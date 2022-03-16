@@ -63,10 +63,10 @@ RM = "/Users/user/Library/Application Support/JetBrains/Toolbox/apps/CLion/ch-0/
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2
+CMAKE_SOURCE_DIR = /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/cmake-build-debug
+CMAKE_BINARY_DIR = /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/cmake-build-debug
 
 # Include any dependencies generated for this target.
 include CMakeFiles/MMSeq2.dir/depend.make
@@ -79,81 +79,81 @@ include CMakeFiles/MMSeq2.dir/flags.make
 
 CMakeFiles/MMSeq2.dir/main.cpp.o: CMakeFiles/MMSeq2.dir/flags.make
 CMakeFiles/MMSeq2.dir/main.cpp.o: ../main.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/MMSeq2.dir/main.cpp.o"
-	/usr/bin/gcc  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/MMSeq2.dir/main.cpp.o -c /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/main.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/MMSeq2.dir/main.cpp.o"
+	/usr/bin/gcc  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/MMSeq2.dir/main.cpp.o -c /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/main.cpp
 
 CMakeFiles/MMSeq2.dir/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/MMSeq2.dir/main.cpp.i"
-	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/main.cpp > CMakeFiles/MMSeq2.dir/main.cpp.i
+	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/main.cpp > CMakeFiles/MMSeq2.dir/main.cpp.i
 
 CMakeFiles/MMSeq2.dir/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/MMSeq2.dir/main.cpp.s"
-	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/main.cpp -o CMakeFiles/MMSeq2.dir/main.cpp.s
+	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/main.cpp -o CMakeFiles/MMSeq2.dir/main.cpp.s
 
 CMakeFiles/MMSeq2.dir/mmseq.cpp.o: CMakeFiles/MMSeq2.dir/flags.make
 CMakeFiles/MMSeq2.dir/mmseq.cpp.o: ../mmseq.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/MMSeq2.dir/mmseq.cpp.o"
-	/usr/bin/gcc  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/MMSeq2.dir/mmseq.cpp.o -c /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/mmseq.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/MMSeq2.dir/mmseq.cpp.o"
+	/usr/bin/gcc  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/MMSeq2.dir/mmseq.cpp.o -c /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/mmseq.cpp
 
 CMakeFiles/MMSeq2.dir/mmseq.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/MMSeq2.dir/mmseq.cpp.i"
-	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/mmseq.cpp > CMakeFiles/MMSeq2.dir/mmseq.cpp.i
+	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/mmseq.cpp > CMakeFiles/MMSeq2.dir/mmseq.cpp.i
 
 CMakeFiles/MMSeq2.dir/mmseq.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/MMSeq2.dir/mmseq.cpp.s"
-	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/mmseq.cpp -o CMakeFiles/MMSeq2.dir/mmseq.cpp.s
+	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/mmseq.cpp -o CMakeFiles/MMSeq2.dir/mmseq.cpp.s
 
 CMakeFiles/MMSeq2.dir/qsequence.cpp.o: CMakeFiles/MMSeq2.dir/flags.make
 CMakeFiles/MMSeq2.dir/qsequence.cpp.o: ../qsequence.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/MMSeq2.dir/qsequence.cpp.o"
-	/usr/bin/gcc  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/MMSeq2.dir/qsequence.cpp.o -c /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/qsequence.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/MMSeq2.dir/qsequence.cpp.o"
+	/usr/bin/gcc  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/MMSeq2.dir/qsequence.cpp.o -c /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/qsequence.cpp
 
 CMakeFiles/MMSeq2.dir/qsequence.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/MMSeq2.dir/qsequence.cpp.i"
-	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/qsequence.cpp > CMakeFiles/MMSeq2.dir/qsequence.cpp.i
+	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/qsequence.cpp > CMakeFiles/MMSeq2.dir/qsequence.cpp.i
 
 CMakeFiles/MMSeq2.dir/qsequence.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/MMSeq2.dir/qsequence.cpp.s"
-	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/qsequence.cpp -o CMakeFiles/MMSeq2.dir/qsequence.cpp.s
+	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/qsequence.cpp -o CMakeFiles/MMSeq2.dir/qsequence.cpp.s
 
 CMakeFiles/MMSeq2.dir/tsequence.cpp.o: CMakeFiles/MMSeq2.dir/flags.make
 CMakeFiles/MMSeq2.dir/tsequence.cpp.o: ../tsequence.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/MMSeq2.dir/tsequence.cpp.o"
-	/usr/bin/gcc  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/MMSeq2.dir/tsequence.cpp.o -c /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/tsequence.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/MMSeq2.dir/tsequence.cpp.o"
+	/usr/bin/gcc  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/MMSeq2.dir/tsequence.cpp.o -c /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/tsequence.cpp
 
 CMakeFiles/MMSeq2.dir/tsequence.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/MMSeq2.dir/tsequence.cpp.i"
-	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/tsequence.cpp > CMakeFiles/MMSeq2.dir/tsequence.cpp.i
+	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/tsequence.cpp > CMakeFiles/MMSeq2.dir/tsequence.cpp.i
 
 CMakeFiles/MMSeq2.dir/tsequence.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/MMSeq2.dir/tsequence.cpp.s"
-	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/tsequence.cpp -o CMakeFiles/MMSeq2.dir/tsequence.cpp.s
+	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/tsequence.cpp -o CMakeFiles/MMSeq2.dir/tsequence.cpp.s
 
 CMakeFiles/MMSeq2.dir/blosum.cpp.o: CMakeFiles/MMSeq2.dir/flags.make
 CMakeFiles/MMSeq2.dir/blosum.cpp.o: ../blosum.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/MMSeq2.dir/blosum.cpp.o"
-	/usr/bin/gcc  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/MMSeq2.dir/blosum.cpp.o -c /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/blosum.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/MMSeq2.dir/blosum.cpp.o"
+	/usr/bin/gcc  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/MMSeq2.dir/blosum.cpp.o -c /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/blosum.cpp
 
 CMakeFiles/MMSeq2.dir/blosum.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/MMSeq2.dir/blosum.cpp.i"
-	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/blosum.cpp > CMakeFiles/MMSeq2.dir/blosum.cpp.i
+	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/blosum.cpp > CMakeFiles/MMSeq2.dir/blosum.cpp.i
 
 CMakeFiles/MMSeq2.dir/blosum.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/MMSeq2.dir/blosum.cpp.s"
-	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/blosum.cpp -o CMakeFiles/MMSeq2.dir/blosum.cpp.s
+	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/blosum.cpp -o CMakeFiles/MMSeq2.dir/blosum.cpp.s
 
 CMakeFiles/MMSeq2.dir/mock_structures.cpp.o: CMakeFiles/MMSeq2.dir/flags.make
 CMakeFiles/MMSeq2.dir/mock_structures.cpp.o: ../mock_structures.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/MMSeq2.dir/mock_structures.cpp.o"
-	/usr/bin/gcc  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/MMSeq2.dir/mock_structures.cpp.o -c /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/mock_structures.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/MMSeq2.dir/mock_structures.cpp.o"
+	/usr/bin/gcc  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/MMSeq2.dir/mock_structures.cpp.o -c /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/mock_structures.cpp
 
 CMakeFiles/MMSeq2.dir/mock_structures.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/MMSeq2.dir/mock_structures.cpp.i"
-	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/mock_structures.cpp > CMakeFiles/MMSeq2.dir/mock_structures.cpp.i
+	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/mock_structures.cpp > CMakeFiles/MMSeq2.dir/mock_structures.cpp.i
 
 CMakeFiles/MMSeq2.dir/mock_structures.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/MMSeq2.dir/mock_structures.cpp.s"
-	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/mock_structures.cpp -o CMakeFiles/MMSeq2.dir/mock_structures.cpp.s
+	/usr/bin/gcc $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/mock_structures.cpp -o CMakeFiles/MMSeq2.dir/mock_structures.cpp.s
 
 # Object files for target MMSeq2
 MMSeq2_OBJECTS = \
@@ -175,7 +175,7 @@ MMSeq2: CMakeFiles/MMSeq2.dir/blosum.cpp.o
 MMSeq2: CMakeFiles/MMSeq2.dir/mock_structures.cpp.o
 MMSeq2: CMakeFiles/MMSeq2.dir/build.make
 MMSeq2: CMakeFiles/MMSeq2.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Linking CXX executable MMSeq2"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Linking CXX executable MMSeq2"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/MMSeq2.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -188,6 +188,6 @@ CMakeFiles/MMSeq2.dir/clean:
 .PHONY : CMakeFiles/MMSeq2.dir/clean
 
 CMakeFiles/MMSeq2.dir/depend:
-	cd /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/cmake-build-debug && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2 /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2 /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/cmake-build-debug /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/cmake-build-debug /Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/cmake-build-debug/CMakeFiles/MMSeq2.dir/DependInfo.cmake --color=$(COLOR)
+	cd /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/cmake-build-debug && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2 /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2 /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/cmake-build-debug /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/cmake-build-debug /Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/cmake-build-debug/CMakeFiles/MMSeq2.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/MMSeq2.dir/depend
 

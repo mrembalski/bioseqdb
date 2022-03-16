@@ -4,12 +4,12 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/blosum.cpp" "/Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/cmake-build-debug/CMakeFiles/MMSeq2.dir/blosum.cpp.o"
-  "/Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/main.cpp" "/Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/cmake-build-debug/CMakeFiles/MMSeq2.dir/main.cpp.o"
-  "/Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/mmseq.cpp" "/Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/cmake-build-debug/CMakeFiles/MMSeq2.dir/mmseq.cpp.o"
-  "/Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/mock_structures.cpp" "/Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/cmake-build-debug/CMakeFiles/MMSeq2.dir/mock_structures.cpp.o"
-  "/Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/qsequence.cpp" "/Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/cmake-build-debug/CMakeFiles/MMSeq2.dir/qsequence.cpp.o"
-  "/Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/tsequence.cpp" "/Users/user/Desktop/Informatyka/IIIrok/ZPP/MMSeq2/cmake-build-debug/CMakeFiles/MMSeq2.dir/tsequence.cpp.o"
+  "/Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/blosum.cpp" "/Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/cmake-build-debug/CMakeFiles/MMSeq2.dir/blosum.cpp.o"
+  "/Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/main.cpp" "/Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/cmake-build-debug/CMakeFiles/MMSeq2.dir/main.cpp.o"
+  "/Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/mmseq.cpp" "/Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/cmake-build-debug/CMakeFiles/MMSeq2.dir/mmseq.cpp.o"
+  "/Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/mock_structures.cpp" "/Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/cmake-build-debug/CMakeFiles/MMSeq2.dir/mock_structures.cpp.o"
+  "/Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/qsequence.cpp" "/Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/cmake-build-debug/CMakeFiles/MMSeq2.dir/qsequence.cpp.o"
+  "/Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/tsequence.cpp" "/Users/user/Desktop/Informatyka/IIIrok/ZPP/bioseqdb/mmseq2/cmake-build-debug/CMakeFiles/MMSeq2.dir/tsequence.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "AppleClang")
 

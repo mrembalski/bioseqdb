@@ -1,29 +1,14 @@
-#include "mmseq.h"
-#include <iostream>
+//
+// Created by user on 16/03/2022.
+//
+
+#include "mmseq2.h"
 
 int main() {
-    MMSeq2::QSequences q = std::make_shared<std::vector<QSequence>>();
-    //MMSeq2::TSequencesPtr t;
-    TSequences::SeqsPtr tPtr = std::make_shared<TSequences::Seqs>();
+    printf("Nie wiem czy 40cm to duzo\n");
 
-    for (auto &i : Q) {
-        q->push_back((QSequence(std::make_shared<std::string>(i))));
-    }
-
-    for (auto &i : T) {
-        tPtr->push_back(i);
-    }
-
-    MMSeq2::TSequencesPtr t = std::make_shared<TSequences>(tPtr);
-
-    MMSeq2 mmSeq2 = MMSeq2(q, t);
-
-    puts("to execution");
-    mmSeq2.execute();
-
-    puts("xdd");
-
-    mmSeq2.getResults();
+    //TODO Marcin: Dodaj swoje dane testowe do namespace'a mock
+    // Tutaj doklep wywolanie MMSeqa na swoich danych
 
     return 0;
 }
