@@ -1,0 +1,19 @@
+version: "3"
+services:
+  db:
+    image: "postgres:latest"
+    command: postgres -c 'shared_buffers=2GB' -c 'effective_cache_size=6GB' -c 'maintenance_work_mem=512MB' -c 'work_mem=4MB' -c 'min_wal_size=2GB' -c 'max_wal_size=8GB'
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: bioseqdb
+      PGDATA: /pgtmpfs
+    tmpfs:
+      - /pgtmpfs
+    networks:
+      - development
+
+networks:
+  development:
+    name: development
