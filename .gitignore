@@ -52,3 +52,12 @@ Mkfile.old
 dkms.conf
 
 .env.production
+
+# Editors
+*.idea
+*.DS_Store
+
+# CMakeBuild
+mmseq2/build
+mmseq2/cmake-build-debug
+mmseq2/dev
