@@ -1,8 +1,6 @@
-//
-// Created by user on 13/03/2022.
-//
 #include "mock_structures.h"
-
+#include <string>
+#include <vector>
 
 class mock::invalid_aa_exception: public std::exception
 {
@@ -32,10 +30,42 @@ char mock::get_aa_by_id(uint32_t aa_id) {
     throw invalid_aa_ex;
 }
 
-uint32_t mock::get_indexes(const char *table_name, const char *kmer) {
-    return 5; // TODO: Marcin uzupelnij o dane testowe
+const char *get_sequence(const char *table_name, uint64_t sequence_id) {
+    if (std::string(table_name) == "QUERY") {
+        return mock::querySequences[sequence_id];
+    } else {
+        return mock::targetSequences[sequence_id];
+    }
 }
 
-void mock::get_ith_index(int i, uint64_t *target_id, uint32_t *position) {
-    return; //TODO: Marcin uzupelnij o dane testowe
+// get_ith_index need to know somehow about result of get_indexes
+// hits can't be global bcs of threads, can't be hold by thread bcs
+// this is mock not mmseq function
+std::vector<std::pair<uint32_t, int32_t>> &&kmerHits(const char *kmer) {
+    std::vector<std::pair<uint32_t, int32_t>> hits;
+    std::string kmerPattern(kmer);
+    uint32_t targetId = 0;
+
+    for (const auto &targetSequence : mock::targetSequences) {
+        std::string targetSeq(targetSequence);
+        for (uint32_t kmerPos = 0; kmerPos + mock::kMerSize < targetSeq.size(); kmerPos++) {
+            std::string proposedKmer(targetSeq.begin() + kmerPos, targetSeq.begin() + kmerPos + mock::kMerSize);
+            if (kmerPattern == proposedKmer) {
+                hits.emplace_back(targetId, kmerPos);
+            }
+        }
+        targetId++;
+    }
+    return std::move(hits);
+}
+
+uint32_t mock::get_indexes(const char *table_name, const char *kmer) {
+    return kmerHits(kmer).size();
+}
+
+// added par kmer bcs we don't have any information about kmer in get_indexes
+void mock::get_ith_index(int i, uint64_t *target_id, uint32_t *position, const char *kmer) {
+    auto &&hits = kmerHits(kmer);
+    *target_id = hits[i].first;
+    *position = hits[i].second;
 }

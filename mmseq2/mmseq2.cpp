@@ -1,9 +1,6 @@
-//
-// Created by user on 16/03/2022.
-//
 #include "mmseq2.h"
 #include "mock_structures.h"
-
+#include <iostream>
 
 void processQueries(uint32_t q_len, uint32_t t_len,
                     uint64_t *q_ids, uint64_t *t_ids,
@@ -23,9 +20,9 @@ void mmseq2::cpp_mmseq2(uint32_t q_len, uint32_t t_len,
     std::mutex mtx;
 
     for (uint32_t i = 0; i < mock::threadNumber; ++i) {
-        workers.push_back(std::thread(
+        workers.emplace_back(
             processQueries, q_len, t_len, q_ids, t_ids, queries, target_table_name, target_column_name, &mtx
-        ));
+        );
     }
 
     for (std::thread &worker : workers) {
@@ -69,7 +66,7 @@ void processSingleQuery(uint64_t q_id, char *query_str,
 
     query.findPrefilterKmerStageResults();
 
-    // TODO Marcin: Tutaj masz ready matche.
+    query.executeAlignment(); // TODO: display results
 }
 
 void mmseq2::Query::findPrefilterKmerStageResults() {
@@ -79,18 +76,18 @@ void mmseq2::Query::findPrefilterKmerStageResults() {
         SMaxSuf += mock::vtml80[mock::get_aa_id(this->sequence[i])][mock::get_aa_id(this->sequence[i])];
     }
 
-    for (uint32_t diagonalNumber = 0; diagonalNumber + mock::kMerSize <= this->sequence.size(); ++diagonalNumber) {
-        SMaxSuf += this->sequence[diagonalNumber + mock::kMerSize];
+    for (uint32_t kMerPos = 0; kMerPos + mock::kMerSize <= this->sequence.size(); ++kMerPos) {
+        SMaxSuf += mock::vtml80[mock::get_aa_id(this->sequence[kMerPos + mock::kMerSize - 1])][mock::get_aa_id(this->sequence[kMerPos + mock::kMerSize - 1])];
 
-        std::string kMer = this->sequence.substr(diagonalNumber, mock::kMerSize);
+        std::string kMer = this->sequence.substr(kMerPos, mock::kMerSize);
 
-        this->processSimilarKMers(diagonalNumber, kMer, SMaxSuf);
+        this->processSimilarKMers(kMerPos, kMer, SMaxSuf);
 
-        SMaxSuf -= mock::vtml80[mock::get_aa_id(this->sequence[diagonalNumber])][mock::get_aa_id(this->sequence[diagonalNumber])];
+        SMaxSuf -= mock::vtml80[mock::get_aa_id(this->sequence[kMerPos])][mock::get_aa_id(this->sequence[kMerPos])];
     }
 }
 
-void mmseq2::Query::processSimilarKMers(uint32_t diagonalNumber, std::string &kMer, int32_t SMaxSuf,
+void mmseq2::Query::processSimilarKMers(uint32_t kMerPos, std::string &kMer, int32_t SMaxSuf,
                                         int32_t Spref, uint32_t indx) {
     if (indx > kMer.size()) {
         return;
@@ -108,35 +105,161 @@ void mmseq2::Query::processSimilarKMers(uint32_t diagonalNumber, std::string &kM
         if (Spref + SMaxSuf >= mock::Smin) {
             kMer[indx] = mock::get_aa_by_id(aaId);
 
-            processSingleKmer(diagonalNumber, kMer);
+            processSingleKmer(kMerPos, kMer);
 
-            processSimilarKMers(diagonalNumber, kMer, SMaxSuf, Spref, indx + 1);
+            processSimilarKMers(kMerPos, kMer, SMaxSuf, Spref, indx + 1);
         }
 
         Spref -= mock::vtml80[this->sequence[indx]][this->sequence[aaId]];
     }
 
     kMer[indx] = currentAA;
-
-    return;
 }
 
-void mmseq2::Query::processSingleKmer(uint32_t diagonal, std::string &kMer) {
+void mmseq2::Query::processSingleKmer(uint32_t kMerPos, std::string &kMer) {
     uint32_t n = mock::get_indexes(targetTableName.c_str(), kMer.c_str());
 
     for (uint32_t i = 0; i < n; ++i) {
         uint64_t target_id;
         uint32_t position;
 
-        mock::get_ith_index(i, &target_id, &position);
+        // added kmer for new interface
+        mock::get_ith_index((int)i, &target_id, &position, kMer.c_str());
+        int32_t diagonal = (int32_t) position - (int32_t)kMerPos;
 
-        if (diagonalPreVVisited[target_id]
-        && diagonalPreVVisited[target_id] == position - diagonal) {
-            addMatch(target_id, position - diagonal);
+        if (diagonalPreVVisited[target_id] && diagonalPrev[target_id] == diagonal) {
+            addMatch(target_id, diagonal);
         }
 
-        diagonalPrev[target_id] = position - diagonal;
+        diagonalPrev[target_id] = diagonal;
         diagonalPreVVisited[target_id] = true;
     }
 
+}
+
+int32_t mmseq2::Query::ungappedAlignment(const std::string& querySequence, const std::string& targetSequence, int32_t diagonal) {
+    uint32_t querySequenceLength = querySequence.size(), targetSequenceLength = targetSequence.size();
+    int32_t queryPosition = 0, queryLastPosition = (int32_t)querySequenceLength - 1;
+    int32_t targetPosition = queryPosition + diagonal;
+
+    if (targetPosition < 0) {
+        queryPosition -= targetPosition;
+        targetPosition = 0;
+    }
+    if (queryLastPosition + diagonal >= targetSequenceLength) {
+        queryLastPosition = (int32_t)targetSequenceLength - diagonal - 1;
+    }
+
+    int32_t score = 0, maxScore = 0;
+
+    while (queryPosition <= queryLastPosition) {
+        score += mock::vtml80[mock::get_aa_id(querySequence[queryPosition])][mock::get_aa_id(targetSequence[targetPosition])];
+        score = std::max(score, 0);
+        maxScore = std::max(maxScore, score);
+
+        queryPosition++;
+        targetPosition++;
+    }
+
+    return maxScore;
+}
+
+std::string &&mmseq2::Query::gappedAlignment(const std::string& querySequence, const std::string& targetSequence) {
+    uint32_t qSeqLen = querySequence.size(), tSeqLen = targetSequence.size();
+    int32_t costOp = mock::costGapOpen, costEx = mock::costGapExtend;
+    // E - gap in row, F - gap in column, H - best score
+    std::vector<std::vector<int32_t>> E(qSeqLen, std::vector<int>(tSeqLen,-costOp));
+    std::vector<std::vector<int32_t>> F(qSeqLen, std::vector<int>(tSeqLen,-costOp));
+    std::vector<std::vector<int32_t>> H(qSeqLen, std::vector<int>(tSeqLen,0));
+
+    int32_t bestScore = 0;
+    uint32_t qPos = -1, tPos = -1;
+
+    // compute matrix
+    for (uint32_t qInd = 0; qInd < qSeqLen; qInd++) {
+        for (uint32_t tInd = 0; tInd < tSeqLen; tInd++) {
+
+            if (tInd > 0) {
+                E[qInd][tInd] = std::max(E[qInd][tInd - 1] - costEx, H[qInd][tInd - 1] - costOp);
+                H[qInd][tInd] = std::max(H[qInd][tInd], E[qInd][tInd]);
+            }
+            if (qInd > 0) {
+                F[qInd][tInd] = std::max(F[qInd - 1][tInd] - costEx, H[qInd - 1][tInd] - costOp);
+                H[qInd][tInd] = std::max(H[qInd][tInd], F[qInd][tInd]);
+            }
+
+            int32_t match = mock::vtml80[mock::get_aa_id(querySequence[qInd])][mock::get_aa_id(targetSequence[tInd])];
+            H[qInd][tInd] = std::max(H[qInd][tInd], match);
+            if (qInd > 0 && tInd > 0) {
+                H[qInd][tInd] = std::max(H[qInd][tInd], H[qInd - 1][tInd - 1] + match);
+            }
+
+            if (H[qInd][tInd] > bestScore) {
+                bestScore = H[qInd][tInd];
+                qPos = qInd;
+                tPos = tInd;
+            }
+        }
+    }
+
+    std::string qAl, tAl;
+    auto qInd = (int32_t)qPos, tInd = (int32_t)tPos;
+
+    // backtrace
+    while (qInd >= 0 && tInd >= 0 && H[qInd][tInd] > 0) {
+        int32_t match = mock::vtml80[mock::get_aa_id(querySequence[qInd])][mock::get_aa_id(targetSequence[tInd])];
+        if ((qInd > 0 && tInd > 0 && H[qInd][tInd] == H[qInd - 1][tInd - 1] + match)
+            || (H[qInd][tInd] == match)) {
+            qAl += querySequence[qInd];
+            tAl += targetSequence[tInd];
+            qInd--;
+            tInd--;
+        } else if (H[qInd][tInd] == E[qInd][tInd]) {
+            while(tInd > 0 && E[qInd][tInd] == E[qInd][tInd - 1] - costEx) {
+                qAl += ' ';
+                tAl += targetSequence[tInd];
+                tInd--;
+            }
+            if (tInd > 0 && E[qInd][tInd] == H[qInd][tInd - 1] - costOp) {
+                qAl += ' ';
+                tAl += targetSequence[tInd];
+                tInd--;
+            }
+        } else if (H[qInd][tInd] == F[qInd][tInd]) {
+            while(qInd > 0 && F[qInd][tInd] == F[qInd - 1][tInd] - costEx) {
+                tAl += ' ';
+                qAl += querySequence[qInd];
+                qInd--;
+            }
+            if (qInd > 0 && F[qInd][tInd] == H[qInd - 1][tInd] - costOp) {
+                tAl += ' ';
+                qAl += querySequence[qInd];
+                qInd--;
+            }
+        }
+    }
+
+    std::reverse(qAl.begin(), qAl.end());
+    std::reverse(tAl.begin(), tAl.end());
+    return std::move(qAl.append("\n").append(tAl));
+}
+
+void mmseq2::Query::executeAlignment() {
+    const PrefilterKmerStageResults& kmerStageResults = mmseq2::Query::getPrefilterKmerStageResults();
+    for (uint32_t i = 0; i < kmerStageResults.getTargetsNumber(); i++) {
+        const int32_t diagonal = kmerStageResults.getDiagonal((int)i);
+        const uint32_t targetId = kmerStageResults.getTargetId((int)i);
+
+        const std::string& querySequence = this->sequence;
+        const std::string& targetSequence = mock::get_sequence(this->targetColumnName.c_str(), targetId);
+
+        if (ungappedAlignment(querySequence, targetSequence, diagonal) >= mock::minUngappedScore && filteredTargetIds.find(targetId) != filteredTargetIds.end()) {
+            filteredTargetIds.insert(targetId);
+            std::string swResult = gappedAlignment(querySequence, targetSequence);
+
+            // stdout
+            std::cout << "Sw for targetId: " << targetId << std::endl;
+            std::cout << swResult << std::endl;
+        }
+    }
 }

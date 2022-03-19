@@ -1,7 +1,3 @@
-//
-// Created by user on 16/03/2022.
-//
-
 #include "mmseq2.h"
 
 int main() {

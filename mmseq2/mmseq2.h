@@ -1,13 +1,10 @@
-//
-// Created by user on 13/03/2022.
-//
-
 #ifndef BIOSEQDB_MMSEQ2_H
 #define BIOSEQDB_MMSEQ2_H
 #include <exception>
 #include <vector>
 #include <string>
 #include <thread>
+#include <set>
 
 namespace mmseq2 {
     void cpp_mmseq2(uint32_t q_len, uint32_t t_len,
@@ -19,20 +16,20 @@ namespace mmseq2 {
     private:
         uint32_t queryId;
         std::vector <uint32_t> targetIds;
-        std::vector <uint32_t> diagonals;
+        std::vector <int32_t> diagonals;
 
     public:
-        PrefilterKmerStageResults(uint32_t queryId) : queryId{ queryId }, targetIds{ std::vector < uint32_t > {}},
-        diagonals{ std::vector < uint32_t > {}}  {}
+        PrefilterKmerStageResults(uint32_t queryId) : queryId{ queryId }, targetIds{ std::vector<uint32_t> {}},
+        diagonals{ std::vector<int32_t> {}}  {}
 
         PrefilterKmerStageResults() = delete;
 
-        void addDiagonal(uint32_t targetId, uint32_t diagonal) {
+        void addDiagonal(uint32_t targetId, int32_t diagonal) {
             targetIds.push_back(targetId);
             diagonals.push_back(diagonal);
         }
 
-        uint32_t getDiagonal(int index) const {
+        int32_t getDiagonal(int index) const {
             return diagonals[index];
         }
 
@@ -57,14 +54,22 @@ namespace mmseq2 {
 
         PrefilterKmerStageResults prefilterKmerStageResults;
 
-        std::vector<uint32_t> diagonalPrev;
+        std::vector<int32_t> diagonalPrev;
 
         std::vector<bool> diagonalPreVVisited;
+
+        std::set<uint32_t> filteredTargetIds;
 
         void processSimilarKMers(uint32_t diagonalNumber, std::string &kMer, int32_t SMaxSuf,
                                  int32_t Spref = 0, uint32_t indx = 0);
 
         void processSingleKmer(uint32_t diagonal, std::string &kMer);
+
+        // returns best score on diagonal
+        static int32_t ungappedAlignment(const std::string& querySequence, const std::string& targetSequence, int32_t diagonal);
+
+        // returns the best alignment
+        static std::string &&gappedAlignment(const std::string& querySequence, const std::string& targetSequence);
 
     public:
         Query() = delete;
@@ -75,7 +80,7 @@ namespace mmseq2 {
                                                                    targetLength{t_len}, targetIds{t_ids},
                                                                    prefilterKmerStageResults{PrefilterKmerStageResults(queryId)},
                                                                    diagonalPreVVisited{std::vector<bool>(t_len, false)},
-                                                                   diagonalPrev{std::vector{t_len}},
+                                                                   diagonalPrev{std::vector<int32_t>(t_len, 0)},
                                                                    targetTableName{std::string(target_table_name)},
                                                                    targetColumnName{std::string(target_column_name)} { }
 
@@ -83,17 +88,15 @@ namespace mmseq2 {
             return prefilterKmerStageResults;
         }
 
-        void addMatch(uint32_t targetId, uint32_t diagonal) {
+        void addMatch(uint32_t targetId, int32_t diagonal) {
             prefilterKmerStageResults.addDiagonal(targetId, diagonal);
         }
 
         void findPrefilterKmerStageResults();
 
-        void executeVectorizedUngappedAlignment(); // TODO Marcin
+        void executeAlignment();
 
-        void executeVectorizedGappedAlignment(); // TODO Marcin
-
-        void displayResults(); // TODO Marcin: to na razie mock funkcja wypisujaca na stdout
+        // void displayResults(); // TODO stdout function
     };
 }
 

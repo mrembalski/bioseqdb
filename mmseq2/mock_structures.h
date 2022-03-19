@@ -1,7 +1,3 @@
-//
-// Created by user on 13/03/2022.
-//
-
 #ifndef BIOSEQDB_MOCK_STRUCTURES_H
 #define BIOSEQDB_MOCK_STRUCTURES_H
 
@@ -17,6 +13,16 @@ namespace mock {
     static constexpr int Smin = 100;
 
     static constexpr int aa_number = 21;
+
+    static constexpr int minUngappedScore = 15;
+
+    static constexpr int costGapOpen = 11;
+
+    static constexpr int costGapExtend = 1;
+
+    const char *querySequences[] = {"AAAAAACCCCCCTTTTTTGGGGGG"};
+
+    const char *targetSequences[] = {"GGGGGAAACCCCAAGGGGTTGGGGGAAA"};
 
     uint32_t get_aa_id(char aa);
 
@@ -47,14 +53,20 @@ namespace mock {
 
     // Mock POSTRES structures
 
+    // For fetching targets (or queries if you'd like to).
+    // Overwrites SPI_tuptable.
+    // changed interface for const structures in mock
+    const char *get_sequence(const char *table_name, uint64_t sequence_id); // TODO: for sequence targets table_column_name?
+
     // Fetches indexes for a given kmer into SPI_tuptable.
     // To access them from C++ use get_ith_index() but you have to do so
     // before calling get_indexes() or get_sequence() again.
     uint32_t get_indexes(const char *table_name, const char *kmer);
 
     // Fetches i-th index from SPI_tuptable (assuming SPI_tuptable contains indexes).
-    void get_ith_index(int i, uint64_t *target_id, uint32_t *position);
+    // changed interface
+    void get_ith_index(int i, uint64_t *target_id, uint32_t *position, const char *kmer);
 
-    // TODO Marcin: dodaj struktury testowe potrzebne do odpalenia main.cpp
+    // TODO test strucutres for main.cpp
 };
 #endif //BIOSEQDB_MOCK_STRUCTURES_H
