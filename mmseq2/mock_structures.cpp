@@ -32,9 +32,9 @@ char mock::get_aa_by_id(uint32_t aa_id) {
 
 const char *get_sequence(const char *table_name, uint64_t sequence_id) {
     if (std::string(table_name) == "QUERY") {
-        return mock::querySequences[sequence_id];
+        return mock::querySequences[sequence_id].c_str();
     } else {
-        return mock::targetSequences[sequence_id];
+        return mock::targetSequences[sequence_id].c_str();
     }
 }
 
@@ -68,4 +68,21 @@ void mock::get_ith_index(int i, uint64_t *target_id, uint32_t *position, const c
     auto &&hits = kmerHits(kmer);
     *target_id = hits[i].first;
     *position = hits[i].second;
+}
+
+mock::TestsParameter::TestsParameter(int kMerSize, int Smin, int minUngappedScore, int costGapOpen, int costGapExtend,
+                                     std::vector<std::string> &&querySequences,
+                                     std::vector<std::string> &&targetSequences)
+                                     : kMerSize{kMerSize}, Smin{Smin}, minUngappedScore{minUngappedScore},
+                                     costGapOpen{costGapOpen}, costGapExtend{costGapExtend},
+                                     querySequences{querySequences}, targetSequences{targetSequences} {}
+
+void mock::TestsParameter::setGlobalParameteres() {
+    mock::kMerSize = this->kMerSize;
+    mock::Smin = this->Smin;
+    mock::minUngappedScore = this->minUngappedScore;
+    mock::costGapOpen = this->costGapOpen;
+    mock::costGapExtend = this->costGapExtend;
+    mock::querySequences = this->querySequences;
+    mock::targetSequences = this->targetSequences;
 }
