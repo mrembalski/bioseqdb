@@ -89,7 +89,7 @@ void mmseq2::Query::findPrefilterKmerStageResults() {
 
 void mmseq2::Query::processSimilarKMers(uint32_t kMerPos, std::string &kMer, int32_t SMaxSuf,
                                         int32_t Spref, uint32_t indx) {
-    if (indx > kMer.size()) {
+    if (indx >= kMer.size()) {
         return;
     }
 

@@ -2,6 +2,14 @@
 #include <string>
 #include <vector>
 
+int mock::kMerSize;
+int mock::Smin;
+int mock::minUngappedScore;
+int mock::costGapOpen;
+int mock::costGapExtend;
+std::vector<std::string> mock::querySequences;
+std::vector<std::string> mock::targetSequences;
+
 class mock::invalid_aa_exception: public std::exception
 {
     virtual const char* what() const throw()
@@ -23,14 +31,14 @@ uint32_t mock::get_aa_id(char aa) {
 }
 
 char mock::get_aa_by_id(uint32_t aa_id) {
-    if (aa_id > 0 && aa_id < aa_number) {
+    if (aa_id >= 0 && aa_id < aa_number) {
         return aa_to_id[aa_id];
     }
 
     throw invalid_aa_ex;
 }
 
-const char *get_sequence(const char *table_name, uint64_t sequence_id) {
+const char *mock::get_sequence(const char *table_name, uint64_t sequence_id) {
     if (std::string(table_name) == "QUERY") {
         return mock::querySequences[sequence_id].c_str();
     } else {

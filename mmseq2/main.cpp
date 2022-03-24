@@ -21,8 +21,8 @@ namespace {
             queries[i] = new char[test.querySequences[i].size()];
             strcpy(queries[i], test.querySequences[i].c_str());
         }
-        char* target_table_name = nullptr;
-        char* target_column_name = nullptr;
+        static char target_table_name[] = {'T', 'N', 'A', 'M', 'E'};
+        static char target_column_name[] = {'C', 'N', 'A', 'M', 'E'};
 
         mmseq2::cpp_mmseq2(q_len, t_len, q_ids, t_ids,
                 queries, target_table_name, target_column_name);
@@ -38,7 +38,7 @@ namespace {
 
 int main() {
 
-    runTest(mock::TestsParameter(7, 10, 15, 11, 1,
+    runTest(mock::TestsParameter(7, 45, 15, 11, 1,
                                  {"AAAAAACCCCCCTTTTTTGGGGGG"},
                                  {"GGGGGAAACCCCAAGGGGTTGGGGGAAA"}));
     runTest(mock::TestsParameter(3, 5, 10, 5, 1,

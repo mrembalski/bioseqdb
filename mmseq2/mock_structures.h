@@ -39,13 +39,13 @@ namespace mock {
             {-4,      -1,      -7,      -4,       3,      -6,       1,      -3,      -4,      -2,      -4,      -2,      -7,      -5,      -3,      -3,      -4,      -4,        1,       8,      -1},
             {-1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,       -1,      -1,      -1}};
 
-    int kMerSize;
-    int Smin;
-    int minUngappedScore;
-    int costGapOpen;
-    int costGapExtend;
-    std::vector<std::string> querySequences;
-    std::vector<std::string> targetSequences;
+    extern int kMerSize;
+    extern int Smin;
+    extern int minUngappedScore;
+    extern int costGapOpen;
+    extern int costGapExtend;
+    extern std::vector<std::string> querySequences;
+    extern std::vector<std::string> targetSequences;
 
     // Mock POSTRES structures
 
