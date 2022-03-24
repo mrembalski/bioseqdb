@@ -72,7 +72,7 @@ uint32_t mock::get_indexes(const char *table_name, const char *kmer) {
 }
 
 // added par kmer bcs we don't have any information about kmer in get_indexes
-void mock::get_ith_index(int i, uint64_t *target_id, uint32_t *position, const char *kmer) {
+void mock::get_ith_index(int32_t i, uint64_t *target_id, uint32_t *position, const char *kmer) {
     auto &&hits = kmerHits(kmer);
     *target_id = hits[i].first;
     *position = hits[i].second;

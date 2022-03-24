@@ -47,5 +47,27 @@ int main() {
     runTest(mock::TestsParameter(5, 10, 10, 4, 1,
                                  {"AACCTTGG", "ACTGACTGACTG", "TACTCAT"},
                                  {"TACGGTAGCTTACTGA", "CTAGCTTACGATGCAAG", "CTTACAGCATACAGCATCGAT"}));
+
+//    std::cout << "[Ungapped alignment - example]\n"; // move ungapped to public
+//    const std::string qSeq = "AACCTTGG", tSeq = "AAAACCTTGG";
+//    for (int i = -5; i <= 5; i++) {
+//        std::cout << "diagonal: " << i << ", ";
+//        std::cout << "score: " << mmseq2::Query::ungappedAlignment(qSeq, tSeq, i) << '\n';
+//    }
+
+//    std::cout << "[Gapped alignment - example]\n"; // move gapped to public
+//    mock::TestsParameter test(0, 0, 0, 4, 1, {}, {});
+//    test.setGlobalParameteres();
+//    const std::vector<std::pair<const std::string, const std::string>> seqs = {
+//            {"AATTCCGG", "AAAAATTGGCC"},
+//            {"TACTCAT", "CTAGCTTACGATGCAAG"},
+//            {"AAAAAACCCCCCTTTTTTGGGGGG", "GGGGGAAACCCCAAGGGGTTGGGGGAAA"},
+//            {"AAAAAACCCCCCTTTTTTGGGGGG", "CTTACAGCATACAGCATCGAT"}
+//    };
+//    for (const auto & seq : seqs) {
+//        std::cout << "q: " << seq.first << ", t: " << seq.second << "\n";
+//        std::cout << mmseq2::Query::gappedAlignment(seq.first, seq.second) << "\n";
+//    }
+
     return 0;
 }

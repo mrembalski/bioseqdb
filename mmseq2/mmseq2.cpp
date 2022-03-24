@@ -124,7 +124,7 @@ void mmseq2::Query::processSingleKmer(uint32_t kMerPos, std::string &kMer) {
         uint32_t position;
 
         // added kmer for new interface
-        mock::get_ith_index((int)i, &target_id, &position, kMer.c_str());
+        mock::get_ith_index((int32_t)i, &target_id, &position, kMer.c_str());
         int32_t diagonal = (int32_t) position - (int32_t)kMerPos;
 
         if (diagonalPreVVisited[target_id] && diagonalPrev[target_id] == diagonal) {
@@ -164,7 +164,7 @@ int32_t mmseq2::Query::ungappedAlignment(const std::string& querySequence, const
     return maxScore;
 }
 
-std::string &&mmseq2::Query::gappedAlignment(const std::string& querySequence, const std::string& targetSequence) {
+std::string mmseq2::Query::gappedAlignment(const std::string& querySequence, const std::string& targetSequence) {
     uint32_t qSeqLen = querySequence.size(), tSeqLen = targetSequence.size();
     int32_t costOp = mock::costGapOpen, costEx = mock::costGapExtend;
     // E - gap in row, F - gap in column, H - best score
@@ -241,7 +241,7 @@ std::string &&mmseq2::Query::gappedAlignment(const std::string& querySequence, c
 
     std::reverse(qAl.begin(), qAl.end());
     std::reverse(tAl.begin(), tAl.end());
-    return std::move(qAl.append("\n").append(tAl));
+    return qAl.append("\n").append(tAl);
 }
 
 void mmseq2::Query::executeAlignment() {

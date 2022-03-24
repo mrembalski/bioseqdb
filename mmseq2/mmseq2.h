@@ -69,7 +69,7 @@ namespace mmseq2 {
         static int32_t ungappedAlignment(const std::string& querySequence, const std::string& targetSequence, int32_t diagonal);
 
         // returns the best alignment
-        static std::string &&gappedAlignment(const std::string& querySequence, const std::string& targetSequence);
+        static std::string gappedAlignment(const std::string& querySequence, const std::string& targetSequence);
 
     public:
         Query() = delete;

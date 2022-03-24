@@ -61,7 +61,7 @@ namespace mock {
 
     // Fetches i-th index from SPI_tuptable (assuming SPI_tuptable contains indexes).
     // changed interface
-    void get_ith_index(int i, uint64_t *target_id, uint32_t *position, const char *kmer);
+    void get_ith_index(int32_t i, uint64_t *target_id, uint32_t *position, const char *kmer);
 
     // for tests
     struct TestsParameter {
