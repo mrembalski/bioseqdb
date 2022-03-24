@@ -1,20 +1,14 @@
-//
-// Created by user on 13/03/2022.
-//
-
 #ifndef BIOSEQDB_MOCK_STRUCTURES_H
 #define BIOSEQDB_MOCK_STRUCTURES_H
 
 #include <exception>
+#include <string>
+#include <vector>
 
 namespace mock {
     class invalid_aa_exception;
 
     static constexpr int threadNumber = 5;
-
-    static constexpr int kMerSize = 7;
-
-    static constexpr int Smin = 100;
 
     static constexpr int aa_number = 21;
 
@@ -45,7 +39,20 @@ namespace mock {
             {-4,      -1,      -7,      -4,       3,      -6,       1,      -3,      -4,      -2,      -4,      -2,      -7,      -5,      -3,      -3,      -4,      -4,        1,       8,      -1},
             {-1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,       -1,      -1,      -1}};
 
+    int kMerSize;
+    int Smin;
+    int minUngappedScore;
+    int costGapOpen;
+    int costGapExtend;
+    std::vector<std::string> querySequences;
+    std::vector<std::string> targetSequences;
+
     // Mock POSTRES structures
+
+    // For fetching targets (or queries if you'd like to).
+    // Overwrites SPI_tuptable.
+    // changed interface for const structures in mock
+    const char *get_sequence(const char *table_name, uint64_t sequence_id); // TODO: for sequence targets table_column_name?
 
     // Fetches indexes for a given kmer into SPI_tuptable.
     // To access them from C++ use get_ith_index() but you have to do so
@@ -53,8 +60,16 @@ namespace mock {
     uint32_t get_indexes(const char *table_name, const char *kmer);
 
     // Fetches i-th index from SPI_tuptable (assuming SPI_tuptable contains indexes).
-    void get_ith_index(int i, uint64_t *target_id, uint32_t *position);
+    // changed interface
+    void get_ith_index(int i, uint64_t *target_id, uint32_t *position, const char *kmer);
 
-    // TODO Marcin: dodaj struktury testowe potrzebne do odpalenia main.cpp
+    // for tests
+    struct TestsParameter {
+        int kMerSize, Smin, minUngappedScore, costGapOpen, costGapExtend;
+        const std::vector<std::string> querySequences, targetSequences;
+
+        TestsParameter(int, int, int, int, int, std::vector<std::string>&&, std::vector<std::string>&&);
+        void setGlobalParameteres();
+    };
 };
 #endif //BIOSEQDB_MOCK_STRUCTURES_H
