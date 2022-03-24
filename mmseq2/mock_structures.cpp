@@ -1,6 +1,7 @@
 #include "mock_structures.h"
 #include <string>
 #include <vector>
+#include <iostream>
 
 int mock::kMerSize;
 int mock::Smin;
@@ -49,7 +50,7 @@ const char *mock::get_sequence(const char *table_name, uint64_t sequence_id) {
 // get_ith_index need to know somehow about result of get_indexes
 // hits can't be global bcs of threads, can't be hold by thread bcs
 // this is mock not mmseq function
-std::vector<std::pair<uint32_t, int32_t>> &&kmerHits(const char *kmer) {
+std::vector<std::pair<uint32_t, int32_t>> kmerHits(const char *kmer) {
     std::vector<std::pair<uint32_t, int32_t>> hits;
     std::string kmerPattern(kmer);
     uint32_t targetId = 0;
@@ -64,7 +65,7 @@ std::vector<std::pair<uint32_t, int32_t>> &&kmerHits(const char *kmer) {
         }
         targetId++;
     }
-    return std::move(hits);
+    return hits;
 }
 
 uint32_t mock::get_indexes(const char *table_name, const char *kmer) {
@@ -73,7 +74,7 @@ uint32_t mock::get_indexes(const char *table_name, const char *kmer) {
 
 // added par kmer bcs we don't have any information about kmer in get_indexes
 void mock::get_ith_index(int32_t i, uint64_t *target_id, uint32_t *position, const char *kmer) {
-    auto &&hits = kmerHits(kmer);
+    auto hits = kmerHits(kmer);
     *target_id = hits[i].first;
     *position = hits[i].second;
 }

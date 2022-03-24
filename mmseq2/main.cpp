@@ -1,5 +1,6 @@
 #include "mmseq2.h"
 #include "mock_structures.h"
+// #include <iostream>
 
 namespace {
     void runTest(mock::TestsParameter&& test) {
@@ -48,6 +49,17 @@ int main() {
                                  {"AACCTTGG", "ACTGACTGACTG", "TACTCAT"},
                                  {"TACGGTAGCTTACTGA", "CTAGCTTACGATGCAAG", "CTTACAGCATACAGCATCGAT"}));
 
+//    std::cout << "[Get all hits - example]\n";
+//    std::string kmer = "TAC";
+//    mock::TestsParameter test0(3, 0, 0, 0, 0, {}, {"TACGGTAGCTTACTGA", "CTAGCTTACGATGCAAG", "CTTACAGCATACAGCATCGAT"});
+//    test0.setGlobalParameteres();
+//    for (size_t i = 0; i < mock::get_indexes(nullptr, kmer.c_str()); i++) {
+//        uint64_t target_id;
+//        uint32_t position;
+//        mock::get_ith_index((int32_t)i, &target_id, &position, kmer.c_str());
+//        std::cout << "id: " << target_id << ", pos: " << position << "\n";
+//    }
+
 //    std::cout << "[Ungapped alignment - example]\n"; // move ungapped to public
 //    const std::string qSeq = "AACCTTGG", tSeq = "AAAACCTTGG";
 //    for (int i = -5; i <= 5; i++) {
@@ -56,8 +68,8 @@ int main() {
 //    }
 
 //    std::cout << "[Gapped alignment - example]\n"; // move gapped to public
-//    mock::TestsParameter test(0, 0, 0, 4, 1, {}, {});
-//    test.setGlobalParameteres();
+//    mock::TestsParameter test1(0, 0, 0, 4, 1, {}, {});
+//    test1.setGlobalParameteres();
 //    const std::vector<std::pair<const std::string, const std::string>> seqs = {
 //            {"AATTCCGG", "AAAAATTGGCC"},
 //            {"TACTCAT", "CTAGCTTACGATGCAAG"},
