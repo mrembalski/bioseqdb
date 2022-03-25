@@ -39,15 +39,18 @@ namespace {
 
 int main() {
 
-    runTest(mock::TestsParameter(7, 45, 15, 11, 1,
-                                 {"AAAAAACCCCCCTTTTTTGGGGGG"},
-                                 {"GGGGGAAACCCCAAGGGGTTGGGGGAAA"}));
-    runTest(mock::TestsParameter(3, 5, 10, 5, 1,
-                                 {"AAAAAACCCCCCTTTTTTGGGGGG"},
-                                 {"GGGGGAAACCCCAAGGGGTTGGGGGAAA"}));
-    runTest(mock::TestsParameter(5, 10, 10, 4, 1,
-                                 {"AACCTTGG", "ACTGACTGACTG", "TACTCAT"},
-                                 {"TACGGTAGCTTACTGA", "CTAGCTTACGATGCAAG", "CTTACAGCATACAGCATCGAT"}));
+    // [D][D] = [G][G] = 7, Smin = kMerSize * 7
+    runTest(mock::TestsParameter(5, 35, 0, 4, 1,
+                                 {"DDDDDAAGGGGG"},
+                                 {"AADDDDDCCGGGGGAA"}));
+
+//    runTest(mock::TestsParameter(7, 45, 15, 11, 1,
+//                                 {"AAAAAACCCCCCTTTTTTGGGGGG"},
+//                                 {"GGGGGAAACCCCAAGGGGTTGGGGGAAA"}));
+//
+//    runTest(mock::TestsParameter(5, 10, 10, 4, 1,
+//                                 {"AACCTTGG", "ACTGACTGACTG", "TACTCAT"},
+//                                 {"TACGGTAGCTTACTGA", "CTAGCTTACGATGCAAG", "CTTACAGCATACAGCATCGAT"}));
 
 //    std::cout << "[Get all hits - example]\n";
 //    std::string kmer = "TAC";

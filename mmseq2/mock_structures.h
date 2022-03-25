@@ -52,7 +52,7 @@ namespace mock {
     // For fetching targets (or queries if you'd like to).
     // Overwrites SPI_tuptable.
     // changed interface for const structures in mock
-    const char *get_sequence(const char *table_name, uint64_t sequence_id); // TODO: for sequence targets table_column_name?
+    const char *get_sequence(const char *table_name, uint64_t sequence_id);
 
     // Fetches indexes for a given kmer into SPI_tuptable.
     // To access them from C++ use get_ith_index() but you have to do so

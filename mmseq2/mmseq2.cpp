@@ -66,7 +66,7 @@ void processSingleQuery(uint64_t q_id, char *query_str,
 
     query.findPrefilterKmerStageResults();
 
-    query.executeAlignment(); // TODO: display results
+    query.executeAlignment();
 }
 
 void mmseq2::Query::findPrefilterKmerStageResults() {
@@ -102,6 +102,10 @@ void mmseq2::Query::processSimilarKMers(uint32_t kMerPos, std::string &kMer, int
     for (uint32_t aaId = 0; aaId < mock::aa_number; ++aaId) {
         Spref += mock::vtml80[currentAAId][aaId];
 
+        // TODO: changed prefix + untouched sufix of kmer can be the same multiple
+        // TODO: times but we need this kmer be in processSingleKmer only 1 time
+        // TODO: ^^ potencial kmers from the same kMerPos
+        // TODO: the effect is that duplicates of the same kmer will gemerate match / double hit
         if (Spref + SMaxSuf >= mock::Smin) {
             kMer[indx] = mock::get_aa_by_id(aaId);
 
@@ -109,7 +113,8 @@ void mmseq2::Query::processSimilarKMers(uint32_t kMerPos, std::string &kMer, int
 
             processSimilarKMers(kMerPos, kMer, SMaxSuf, Spref, indx + 1);
         }
-
+        // TODO: Spref -= mock::vtml80[currentAAId][aaId];
+        // TODO: positions indx and aaId are not positions in sequence
         Spref -= mock::vtml80[this->sequence[indx]][this->sequence[aaId]];
     }
 
@@ -253,12 +258,12 @@ void mmseq2::Query::executeAlignment() {
         const std::string& querySequence = this->sequence;
         const std::string& targetSequence = mock::get_sequence(this->targetColumnName.c_str(), targetId);
 
-        if (ungappedAlignment(querySequence, targetSequence, diagonal) >= mock::minUngappedScore && filteredTargetIds.find(targetId) != filteredTargetIds.end()) {
+        if (ungappedAlignment(querySequence, targetSequence, diagonal) >= mock::minUngappedScore && filteredTargetIds.find(targetId) == filteredTargetIds.end()) {
             filteredTargetIds.insert(targetId);
             std::string swResult = gappedAlignment(querySequence, targetSequence);
 
             // stdout
-            std::cout << "Sw for targetId: " << targetId << std::endl;
+            std::cout << "SW alignment for qId: " << this->queryId << ", tId: " << targetId << std::endl;
             std::cout << swResult << std::endl;
         }
     }
