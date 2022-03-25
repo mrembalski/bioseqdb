@@ -1,5 +1,5 @@
-CREATE OR REPLACE FUNCTION test_function(integer)
-    RETURNS SETOF integer
-    AS '/mmseq2/test.so', 'test_function'
+CREATE OR REPLACE FUNCTION seq_search_mmseqs(bigint, boolean, dna_sequence, int, text)
+    RETURNS SETOF record
+    AS '/mmseq2/test.so', 'seq_search_mmseqs'
     LANGUAGE C STRICT;
-    
+
