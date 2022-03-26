@@ -44,9 +44,10 @@ int main() {
 //                                 {"DDDDDAAGGGGG"},
 //                                 {"AADDDDDCCGGGGGAA"}));
 
-      runTest(mock::TestsParameter(5, 35, 15, 5, 1,
-                                   {"DDDDDAAGGGGG"},
-                                   {"DDDDDDDCCGGGGGAA", "AAADDDDDCCGGGGGDD"}));
+      runTest(mock::TestsParameter(7, 49, 0, 4, 1,
+                                   {"DDDDDDDDDCCGGGGGGGAA", "AAADDDDDDDCCGGGGGGGDD"},
+                                   {"DDDDDDDAAGGGGGGG"}));
+
 //    runTest(mock::TestsParameter(7, 45, 15, 11, 1,
 //                                 {"AAAAAACCCCCCTTTTTTGGGGGG"},
 //                                 {"GGGGGAAACCCCAAGGGGTTGGGGGAAA"}));
