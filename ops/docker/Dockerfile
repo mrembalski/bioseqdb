@@ -10,10 +10,12 @@ COPY . .
 RUN echo "$POSTGRES_DB"
 RUN echo "$POSTGRES_PASSWORD"
 RUN set -x \
-    && apt-get update && apt-get install -y --no-install-recommends ca-certificates make postgresql-server-dev-$PG_DEV_VERSION gcc libc6-dev libssl-dev libkrb5-dev \
+    && apt-get update && apt-get install -y --no-install-recommends ca-certificates make postgresql-server-dev-$PG_DEV_VERSION gcc g++ libc6-dev libssl-dev libkrb5-dev \
     # todo: move to makefile
     && gcc -fPIC -c -I /usr/include/postgresql/$PG_DEV_VERSION/server/ /mmseq2/test.c -o /mmseq2/test.o \
-    && gcc -shared -o /mmseq2/test.so /mmseq2/test.o 
+    && gcc -fPIC -c -I /usr/include/postgresql/$PG_DEV_VERSION/server/ /mmseq2/psql_interface.c -o /mmseq2/psql_interface.o \
+    && g++ -fPIC -c /mmseq2/mock_function.cpp -o /mmseq2/mock_function.o \
+    && gcc -shared -o /mmseq2/test.so /mmseq2/test.o /mmseq2/psql_interface.o /mmseq2/mock_function.o
 
 
 # .sh or .sql files from docker-entrypoint-initdb.d
