@@ -8,7 +8,7 @@
 namespace mock {
     class invalid_aa_exception;
 
-    static constexpr int threadNumber = 5;
+    static constexpr int threadNumber = 5; // TODO: change to 5
 
     static constexpr int aa_number = 21;
 
@@ -39,20 +39,23 @@ namespace mock {
             {-4,      -1,      -7,      -4,       3,      -6,       1,      -3,      -4,      -2,      -4,      -2,      -7,      -5,      -3,      -3,      -4,      -4,        1,       8,      -1},
             {-1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,      -1,       -1,      -1,      -1}};
 
-    int kMerSize;
-    int Smin;
-    int minUngappedScore;
-    int costGapOpen;
-    int costGapExtend;
-    std::vector<std::string> querySequences;
-    std::vector<std::string> targetSequences;
+    extern int kMerSize;
+    extern int Smin;
+    extern int minUngappedScore;
+    extern int costGapOpen;
+    extern int costGapExtend;
+    extern std::vector<std::string> querySequences;
+    extern std::vector<std::string> targetSequences;
 
     // Mock POSTRES structures
+
+    // For logging in Postgres.
+    void log_from_cpp(const char *str);
 
     // For fetching targets (or queries if you'd like to).
     // Overwrites SPI_tuptable.
     // changed interface for const structures in mock
-    const char *get_sequence(const char *table_name, uint64_t sequence_id); // TODO: for sequence targets table_column_name?
+    const char *get_sequence(const char *table_name, uint64_t sequence_id);
 
     // Fetches indexes for a given kmer into SPI_tuptable.
     // To access them from C++ use get_ith_index() but you have to do so
@@ -61,7 +64,7 @@ namespace mock {
 
     // Fetches i-th index from SPI_tuptable (assuming SPI_tuptable contains indexes).
     // changed interface
-    void get_ith_index(int i, uint64_t *target_id, uint32_t *position, const char *kmer);
+    void get_ith_index(int32_t i, uint64_t *target_id, uint32_t *position, const char *kmer);
 
     // for tests
     struct TestsParameter {
