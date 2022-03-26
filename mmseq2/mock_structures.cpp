@@ -3,11 +3,11 @@
 #include <vector>
 #include <iostream>
 
-int mock::kMerSize;
-int mock::Smin;
-int mock::minUngappedScore;
-int mock::costGapOpen;
-int mock::costGapExtend;
+int mock::kMerSize = 7;
+int mock::Smin = 35;
+int mock::minUngappedScore = 15;
+int mock::costGapOpen = 11;
+int mock::costGapExtend = 1;
 std::vector<std::string> mock::querySequences;
 std::vector<std::string> mock::targetSequences;
 
@@ -37,6 +37,10 @@ char mock::get_aa_by_id(uint32_t aa_id) {
     }
 
     throw invalid_aa_ex;
+}
+
+void mock::log_from_cpp(const char *str) {
+    std::cout << str;
 }
 
 const char *mock::get_sequence(const char *table_name, uint64_t sequence_id) {

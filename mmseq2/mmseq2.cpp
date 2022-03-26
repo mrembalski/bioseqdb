@@ -269,9 +269,10 @@ void mmseq2::Query::executeAlignment() {
             filteredTargetIds.insert(targetId);
             std::string swResult = gappedAlignment(querySequence, targetSequence);
 
-            // stdout
-            std::cout << "SW alignment for qId: " << this->queryId << ", tId: " << targetId << std::endl;
-            std::cout << swResult << std::endl;
+            // postgres - stdout
+            std::string swOut = "SW alignment for qId: " + std::to_string(this->queryId) +
+                    ", tId: " + std::to_string(targetId) + "\n" + swResult + "\n";
+            mock::log_from_cpp(swOut.c_str());
         }
     }
 }

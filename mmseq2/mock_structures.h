@@ -49,6 +49,9 @@ namespace mock {
 
     // Mock POSTRES structures
 
+    // For logging in Postgres.
+    void log_from_cpp(const char *str);
+
     // For fetching targets (or queries if you'd like to).
     // Overwrites SPI_tuptable.
     // changed interface for const structures in mock

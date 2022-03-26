@@ -66,16 +66,13 @@ namespace mmseq2 {
         void processSingleKmer(uint32_t diagonal, std::string &kMer);
 
         // returns best score on diagonal
-        //TODO: ungappedAlignment && gapped should be here
+        static int32_t ungappedAlignment(const std::string& querySequence, const std::string& targetSequence, int32_t diagonal);
 
         // returns the best alignment
+        static std::string gappedAlignment(const std::string& querySequence, const std::string& targetSequence);
 
     public:
         Query() = delete;
-
-        static int32_t ungappedAlignment(const std::string& querySequence, const std::string& targetSequence, int32_t diagonal);
-
-        static std::string gappedAlignment(const std::string& querySequence, const std::string& targetSequence);
 
         Query(uint64_t queryId, char *query,
               uint32_t t_len, uint64_t *t_ids,
@@ -98,8 +95,6 @@ namespace mmseq2 {
         void findPrefilterKmerStageResults();
 
         void executeAlignment();
-
-        // void displayResults(); // TODO stdout function
     };
 }
 
