@@ -66,7 +66,7 @@ void processSingleQuery(uint64_t q_id, char *query_str,
 
     query.findPrefilterKmerStageResults();
 
-    query.executeAlignment(); // TODO: display results
+    query.executeAlignment();
 }
 
 void mmseq2::Query::findPrefilterKmerStageResults() {
@@ -89,7 +89,11 @@ void mmseq2::Query::findPrefilterKmerStageResults() {
 
 void mmseq2::Query::processSimilarKMers(uint32_t kMerPos, std::string &kMer, int32_t SMaxSuf,
                                         int32_t Spref, uint32_t indx) {
-    if (indx > kMer.size()) {
+    if (indx == 0 && Spref + SMaxSuf >= mock::Smin) {
+        processSingleKmer(kMerPos, kMer);
+    }
+
+    if (indx >= kMer.size()) {
         return;
     }
 
@@ -105,12 +109,14 @@ void mmseq2::Query::processSimilarKMers(uint32_t kMerPos, std::string &kMer, int
         if (Spref + SMaxSuf >= mock::Smin) {
             kMer[indx] = mock::get_aa_by_id(aaId);
 
-            processSingleKmer(kMerPos, kMer);
+            if (currentAAId != aaId) {
+                processSingleKmer(kMerPos, kMer);
+            }
 
             processSimilarKMers(kMerPos, kMer, SMaxSuf, Spref, indx + 1);
         }
 
-        Spref -= mock::vtml80[this->sequence[indx]][this->sequence[aaId]];
+        Spref -= mock::vtml80[currentAAId][aaId];
     }
 
     kMer[indx] = currentAA;
@@ -124,7 +130,7 @@ void mmseq2::Query::processSingleKmer(uint32_t kMerPos, std::string &kMer) {
         uint32_t position;
 
         // added kmer for new interface
-        mock::get_ith_index((int)i, &target_id, &position, kMer.c_str());
+        mock::get_ith_index((int32_t)i, &target_id, &position, kMer.c_str());
         int32_t diagonal = (int32_t) position - (int32_t)kMerPos;
 
         if (diagonalPreVVisited[target_id] && diagonalPrev[target_id] == diagonal) {
@@ -164,7 +170,7 @@ int32_t mmseq2::Query::ungappedAlignment(const std::string& querySequence, const
     return maxScore;
 }
 
-std::string &&mmseq2::Query::gappedAlignment(const std::string& querySequence, const std::string& targetSequence) {
+std::string mmseq2::Query::gappedAlignment(const std::string& querySequence, const std::string& targetSequence) {
     uint32_t qSeqLen = querySequence.size(), tSeqLen = targetSequence.size();
     int32_t costOp = mock::costGapOpen, costEx = mock::costGapExtend;
     // E - gap in row, F - gap in column, H - best score
@@ -199,6 +205,8 @@ std::string &&mmseq2::Query::gappedAlignment(const std::string& querySequence, c
                 qPos = qInd;
                 tPos = tInd;
             }
+
+            std::cout << E[qInd][tInd] << " " << F[qInd][tInd] << " " << H[qInd][tInd] << std::endl;
         }
     }
 
@@ -241,7 +249,7 @@ std::string &&mmseq2::Query::gappedAlignment(const std::string& querySequence, c
 
     std::reverse(qAl.begin(), qAl.end());
     std::reverse(tAl.begin(), tAl.end());
-    return std::move(qAl.append("\n").append(tAl));
+    return qAl.append("\n").append(tAl);
 }
 
 void mmseq2::Query::executeAlignment() {
@@ -250,16 +258,21 @@ void mmseq2::Query::executeAlignment() {
         const int32_t diagonal = kmerStageResults.getDiagonal((int)i);
         const uint32_t targetId = kmerStageResults.getTargetId((int)i);
 
+        std::cout << diagonal << " " << targetId << std::endl;
+
+        std::cout << "ende\n";
+
         const std::string& querySequence = this->sequence;
         const std::string& targetSequence = mock::get_sequence(this->targetColumnName.c_str(), targetId);
 
-        if (ungappedAlignment(querySequence, targetSequence, diagonal) >= mock::minUngappedScore && filteredTargetIds.find(targetId) != filteredTargetIds.end()) {
+        if (ungappedAlignment(querySequence, targetSequence, diagonal) >= mock::minUngappedScore && filteredTargetIds.find(targetId) == filteredTargetIds.end()) {
             filteredTargetIds.insert(targetId);
             std::string swResult = gappedAlignment(querySequence, targetSequence);
 
-            // stdout
-            std::cout << "Sw for targetId: " << targetId << std::endl;
-            std::cout << swResult << std::endl;
+            // postgres - stdout
+            std::string swOut = "SW alignment for qId: " + std::to_string(this->queryId) +
+                    ", tId: " + std::to_string(targetId) + "\n" + swResult + "\n";
+            mock::log_from_cpp(swOut.c_str());
         }
     }
 }
