@@ -89,6 +89,10 @@ void mmseq2::Query::findPrefilterKmerStageResults() {
 
 void mmseq2::Query::processSimilarKMers(uint32_t kMerPos, std::string &kMer, int32_t SMaxSuf,
                                         int32_t Spref, uint32_t indx) {
+    if (indx == 0 && Spref + SMaxSuf >= mock::Smin) {
+        processSingleKmer(kMerPos, kMer);
+    }
+
     if (indx >= kMer.size()) {
         return;
     }
@@ -102,20 +106,17 @@ void mmseq2::Query::processSimilarKMers(uint32_t kMerPos, std::string &kMer, int
     for (uint32_t aaId = 0; aaId < mock::aa_number; ++aaId) {
         Spref += mock::vtml80[currentAAId][aaId];
 
-        // TODO: changed prefix + untouched sufix of kmer can be the same multiple
-        // TODO: times but we need this kmer be in processSingleKmer only 1 time
-        // TODO: ^^ potencial kmers from the same kMerPos
-        // TODO: the effect is that duplicates of the same kmer will gemerate match / double hit
         if (Spref + SMaxSuf >= mock::Smin) {
             kMer[indx] = mock::get_aa_by_id(aaId);
 
-            processSingleKmer(kMerPos, kMer);
+            if (currentAAId != aaId) {
+                processSingleKmer(kMerPos, kMer);
+            }
 
             processSimilarKMers(kMerPos, kMer, SMaxSuf, Spref, indx + 1);
         }
-        // TODO: Spref -= mock::vtml80[currentAAId][aaId];
-        // TODO: positions indx and aaId are not positions in sequence
-        Spref -= mock::vtml80[this->sequence[indx]][this->sequence[aaId]];
+
+        Spref -= mock::vtml80[currentAAId][aaId];
     }
 
     kMer[indx] = currentAA;
@@ -204,6 +205,8 @@ std::string mmseq2::Query::gappedAlignment(const std::string& querySequence, con
                 qPos = qInd;
                 tPos = tInd;
             }
+
+            std::cout << E[qInd][tInd] << " " << F[qInd][tInd] << " " << H[qInd][tInd] << std::endl;
         }
     }
 
@@ -254,6 +257,10 @@ void mmseq2::Query::executeAlignment() {
     for (uint32_t i = 0; i < kmerStageResults.getTargetsNumber(); i++) {
         const int32_t diagonal = kmerStageResults.getDiagonal((int)i);
         const uint32_t targetId = kmerStageResults.getTargetId((int)i);
+
+        std::cout << diagonal << " " << targetId << std::endl;
+
+        std::cout << "ende\n";
 
         const std::string& querySequence = this->sequence;
         const std::string& targetSequence = mock::get_sequence(this->targetColumnName.c_str(), targetId);

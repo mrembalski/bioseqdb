@@ -8,7 +8,7 @@
 namespace mock {
     class invalid_aa_exception;
 
-    static constexpr int threadNumber = 5;
+    static constexpr int threadNumber = 5; // TODO: change to 5
 
     static constexpr int aa_number = 21;
 

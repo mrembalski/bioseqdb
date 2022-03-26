@@ -1,6 +1,6 @@
 #include "mmseq2.h"
 #include "mock_structures.h"
-// #include <iostream>
+#include <iostream>
 
 namespace {
     void runTest(mock::TestsParameter&& test) {
@@ -40,10 +40,13 @@ namespace {
 int main() {
 
     // [D][D] = [G][G] = 7, Smin = kMerSize * 7
-    runTest(mock::TestsParameter(5, 35, 0, 4, 1,
-                                 {"DDDDDAAGGGGG"},
-                                 {"AADDDDDCCGGGGGAA"}));
+//    runTest(mock::TestsParameter(5, 35, 0, 4, 1,
+//                                 {"DDDDDAAGGGGG"},
+//                                 {"AADDDDDCCGGGGGAA"}));
 
+      runTest(mock::TestsParameter(5, 35, 15, 5, 1,
+                                   {"DDDDDAAGGGGG"},
+                                   {"DDDDDDDCCGGGGGAA", "AAADDDDDCCGGGGGDD"}));
 //    runTest(mock::TestsParameter(7, 45, 15, 11, 1,
 //                                 {"AAAAAACCCCCCTTTTTTGGGGGG"},
 //                                 {"GGGGGAAACCCCAAGGGGTTGGGGGAAA"}));
@@ -62,14 +65,14 @@ int main() {
 //        mock::get_ith_index((int32_t)i, &target_id, &position, kmer.c_str());
 //        std::cout << "id: " << target_id << ", pos: " << position << "\n";
 //    }
-
+//
 //    std::cout << "[Ungapped alignment - example]\n"; // move ungapped to public
 //    const std::string qSeq = "AACCTTGG", tSeq = "AAAACCTTGG";
 //    for (int i = -5; i <= 5; i++) {
 //        std::cout << "diagonal: " << i << ", ";
 //        std::cout << "score: " << mmseq2::Query::ungappedAlignment(qSeq, tSeq, i) << '\n';
 //    }
-
+//
 //    std::cout << "[Gapped alignment - example]\n"; // move gapped to public
 //    mock::TestsParameter test1(0, 0, 0, 4, 1, {}, {});
 //    test1.setGlobalParameteres();
