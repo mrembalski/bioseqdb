@@ -325,3 +325,10 @@ CREATE OR REPLACE FUNCTION seq_search_mmseqs(bigint, boolean, dna_sequence, int,
     RETURNS SETOF record
     AS '/mmseq2/test.so', 'seq_search_mmseqs'
     LANGUAGE C STRICT;
+
+-- CREATE TABLE taco(id bigint, sequence dna_sequence);
+-- INSERT INTO taco VALUES (1, 'DDDDDAAGGGGG');
+
+-- CREATE TABLE que(id bigint, sequence dna_sequence);
+-- INSERT INTO que VALUES (1, 'DDDDDDDCCGGGGGAA');
+-- INSERT INTO que VALUES (2, 'AAADDDDDCCGGGGGDD');

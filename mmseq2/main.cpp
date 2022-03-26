@@ -1,6 +1,7 @@
 #include "mmseq2.h"
 #include "mock_structures.h"
 #include <iostream>
+#include <cstring>
 
 namespace {
     void runTest(mock::TestsParameter&& test) {
@@ -25,7 +26,7 @@ namespace {
         static char target_table_name[] = {'T', 'N', 'A', 'M', 'E'};
         static char target_column_name[] = {'C', 'N', 'A', 'M', 'E'};
 
-        mmseq2::cpp_mmseq2(q_len, t_len, q_ids, t_ids,
+        cpp_mmseq2(q_len, t_len, q_ids, t_ids,
                 queries, target_table_name, target_column_name);
 
         delete[] q_ids;
@@ -45,8 +46,8 @@ int main() {
 //                                 {"AADDDDDCCGGGGGAA"}));
 
       runTest(mock::TestsParameter(5, 35, 15, 5, 1,
-                                   {"DDDDDAAGGGGG"},
-                                   {"DDDDDDDCCGGGGGAA", "AAADDDDDCCGGGGGDD"}));
+                                   {"TTTTTAAGGGGG"}, // target
+                                   {"TTTTTTTCCGGGGGAA", "AAATTTTTCCGGGGGTT"})); // query
 //    runTest(mock::TestsParameter(7, 45, 15, 11, 1,
 //                                 {"AAAAAACCCCCCTTTTTTGGGGGG"},
 //                                 {"GGGGGAAACCCCAAGGGGTTGGGGGAAA"}));

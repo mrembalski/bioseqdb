@@ -49,23 +49,6 @@ namespace mock {
 
     // Mock POSTRES structures
 
-    // For logging in Postgres.
-    void log_from_cpp(const char *str);
-
-    // For fetching targets (or queries if you'd like to).
-    // Overwrites SPI_tuptable.
-    // changed interface for const structures in mock
-    const char *get_sequence(const char *table_name, uint64_t sequence_id);
-
-    // Fetches indexes for a given kmer into SPI_tuptable.
-    // To access them from C++ use get_ith_index() but you have to do so
-    // before calling get_indexes() or get_sequence() again.
-    uint32_t get_indexes(const char *table_name, const char *kmer);
-
-    // Fetches i-th index from SPI_tuptable (assuming SPI_tuptable contains indexes).
-    // changed interface
-    void get_ith_index(int32_t i, uint64_t *target_id, uint32_t *position, const char *kmer);
-
     // for tests
     struct TestsParameter {
         int kMerSize, Smin, minUngappedScore, costGapOpen, costGapExtend;

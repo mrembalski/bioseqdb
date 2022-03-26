@@ -1,5 +1,20 @@
 #ifndef BIOSEQDB_MMSEQ2_H
 #define BIOSEQDB_MMSEQ2_H
+
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+    void cpp_mmseq2(uint32_t q_len, uint32_t t_len,
+                        uint64_t *q_ids, uint64_t *t_ids,
+                        char **queries,
+                        char* target_table_name, char* target_column_name);
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef __cplusplus
 #include <exception>
 #include <vector>
 #include <string>
@@ -7,11 +22,6 @@
 #include <set>
 
 namespace mmseq2 {
-    void cpp_mmseq2(uint32_t q_len, uint32_t t_len,
-                    uint64_t *q_ids, uint64_t *t_ids,
-                    char **queries,
-                    char* target_table_name, char* target_column_name);
-
     class PrefilterKmerStageResults {
     private:
         uint32_t queryId;
@@ -97,5 +107,6 @@ namespace mmseq2 {
         void executeAlignment();
     };
 }
+#endif
 
 #endif //BIOSEQDB_MMSEQ2_H

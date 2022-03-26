@@ -5,8 +5,8 @@
 
 int mock::kMerSize = 7;
 int mock::Smin = 35;
-int mock::minUngappedScore = 15;
-int mock::costGapOpen = 11;
+int mock::minUngappedScore = 0;
+int mock::costGapOpen = 4;
 int mock::costGapExtend = 1;
 std::vector<std::string> mock::querySequences;
 std::vector<std::string> mock::targetSequences;
@@ -39,18 +39,6 @@ char mock::get_aa_by_id(uint32_t aa_id) {
     throw invalid_aa_ex;
 }
 
-void mock::log_from_cpp(const char *str) {
-    std::cout << str;
-}
-
-const char *mock::get_sequence(const char *table_name, uint64_t sequence_id) {
-    if (std::string(table_name) == "QUERY") {
-        return mock::querySequences[sequence_id].c_str();
-    } else {
-        return mock::targetSequences[sequence_id].c_str();
-    }
-}
-
 // get_ith_index need to know somehow about result of get_indexes
 // hits can't be global bcs of threads, can't be hold by thread bcs
 // this is mock not mmseq function
@@ -70,17 +58,6 @@ std::vector<std::pair<uint32_t, int32_t>> kmerHits(const char *kmer) {
         targetId++;
     }
     return hits;
-}
-
-uint32_t mock::get_indexes(const char *table_name, const char *kmer) {
-    return kmerHits(kmer).size();
-}
-
-// added par kmer bcs we don't have any information about kmer in get_indexes
-void mock::get_ith_index(int32_t i, uint64_t *target_id, uint32_t *position, const char *kmer) {
-    auto hits = kmerHits(kmer);
-    *target_id = hits[i].first;
-    *position = hits[i].second;
 }
 
 mock::TestsParameter::TestsParameter(int kMerSize, int Smin, int minUngappedScore, int costGapOpen, int costGapExtend,

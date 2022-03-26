@@ -1,6 +1,9 @@
 #include "mmseq2.h"
 #include "mock_structures.h"
+#include "psql_interface.h"
 #include <iostream>
+#include <algorithm>
+#include <mutex>
 
 void processQueries(uint32_t q_len, uint32_t t_len,
                     uint64_t *q_ids, uint64_t *t_ids,
@@ -12,11 +15,18 @@ void processSingleQuery(uint64_t q_id, char *query,
                         uint32_t t_len, uint64_t *t_ids,
                         char* target_table_name, char* target_column_name);
 
-void mmseq2::cpp_mmseq2(uint32_t q_len, uint32_t t_len,
+void cpp_mmseq2(uint32_t q_len, uint32_t t_len,
                 uint64_t *q_ids, uint64_t *t_ids,
                 char **queries,
                 char* target_table_name, char* target_column_name) {
-    std::vector<std::thread> workers{};
+    // char *seq = get_sequence(target_table_name, target_column_name, 1);
+    // log_from_cpp(seq);
+
+    log_from_cpp("Hello world!");
+    std::mutex mtx;
+    processQueries(q_len, t_len, q_ids, t_ids, queries, target_table_name, target_column_name, &mtx);
+    
+    /* std::vector<std::thread> workers{};
     std::mutex mtx;
 
     for (uint32_t i = 0; i < mock::threadNumber; ++i) {
@@ -27,7 +37,7 @@ void mmseq2::cpp_mmseq2(uint32_t q_len, uint32_t t_len,
 
     for (std::thread &worker : workers) {
         worker.join();
-    }
+    } */
 }
 
 // Returns the smalles id of query that was not processed yet
@@ -123,14 +133,14 @@ void mmseq2::Query::processSimilarKMers(uint32_t kMerPos, std::string &kMer, int
 }
 
 void mmseq2::Query::processSingleKmer(uint32_t kMerPos, std::string &kMer) {
-    uint32_t n = mock::get_indexes(targetTableName.c_str(), kMer.c_str());
+    uint32_t n = get_indexes((targetTableName + "_" + targetColumnName).c_str(), kMer.c_str());
 
     for (uint32_t i = 0; i < n; ++i) {
         uint64_t target_id;
         uint32_t position;
 
         // added kmer for new interface
-        mock::get_ith_index((int32_t)i, &target_id, &position, kMer.c_str());
+        get_ith_index((int32_t)i, &target_id, &position);
         int32_t diagonal = (int32_t) position - (int32_t)kMerPos;
 
         if (diagonalPreVVisited[target_id] && diagonalPrev[target_id] == diagonal) {
@@ -263,7 +273,7 @@ void mmseq2::Query::executeAlignment() {
         std::cout << "ende\n";
 
         const std::string& querySequence = this->sequence;
-        const std::string& targetSequence = mock::get_sequence(this->targetColumnName.c_str(), targetId);
+        const std::string& targetSequence = get_sequence(this->targetTableName.c_str(), this->targetColumnName.c_str(), targetId);
 
         if (ungappedAlignment(querySequence, targetSequence, diagonal) >= mock::minUngappedScore && filteredTargetIds.find(targetId) == filteredTargetIds.end()) {
             filteredTargetIds.insert(targetId);
@@ -272,7 +282,7 @@ void mmseq2::Query::executeAlignment() {
             // postgres - stdout
             std::string swOut = "SW alignment for qId: " + std::to_string(this->queryId) +
                     ", tId: " + std::to_string(targetId) + "\n" + swResult + "\n";
-            mock::log_from_cpp(swOut.c_str());
+            log_from_cpp(swOut.c_str());
         }
     }
 }
