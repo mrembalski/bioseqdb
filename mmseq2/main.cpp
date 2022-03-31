@@ -1,6 +1,6 @@
 #include "mmseq2.h"
 #include "mock_structures.h"
-#include <iostream>
+// #include <iostream>
 
 namespace {
     void runTest(mock::TestsParameter&& test) {
@@ -40,13 +40,17 @@ namespace {
 int main() {
 
     // [D][D] = [G][G] = 7, Smin = kMerSize * 7
-//    runTest(mock::TestsParameter(5, 35, 0, 4, 1,
-//                                 {"DDDDDAAGGGGG"},
-//                                 {"AADDDDDCCGGGGGAA"}));
+    runTest(mock::TestsParameter(5, 35, 0, 4, 1,
+                                 {"DDDDDAAGGGGG"},
+                                 {"AADDDDDCCGGGGGAA"}));
 
-      runTest(mock::TestsParameter(7, 49, 0, 4, 1,
-                                   {"DDDDDDDDDCCGGGGGGGAA", "AAADDDDDDDCCGGGGGGGDD"},
-                                   {"DDDDDDDAAGGGGGGG"}));
+    runTest(mock::TestsParameter(7, 49, 0, 4, 1,
+                                 {"DDDDDDDDDCCGGGGGGGAA", "AAADDDDDDDCCGGGGGGGDD"},
+                                 {"DDDDDDDAAGGGGGGG"}));
+
+    runTest(mock::TestsParameter(7, 49, 0, 4, 1,
+                                 {"AAADDDDDDDCCGGGGGGGDD"},
+                                 {"DDDDDDDAAGGGGGGG", "DDDDDDDDDCCGGGGGGGAA"}));
 
 //    runTest(mock::TestsParameter(7, 45, 15, 11, 1,
 //                                 {"AAAAAACCCCCCTTTTTTGGGGGG"},
