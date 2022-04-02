@@ -12,6 +12,11 @@ extern "C" {
 
 #include "mmseq2.h"
 
+#include <vector>
+#include <string>
+
+#define OUT_TUPLE_ARITY 18
+
 extern "C" {
     PG_MODULE_MAGIC;
 
@@ -63,14 +68,40 @@ extern "C" {
         cpp_mmseq2(q_len, t_len, q_ids, t_ids, queries, target_table_name, target_column_name);
         SPI_finish(); */
 
+        mmseq2::MMseqOutTuple tuple;
+        tuple.queryId = 12;
+        tuple.targetId = 34;
+        tuple.rawScore = 5.34;
+        tuple.bitScore = 11.2323;
+
+        std::vector<mmseq2::MMseqOutTuple> mmseq_result;
+        mmseq_result.push_back(tuple);
+        uint32_t n = mmseq_result.size();
+
         // Build the output table
-        for (int i = 0; i < 12; i++)
+        for (uint32_t i = 0; i < n; i++)
         {
-            char **values = (char **)palloc0(sizeof(char *) * 4);
-            values[0] = "asdf";
-            values[1] = "asdf";
-            values[2] = "asdf";
-            values[3] = "asdf";
+            mmseq2::MMseqOutTuple t = mmseq_result[i];
+            char **values = (char **)palloc0(sizeof(char *) * OUT_TUPLE_ARITY);
+            values[0]  = std::to_string(t.queryId).data();
+            values[1]  = std::to_string(t.targetId).data();
+            values[2]  = std::to_string(t.rawScore).data();
+            values[3]  = std::to_string(t.bitScore).data();
+            values[4]  = std::to_string(t.eValue).data();
+            values[5]  = std::to_string(t.qStart).data();
+            values[6]  = std::to_string(t.qEnd).data();
+            values[7]  = std::to_string(t.qLen).data();
+            values[8]  = std::to_string(t.tStart).data();
+            values[9]  = std::to_string(t.tEnd).data();
+            values[10] = std::to_string(t.tLen).data();
+            values[11] = t.qAln.data();
+            values[12] = t.tAln.data();
+            values[13] = t.cigar.data();
+            values[14] = std::to_string(t.alnLen).data();
+            values[15] = std::to_string(t.mismatch).data();
+            values[16] = std::to_string(t.gapOpen).data();
+            values[17] = std::to_string(t.pident).data();
+
 
             HeapTuple tuple;
             tuple = BuildTupleFromCStrings(attinmeta, values);

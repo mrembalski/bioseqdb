@@ -15,6 +15,15 @@ void cpp_mmseq2(uint32_t q_len, uint32_t t_len,
 #include <set>
 
 namespace mmseq2 {
+    struct MMseqOutTuple {
+        uint64_t queryId, targetId;
+        double rawScore = 0.0, bitScore = 0.0, eValue = 0.0;
+        uint32_t qStart = 0, qEnd = 0, qLen = 0, tStart = 0, tEnd = 0, tLen = 0;
+        std::string qAln, tAln, cigar;
+        uint32_t alnLen = 0, mismatch = 0, gapOpen = 0;
+        double pident = 0.0;
+    };
+
     class PrefilterKmerStageResults {
     private:
         uint32_t queryId;
