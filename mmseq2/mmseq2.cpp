@@ -1,12 +1,11 @@
 #include "mmseq2.h"
 #include "mock_structures.h"
-#include <iostream>
 
 void processQueries(uint32_t q_len, uint32_t t_len,
                     uint64_t *q_ids, uint64_t *t_ids,
                     char **queries,
                     char* target_table_name, char* target_column_name,
-                    std::mutex *mtx);
+                    std::mutex *mtx, uint32_t *nextQuery);
 
 void processSingleQuery(uint64_t q_id, char *query,
                         uint32_t t_len, uint64_t *t_ids,
@@ -18,10 +17,11 @@ void mmseq2::cpp_mmseq2(uint32_t q_len, uint32_t t_len,
                 char* target_table_name, char* target_column_name) {
     std::vector<std::thread> workers{};
     std::mutex mtx;
+    uint32_t nextQuery = 0;
 
     for (uint32_t i = 0; i < mock::threadNumber; ++i) {
         workers.emplace_back(
-            processQueries, q_len, t_len, q_ids, t_ids, queries, target_table_name, target_column_name, &mtx
+            processQueries, q_len, t_len, q_ids, t_ids, queries, target_table_name, target_column_name, &mtx, &nextQuery
         );
     }
 
@@ -31,14 +31,15 @@ void mmseq2::cpp_mmseq2(uint32_t q_len, uint32_t t_len,
 }
 
 // Returns the smalles id of query that was not processed yet
-uint32_t getNextQuery(uint32_t q_len, std::mutex *mtx) {
+uint32_t getNextQuery(uint32_t q_len, std::mutex *mtx, uint32_t *nextQuery) {
     uint32_t res = -1;
 
     mtx->lock();
-    static uint32_t nextQuery = 0;
+    uint32_t tmpNextQuery = *nextQuery;
 
-    if (nextQuery < q_len) {
-        res = nextQuery++;
+    if (tmpNextQuery < q_len) {
+        res = tmpNextQuery;
+        *nextQuery = tmpNextQuery + 1;
     }
 
     mtx->unlock();
@@ -50,11 +51,11 @@ void processQueries(uint32_t q_len, uint32_t t_len,
                         uint64_t *q_ids, uint64_t *t_ids,
                         char **queries,
                         char* target_table_name, char* target_column_name,
-                        std::mutex *mtx) {
-    uint32_t nextQuery;
+                        std::mutex *mtx, uint32_t *nextQuery) {
+    uint32_t tmpNextQuery;
 
-    while ((nextQuery = getNextQuery(q_len, mtx)) != -1) {
-        processSingleQuery(q_ids[nextQuery], queries[nextQuery], t_len, t_ids, target_table_name, target_column_name);
+    while ((tmpNextQuery = getNextQuery(q_len, mtx, nextQuery)) != -1) {
+        processSingleQuery(q_ids[tmpNextQuery], queries[tmpNextQuery], t_len, t_ids, target_table_name, target_column_name);
     }
 }
 
@@ -206,7 +207,7 @@ std::string mmseq2::Query::gappedAlignment(const std::string& querySequence, con
                 tPos = tInd;
             }
 
-            std::cout << E[qInd][tInd] << " " << F[qInd][tInd] << " " << H[qInd][tInd] << std::endl;
+            // std::cout << E[qInd][tInd] << " " << F[qInd][tInd] << " " << H[qInd][tInd] << std::endl;
         }
     }
 
@@ -257,10 +258,6 @@ void mmseq2::Query::executeAlignment() {
     for (uint32_t i = 0; i < kmerStageResults.getTargetsNumber(); i++) {
         const int32_t diagonal = kmerStageResults.getDiagonal((int)i);
         const uint32_t targetId = kmerStageResults.getTargetId((int)i);
-
-        std::cout << diagonal << " " << targetId << std::endl;
-
-        std::cout << "ende\n";
 
         const std::string& querySequence = this->sequence;
         const std::string& targetSequence = mock::get_sequence(this->targetColumnName.c_str(), targetId);
