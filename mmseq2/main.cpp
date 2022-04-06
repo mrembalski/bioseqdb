@@ -1,5 +1,4 @@
 #include "mmseq2.h"
-#include "mock_structures.h"
 // #include <iostream>
 
 namespace {
@@ -25,8 +24,10 @@ namespace {
         static char target_table_name[] = {'T', 'N', 'A', 'M', 'E'};
         static char target_column_name[] = {'C', 'N', 'A', 'M', 'E'};
 
-        mmseq2::cpp_mmseq2(q_len, t_len, q_ids, t_ids,
-                queries, target_table_name, target_column_name);
+//        mmseq2::InputParams inputParser = mmseq2::InputParams(
+//                    q_len, t_len, q_ids, t_ids, queries, target_table_name, target_column_name, "blosum"
+//                );
+//        mmseq2::cpp_mmseq2(inputParams);
 
         delete[] q_ids;
         delete[] t_ids;
@@ -38,19 +39,19 @@ namespace {
 };
 
 int main() {
-
+    std::cout << "twoja mama kazala Cie pozdrawic" << std::endl;
     // [D][D] = [G][G] = 7, Smin = kMerSize * 7
-    runTest(mock::TestsParameter(5, 35, 0, 4, 1,
-                                 {"DDDDDAAGGGGG"},
-                                 {"AADDDDDCCGGGGGAA"}));
-
-    runTest(mock::TestsParameter(7, 49, 0, 4, 1,
-                                 {"DDDDDDDDDCCGGGGGGGAA", "AAADDDDDDDCCGGGGGGGDD"},
-                                 {"DDDDDDDAAGGGGGGG"}));
-
-    runTest(mock::TestsParameter(7, 49, 0, 4, 1,
-                                 {"AAADDDDDDDCCGGGGGGGDD"},
-                                 {"DDDDDDDAAGGGGGGG", "DDDDDDDDDCCGGGGGGGAA"}));
+//    runTest(mock::TestsParameter(5, 35, 0, 4, 1,
+//                                 {"DDDDDAAGGGGG"},
+//                                 {"AADDDDDCCGGGGGAA"}));
+//
+//    runTest(mock::TestsParameter(7, 49, 0, 4, 1,
+//                                 {"DDDDDDDDDCCGGGGGGGAA", "AAADDDDDDDCCGGGGGGGDD"},
+//                                 {"DDDDDDDAAGGGGGGG"}));
+//
+//    runTest(mock::TestsParameter(7, 49, 0, 4, 1,
+//                                 {"AAADDDDDDDCCGGGGGGGDD"},
+//                                 {"DDDDDDDAAGGGGGGG", "DDDDDDDDDCCGGGGGGGAA"}));
 
 //    runTest(mock::TestsParameter(7, 45, 15, 11, 1,
 //                                 {"AAAAAACCCCCCTTTTTTGGGGGG"},
