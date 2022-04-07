@@ -1,23 +1,25 @@
-extern "C" {
-#include "postgres.h"
-#include "access/htup_details.h"
-#include "catalog/pg_type.h"
-#include "executor/spi.h"
-#include "funcapi.h"
-#include "lib/stringinfo.h"
-#include "miscadmin.h"
-#include "executor/tablefunc.h"
-#include "utils/builtins.h"
+#include <vector>
+#include <string>
+
+extern "C"
+{
+#include <postgres.h>
+#include <access/htup_details.h>
+#include <catalog/pg_type.h>
+#include <executor/spi.h>
+#include <funcapi.h>
+#include <lib/stringinfo.h>
+#include <miscadmin.h>
+#include <executor/tablefunc.h>
+#include <utils/builtins.h>
 }
 
 #include "mmseq2.h"
 
-#include <vector>
-#include <string>
-
 #define OUT_TUPLE_ARITY 18
 
-extern "C" {
+extern "C"
+{
     PG_MODULE_MAGIC;
 
     PG_FUNCTION_INFO_V1(seq_search_mmseqs);
@@ -25,8 +27,8 @@ extern "C" {
     Datum seq_search_mmseqs(PG_FUNCTION_ARGS)
     {
         // Get all arguments
-        char  *query_tblname = text_to_cstring(PG_GETARG_TEXT_PP(0));
-        char  *query_colname = text_to_cstring(PG_GETARG_TEXT_PP(1));
+        char *query_tblname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+        char *query_colname = text_to_cstring(PG_GETARG_TEXT_PP(1));
         char *target_tblname = text_to_cstring(PG_GETARG_TEXT_PP(2));
         char *target_colname = text_to_cstring(PG_GETARG_TEXT_PP(3));
 
@@ -83,16 +85,16 @@ extern "C" {
         {
             mmseq2::MMseqOutTuple t = mmseq_result[i];
             char **values = (char **)palloc0(sizeof(char *) * OUT_TUPLE_ARITY);
-            values[0]  = std::to_string(t.queryId).data();
-            values[1]  = std::to_string(t.targetId).data();
-            values[2]  = std::to_string(t.rawScore).data();
-            values[3]  = std::to_string(t.bitScore).data();
-            values[4]  = std::to_string(t.eValue).data();
-            values[5]  = std::to_string(t.qStart).data();
-            values[6]  = std::to_string(t.qEnd).data();
-            values[7]  = std::to_string(t.qLen).data();
-            values[8]  = std::to_string(t.tStart).data();
-            values[9]  = std::to_string(t.tEnd).data();
+            values[0] = std::to_string(t.queryId).data();
+            values[1] = std::to_string(t.targetId).data();
+            values[2] = std::to_string(t.rawScore).data();
+            values[3] = std::to_string(t.bitScore).data();
+            values[4] = std::to_string(t.eValue).data();
+            values[5] = std::to_string(t.qStart).data();
+            values[6] = std::to_string(t.qEnd).data();
+            values[7] = std::to_string(t.qLen).data();
+            values[8] = std::to_string(t.tStart).data();
+            values[9] = std::to_string(t.tEnd).data();
             values[10] = std::to_string(t.tLen).data();
             values[11] = t.qAln.data();
             values[12] = t.tAln.data();
@@ -101,7 +103,6 @@ extern "C" {
             values[15] = std::to_string(t.mismatch).data();
             values[16] = std::to_string(t.gapOpen).data();
             values[17] = std::to_string(t.pident).data();
-
 
             HeapTuple tuple;
             tuple = BuildTupleFromCStrings(attinmeta, values);
