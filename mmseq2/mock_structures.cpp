@@ -49,7 +49,7 @@ std::vector<std::pair<uint32_t, int32_t>> kmerHits(const char *kmer) {
 
     for (const auto &targetSequence : mock::targetSequences) {
         std::string targetSeq(targetSequence);
-        for (uint32_t kmerPos = 0; kmerPos + mock::kMerSize < targetSeq.size(); kmerPos++) {
+        for (uint32_t kmerPos = 0; kmerPos + mock::kMerSize <= targetSeq.size(); kmerPos++) {
             std::string proposedKmer(targetSeq.begin() + kmerPos, targetSeq.begin() + kmerPos + mock::kMerSize);
             if (kmerPattern == proposedKmer) {
                 hits.emplace_back(targetId, kmerPos);
