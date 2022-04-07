@@ -17,82 +17,54 @@ namespace mmseq2 {
             switch(aa_id) {
                 case 'A':
                     return 0;
-                    break;
                 case 'R':
                     return 1;
-                    break;
                 case 'N':
                     return 2;
-                    break;
                 case 'D':
                     return 3;
-                    break;
                 case 'C':
                     return 4;
-                    break;
                 case 'Q':
                     return 5;
-                    break;
                 case 'E':
                     return 6;
-                    break;
                 case 'G':
                     return 7;
-                    break;
                 case 'H':
                     return 8;
-                    break;
                 case 'I':
                     return 9;
-                    break;
                 case 'L':
                     return 10;
-                    break;
                 case 'K':
                     return 11;
-                    break;
                 case 'M':
                     return 12;
-                    break;
                 case 'F':
                     return 13;
-                    break;
                 case 'P':
                     return 14;
-                    break;
                 case 'S':
                     return 15;
-                    break;
                 case 'T':
                     return 16;
-                    break;
                 case 'W':
                     return 17;
-                    break;
                 case 'Y':
                     return 18;
-                    break;
                 case 'V':
                     return 19;
-                    break;
                 case 'B':
                     return 20;
-                    break;
                 case 'J':
                     return 21;
-                    break;
                 case 'Z':
                     return 22;
-                    break;
                 case 'X':
                     return 23;
-                    break;
-                case '*':
+                default: // case '*'
                     return 24;
-                    break;
-                default:
-                    return 24;
-                    break;
             }
         }
 
@@ -100,82 +72,54 @@ namespace mmseq2 {
             switch(aa_char) {
                 case 0:
                     return 'A';
-                    break;
                 case 1:
                     return 'R';
-                    break;
                 case 2:
                     return 'N';
-                    break;
                 case 3:
                     return 'D';
-                    break;
                 case 4:
                     return 'C';
-                    break;
                 case 5:
                     return 'Q';
-                    break;
                 case 6:
                     return 'E';
-                    break;
                 case 7:
                     return 'G';
-                    break;
                 case 8:
                     return 'H';
-                    break;
                 case 9:
                     return 'I';
-                    break;
                 case 10:
                     return 'L';
-                    break;
                 case 11:
                     return 'K';
-                    break;
                 case 12:
                     return 'M';
-                    break;
                 case 13:
                     return 'F';
-                    break;
                 case 14:
                     return 'P';
-                    break;
                 case 15:
                     return 'S';
-                    break;
                 case 16:
                     return 'T';
-                    break;
                 case 17:
                     return 'W';
-                    break;
                 case 18:
                     return 'Y';
-                    break;
                 case 19:
                     return 'V';
-                    break;
                 case 20:
                     return 'B';
-                    break;
                 case 21:
                     return 'J';
-                    break;
                 case 22:
                     return 'Z';
-                    break;
                 case 23:
                     return 'X';
-                    break;
-                case 24:
+                default: // case 24
                     return '*';
-                    break;
-                default:
-                    return '*';
-                    break;
             }
         }
 
@@ -195,23 +139,17 @@ namespace mmseq2 {
             switch(blosumId) {
                 case 45:
                     return 0;
-                    break;
                 case 50:
                     return 1;
-                    break;
                 case 62:
                     return 2;
-                    break;
                 case 80:
                     return 3;
-                    break;
                 case 90:
                     return 4;
-                    break;
                 default:
-                    std::cout << "Wrong blosum number" << std::endl;;
+                    std::cout << "Wrong blosum number" << std::endl;
                     exit(1);
-                    break;
             }
         }
 
@@ -404,9 +342,9 @@ namespace mmseq2 {
         InputParams() = delete;
 
         InputParams(uint32_t qLen, uint32_t tLen, Vec64Ptr qIds, Vec64Ptr tIds, VecStrPtr queries,
-        StrPtr targetTableName, StrPtr targetColumnName, const StrPtr& substitutionMatrixName, uint32_t kMerLength,
-        int32_t kMerGenThreshold, int32_t ungappedAlignmentScore, int32_t evalTreshold, int32_t gapOpenCost,
-        int32_t gapPenaltyCost, uint32_t threadNumber);
+                    StrPtr targetTableName, StrPtr targetColumnName, const StrPtr& substitutionMatrixName, uint32_t kMerLength,
+                    int32_t kMerGenThreshold, int32_t ungappedAlignmentScore, int32_t evalTreshold, int32_t gapOpenCost,
+                    int32_t gapPenaltyCost, uint32_t threadNumber);
 
         [[nodiscard]] uint32_t getQLen() const {
             return qLen;
@@ -503,7 +441,9 @@ namespace mmseq2 {
                                                                                  gapOpenCost{inputParams.get()->getGapOpenCost()},
                                                                                  costGapExtended{inputParams.get()->getGapPenaltyCost()},
                                                                                  targetTableName{inputParams.get()->getTargetTableName()},
-                                                                                 prefilterKmerStageResults{queryId} { }
+                                                                                 prefilterKmerStageResults{queryId},
+                                                                                 diagonalPreVVisited{std::vector<bool>(inputParams.get()->getTLen(), false)},
+                                                                                 diagonalPrev{std::vector<int32_t>(inputParams.get()->getTLen(), 0)} { }
 
         [[nodiscard]] const PrefilterKmerStageResults& getPrefilterKmerStageResults() const {
             return prefilterKmerStageResults;
@@ -538,7 +478,6 @@ namespace mmseq2 {
         int32_t gapOpenCost;
         int32_t costGapExtended;
 
-
         PrefilterKmerStageResults prefilterKmerStageResults;
 
         std::vector<int32_t> diagonalPrev;
@@ -552,11 +491,9 @@ namespace mmseq2 {
 
         void processSingleKmer(uint32_t diagonal, std::string &kMer);
 
-        // returns best score on diagonal //TODO Marcin -> czemu to jest static? Przeciez tych queries to mamy od chuja i one beda ze soba kolidowac
-        /*static*/ int32_t ungappedAlignment(const StrPtr& querySequence, const StrPtr& targetSequence, int32_t diagonal) const;
+        [[nodiscard]] int32_t ungappedAlignment(const StrPtr& querySequence, const StrPtr& targetSequence, int32_t diagonal) const;
 
-        // returns the best alignment
-        /*static*/ [[nodiscard]] StrPtr gappedAlignment(const StrPtr& querySequence, const StrPtr& targetSequence) const;
+        [[nodiscard]] StrPtr gappedAlignment(const StrPtr& querySequence, const StrPtr& targetSequence) const;
     };
 }
 

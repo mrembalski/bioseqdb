@@ -146,7 +146,7 @@ int32_t mmseq2::Query::ungappedAlignment(const StrPtr& querySequence, const StrP
     int32_t score = 0, maxScore = 0;
 
     while (queryPosition <= queryLastPosition) {
-        score += AminoAcid::getPenalty(getSubstitutionMatrixId(), queryPosition, targetSequence.get()->at(targetPosition));
+        score += AminoAcid::getPenalty(getSubstitutionMatrixId(), querySequence.get()->at(queryPosition), targetSequence.get()->at(targetPosition));
         score = std::max(score, 0);
         maxScore = std::max(maxScore, score);
 
@@ -192,8 +192,6 @@ mmseq2::Query::StrPtr mmseq2::Query::gappedAlignment(const StrPtr& querySequence
                 qPos = qInd;
                 tPos = tInd;
             }
-
-            // std::cout << E[qInd][tInd] << " " << F[qInd][tInd] << " " << H[qInd][tInd] << std::endl;
         }
     }
 

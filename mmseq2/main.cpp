@@ -1,88 +1,97 @@
 #include "mmseq2.h"
-// #include <iostream>
 
 namespace {
-    void runTest(mock::TestsParameter&& test) {
+    mmseq2::InputParams::InputParamsPtr prepareInput(
+            std::string matrixName, uint32_t kMerLength,
+            int32_t kMerGenThreshold, int32_t ungappedAlignmentScore, int32_t evalTreshold,
+            int32_t gapOpenCost, int32_t gapPenaltyCost, uint32_t threadNumber) {
 
-        test.setGlobalParameteres();
+        uint32_t qLen = mock::querySequences.size();
+        uint32_t tLen = mock::targetSequences.size();
 
-        uint32_t q_len = mock::querySequences.size();
-        uint32_t t_len = mock::targetSequences.size();
-        auto *q_ids = new uint64_t[q_len];
-        for (uint32_t i = 0; i < q_len; i++) {
-            q_ids[i] = (uint64_t)i;
+        mmseq2::InputParams::Vec64Ptr qIds = std::make_shared<std::vector<uint64_t>>(qLen, 0);
+        for (uint32_t i = 0; i < qLen; i++) {
+            (*qIds)[i] = (uint64_t)i;
         }
-        auto *t_ids = new uint64_t[t_len];
-        for (uint32_t i = 0; i < t_len; i++) {
-            t_ids[i] = (uint64_t)i;
+        mmseq2::InputParams::Vec64Ptr tIds = std::make_shared<std::vector<uint64_t>>(tLen, 0);
+        for (uint32_t i = 0; i < tLen; i++) {
+            (*tIds)[i] = (uint64_t)i;
         }
-        char **queries = new char*[q_len];
-        for (uint32_t i = 0; i < q_len; i++) {
-            queries[i] = new char[test.querySequences[i].size()];
-            strcpy(queries[i], test.querySequences[i].c_str());
-        }
-        static char target_table_name[] = {'T', 'N', 'A', 'M', 'E'};
-        static char target_column_name[] = {'C', 'N', 'A', 'M', 'E'};
 
-//        mmseq2::InputParams inputParser = mmseq2::InputParams(
-//                    q_len, t_len, q_ids, t_ids, queries, target_table_name, target_column_name, "blosum"
-//                );
-//        mmseq2::cpp_mmseq2(inputParams);
-
-        delete[] q_ids;
-        delete[] t_ids;
-        for (uint32_t i = 0; i < q_len; i++) {
-            delete[] queries[i];
+        mmseq2::InputParams::VecStrPtr queries = std::make_shared<std::vector<mmseq2::InputParams::StrPtr>>(qLen, nullptr);
+        for (uint32_t i = 0; i < qLen; i++) {
+            (*queries)[i] = std::make_shared<std::string>(mock::querySequences[i]);
         }
-        delete[] queries;
+
+        mmseq2::InputParams::StrPtr targetTableName = std::make_shared<std::string>("TNAME");
+        mmseq2::InputParams::StrPtr targetColumnName = std::make_shared<std::string>("CNAME");
+        mmseq2::InputParams::StrPtr substitutionMatrixName = std::make_shared<std::string>(matrixName);
+
+        return std::make_shared<mmseq2::InputParams>(
+                qLen, tLen, qIds, tIds, queries, targetTableName, targetColumnName,
+                substitutionMatrixName, kMerLength, kMerGenThreshold, ungappedAlignmentScore,
+                evalTreshold, gapOpenCost, gapPenaltyCost, threadNumber);
+    }
+
+    void runMMSeq2(std::vector<std::string> &&querySequences, std::vector<std::string> &&targetSequences,
+                 std::string&& matrixName, uint32_t kMerLength,
+                 int32_t kMerGenThreshold, int32_t ungappedAlignmentScore, int32_t evalTreshold,
+                 int32_t gapOpenCost, int32_t gapPenaltyCost, uint32_t threadNumber) {
+
+        mock::querySequences = querySequences;
+        mock::targetSequences = targetSequences;
+
+        mmseq2::InputParams::InputParamsPtr inputParams = prepareInput(
+                matrixName, kMerLength, kMerGenThreshold, ungappedAlignmentScore,
+                evalTreshold, gapOpenCost, gapPenaltyCost, threadNumber);
+
+        mmseq2::MMSeq2(std::move(inputParams));
     }
 };
 
 int main() {
-    std::cout << "twoja mama kazala Cie pozdrawic" << std::endl;
-    // [D][D] = [G][G] = 7, Smin = kMerSize * 7
-//    runTest(mock::TestsParameter(5, 35, 0, 4, 1,
-//                                 {"DDDDDAAGGGGG"},
-//                                 {"AADDDDDCCGGGGGAA"}));
-//
-//    runTest(mock::TestsParameter(7, 49, 0, 4, 1,
-//                                 {"DDDDDDDDDCCGGGGGGGAA", "AAADDDDDDDCCGGGGGGGDD"},
-//                                 {"DDDDDDDAAGGGGGGG"}));
-//
-//    runTest(mock::TestsParameter(7, 49, 0, 4, 1,
-//                                 {"AAADDDDDDDCCGGGGGGGDD"},
-//                                 {"DDDDDDDAAGGGGGGG", "DDDDDDDDDCCGGGGGGGAA"}));
+    std::cout << "Dziękuję :), również pozdrawiam." << std::endl;
 
-//    runTest(mock::TestsParameter(7, 45, 15, 11, 1,
-//                                 {"AAAAAACCCCCCTTTTTTGGGGGG"},
-//                                 {"GGGGGAAACCCCAAGGGGTTGGGGGAAA"}));
-//
-//    runTest(mock::TestsParameter(5, 10, 10, 4, 1,
-//                                 {"AACCTTGG", "ACTGACTGACTG", "TACTCAT"},
-//                                 {"TACGGTAGCTTACTGA", "CTAGCTTACGATGCAAG", "CTTACAGCATACAGCATCGAT"}));
+    runMMSeq2({"DDDDDAAGGGGG"},
+            {"AADDDDDCCGGGGGAA"},
+            "blosum62", 5, 30, 0, 1, 4, 1, 1);
+
+//    runMMSeq2({"DDDDDDDDDCCGGGGGGGAA", "AAADDDDDDDCCGGGGGGGDD"},
+//            {"DDDDDDDAAGGGGGGG"},
+//            "blosum62", 7, 42, 0, 1, 4, 1, 2);
+
+//    runMMSeq2({"AAADDDDDDDCCGGGGGGGDD"},
+//            {"DDDDDDDAAGGGGGGG", "DDDDDDDDDCCGGGGGGGAA"},
+//            "blosum62", 7, 42, 0, 1, 4, 1, 1);
+
+//    runMMSeq2({"AACCTTGG", "ACTGACTGACTG", "TACTCAT"},
+//            {"TACGGTAGCTTACTGA", "CTAGCTTACGATGCAAG", "CTTACAGCATACAGCATCGAT"},
+//            "blosum62", 5, 10, 10, 1, 4, 1, 5);
 
 //    std::cout << "[Get all hits - example]\n";
 //    std::string kmer = "TAC";
-//    mock::TestsParameter test0(3, 0, 0, 0, 0, {}, {"TACGGTAGCTTACTGA", "CTAGCTTACGATGCAAG", "CTTACAGCATACAGCATCGAT"});
-//    test0.setGlobalParameteres();
-//    for (size_t i = 0; i < mock::get_indexes(nullptr, kmer.c_str()); i++) {
+//    mock::targetSequences = {"TACGGTAGCTTACTGA", "CTAGCTTACGATGCAAG", "CTTACAGCATACAGCATCGAT"};
+//    for (size_t i = 0; i < mock::get_indexes(nullptr, kmer.c_str(), 3); i++) {
 //        uint64_t target_id;
 //        uint32_t position;
-//        mock::get_ith_index((int32_t)i, &target_id, &position, kmer.c_str());
+//        mock::get_ith_index((int32_t)i, &target_id, &position, kmer.c_str(), 3);
 //        std::cout << "id: " << target_id << ", pos: " << position << "\n";
 //    }
-//
+
 //    std::cout << "[Ungapped alignment - example]\n"; // move ungapped to public
-//    const std::string qSeq = "AACCTTGG", tSeq = "AAAACCTTGG";
+//    mock::querySequences = {"AACCTTGG"};
+//    mock::targetSequences = {"AAAACCTTGG"};
+//    auto querySequencePtr = std::make_shared<std::string>(mock::querySequences[0]);
+//    auto targetSequencePtr = std::make_shared<std::string>(mock::targetSequences[0]);
+//    mmseq2::InputParams::InputParamsPtr inputParams = prepareInput("blosum62", 0, 0, 0, 0, 0, 0, 0);
+//    auto query = mmseq2::Query(0, querySequencePtr, inputParams);
 //    for (int i = -5; i <= 5; i++) {
 //        std::cout << "diagonal: " << i << ", ";
-//        std::cout << "score: " << mmseq2::Query::ungappedAlignment(qSeq, tSeq, i) << '\n';
+//        std::cout << "score: " << query.mmseq2::Query::ungappedAlignment(querySequencePtr, targetSequencePtr, i) << '\n';
 //    }
-//
+
 //    std::cout << "[Gapped alignment - example]\n"; // move gapped to public
-//    mock::TestsParameter test1(0, 0, 0, 4, 1, {}, {});
-//    test1.setGlobalParameteres();
-//    const std::vector<std::pair<const std::string, const std::string>> seqs = {
+//    std::vector<std::pair<std::string, std::string>> seqs = {
 //            {"AATTCCGG", "AAAAATTGGCC"},
 //            {"TACTCAT", "CTAGCTTACGATGCAAG"},
 //            {"AAAAAACCCCCCTTTTTTGGGGGG", "GGGGGAAACCCCAAGGGGTTGGGGGAAA"},
@@ -90,7 +99,15 @@ int main() {
 //    };
 //    for (const auto & seq : seqs) {
 //        std::cout << "q: " << seq.first << ", t: " << seq.second << "\n";
-//        std::cout << mmseq2::Query::gappedAlignment(seq.first, seq.second) << "\n";
+//        mock::querySequences = {seq.first};
+//        mock::targetSequences = {seq.second};
+//        auto querySequencePtr = std::make_shared<std::string>(seq.first);
+//        auto targetSequencePtr = std::make_shared<std::string>(seq.second);
+//        mmseq2::InputParams::InputParamsPtr inputParams = prepareInput("blosum62", 0, 0, 0, 0, 4, 1, 0);
+//        auto query = mmseq2::Query(0, querySequencePtr, inputParams);
+//
+//        auto res = query.mmseq2::Query::gappedAlignment(querySequencePtr, targetSequencePtr);
+//        std::cout << *res << "\n";
 //    }
 
     return 0;
