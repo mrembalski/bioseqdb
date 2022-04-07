@@ -127,8 +127,9 @@ int main() {
 //        mmseq2::InputParams::InputParamsPtr inputParams = prepareInput("blosum62", 0, 0, 0, 0, 4, 1, 0);
 //        auto query = mmseq2::Query(0, querySequencePtr, inputParams);
 //
-//        auto res = query.mmseq2::Query::gappedAlignment(querySequencePtr, targetSequencePtr);
-//        std::cout << *res << "\n";
+//        mmseq2::MmseqResult result(0, 0);
+//        query.mmseq2::Query::gappedAlignment(querySequencePtr, targetSequencePtr, result);
+//        std::cout << result.qAln << "\n" << result.tAln << "\n";
 //    }
 
     return 0;
