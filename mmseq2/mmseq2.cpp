@@ -1,25 +1,30 @@
 #include "mmseq2.h"
 
 #include <utility>
+#include <thread>
+#include <cmath>
 
-void processQueries(const mmseq2::InputParams::InputParamsPtr& inputParams, std::mutex *mtx, uint32_t *nextQuery);
+void processQueries(const mmseq2::InputParams::InputParamsPtr& inputParams, std::mutex *mtx, uint32_t *nextQuery, std::mutex *resMtx, const mmseq2::VecResPtr& resultPtr);
 
-void processSingleQuery(uint64_t qId, mmseq2::InputParams::StrPtr queryStr, mmseq2::InputParams::InputParamsPtr inputParams);
+void processSingleQuery(uint64_t qId, mmseq2::InputParams::StrPtr queryStr, mmseq2::InputParams::InputParamsPtr inputParams, std::mutex *resMtx, const mmseq2::VecResPtr& resultPtr);
 
-void mmseq2::MMSeq2(mmseq2::InputParams::InputParamsPtr inputParams) {
+mmseq2::VecRes mmseq2::MMSeq2(mmseq2::InputParams::InputParamsPtr inputParams) {
     std::vector<std::thread> workers{};
-    std::mutex mtx;
+    std::mutex mtx, resMtx;
     uint32_t nextQuery = 0;
+    mmseq2::VecResPtr resultPtr = std::make_shared<mmseq2::VecRes>();
 
     for (uint32_t i = 0; i < inputParams.get()->getThreadNumber(); ++i) {
         workers.emplace_back(std::thread(
-            processQueries, inputParams, &mtx, &nextQuery)
+            processQueries, inputParams, &mtx, &nextQuery, &resMtx, resultPtr)
         );
     }
 
     for (std::thread &worker : workers) {
         worker.join();
     }
+
+    return *resultPtr;
 }
 
 // Returns the smalles id of query that was not processed yet
@@ -39,21 +44,21 @@ uint32_t getNextQuery(uint32_t q_len, std::mutex *mtx, uint32_t *nextQuery) {
     return res;
 }
 
-void processQueries(const mmseq2::InputParams::InputParamsPtr& inputParams, std::mutex *mtx, uint32_t *nextQuery) {
+void processQueries(const mmseq2::InputParams::InputParamsPtr& inputParams, std::mutex *mtx, uint32_t *nextQuery, std::mutex *resMtx, const mmseq2::VecResPtr& resultPtr) {
     uint32_t tmpNextQuery;
 
     while ((tmpNextQuery = getNextQuery(inputParams.get()->getQLen(), mtx, nextQuery)) != -1) {
-        processSingleQuery(inputParams.get()->getQIds()->at(tmpNextQuery), inputParams.get()->getQueries()->at(tmpNextQuery), inputParams);
+        processSingleQuery(inputParams.get()->getQIds()->at(tmpNextQuery), inputParams.get()->getQueries()->at(tmpNextQuery), inputParams, resMtx, resultPtr);
     }
 }
 
-void processSingleQuery(uint64_t qId, mmseq2::InputParams::StrPtr queryStr, mmseq2::InputParams::InputParamsPtr inputParams) {
+void processSingleQuery(uint64_t qId, mmseq2::InputParams::StrPtr queryStr, mmseq2::InputParams::InputParamsPtr inputParams, std::mutex *resMtx, const mmseq2::VecResPtr& resultPtr) {
 
     mmseq2::Query query{qId, std::move(queryStr), std::move(inputParams)};
 
     query.findPrefilterKmerStageResults();
 
-    query.executeAlignment();
+    query.executeAlignment(resMtx, resultPtr);
 }
 
 void mmseq2::Query::findPrefilterKmerStageResults() {
@@ -157,7 +162,18 @@ int32_t mmseq2::Query::ungappedAlignment(const StrPtr& querySequence, const StrP
     return maxScore;
 }
 
-mmseq2::Query::StrPtr mmseq2::Query::gappedAlignment(const StrPtr& querySequence, const StrPtr& targetSequence) const {
+// from hsp to bit score, using K, lambda
+double evalBitScore(double rawScore) {
+    static double K = 3.0, lambda = 0.5;
+    return (lambda * rawScore - std::log(K)) / std::log(2);
+}
+
+// number of expected hits of similar score
+double evalEValue(double bitScore, uint32_t m, uint32_t n) {
+    return (double)m * (double)n * (std::pow(2.0, -bitScore));
+}
+
+void mmseq2::Query::gappedAlignment(const StrPtr& querySequence, const StrPtr& targetSequence, MmseqResult& result) const {
     uint32_t qSeqLen = querySequence.get()->size(), tSeqLen = targetSequence.get()->size();
     int32_t costOp = this->gapOpenCost, costEx = this->costGapExtended;
     // E - gap in row, F - gap in column, H - best score
@@ -195,50 +211,80 @@ mmseq2::Query::StrPtr mmseq2::Query::gappedAlignment(const StrPtr& querySequence
         }
     }
 
-    std::string qAl, tAl;
+    result.qEnd = qPos;
+    result.tEnd = tPos;
+    std::string qAl, tAl, cigar;
+    int lastAction = -1, identicalMatches = 0;
     auto qInd = (int32_t)qPos, tInd = (int32_t)tPos;
 
     // backtrace
     while (qInd >= 0 && tInd >= 0 && H[qInd][tInd] > 0) {
         int32_t match = AminoAcid::getPenalty(this->substitutionMatrixId,
                                               querySequence.get()->at(qInd), targetSequence.get()->at(tInd));
-        if ((qInd > 0 && tInd > 0 && H[qInd][tInd] == H[qInd - 1][tInd - 1] + match)
-            || (H[qInd][tInd] == match)) {
+        if ((qInd > 0 && tInd > 0 && H[qInd][tInd] == H[qInd - 1][tInd - 1] + match) || (H[qInd][tInd] == match)) {
+            if (querySequence.get()->at(qInd) != targetSequence.get()->at(tInd)) {
+                result.mismatch += 1;
+            } else {
+                identicalMatches += 1;
+            }
+            cigar += 'M';
             qAl += querySequence.get()->at(qInd);
             tAl += targetSequence.get()->at(tInd);
             qInd--;
             tInd--;
+            lastAction = 0;
         } else if (H[qInd][tInd] == E[qInd][tInd]) {
+            result.gapOpen += 1;
             while(tInd > 0 && E[qInd][tInd] == E[qInd][tInd - 1] - costEx) {
+                cigar += 'D';
                 qAl += ' ';
                 tAl += targetSequence.get()->at(tInd);
                 tInd--;
             }
             if (tInd > 0 && E[qInd][tInd] == H[qInd][tInd - 1] - costOp) {
+                cigar += 'D';
                 qAl += ' ';
                 tAl += targetSequence.get()->at(tInd);
                 tInd--;
             }
+            lastAction = 1;
         } else if (H[qInd][tInd] == F[qInd][tInd]) {
+            result.gapOpen += 1;
             while(qInd > 0 && F[qInd][tInd] == F[qInd - 1][tInd] - costEx) {
+                cigar += 'I';
                 tAl += ' ';
                 qAl += querySequence.get()->at(qInd);
                 qInd--;
             }
             if (qInd > 0 && F[qInd][tInd] == H[qInd - 1][tInd] - costOp) {
+                cigar += 'I';
                 tAl += ' ';
                 qAl += querySequence.get()->at(qInd);
                 qInd--;
             }
+            lastAction = 2;
         }
     }
 
     std::reverse(qAl.begin(), qAl.end());
     std::reverse(tAl.begin(), tAl.end());
-    return std::make_shared<std::string>(qAl.append("\n").append(tAl));
+    std::reverse(cigar.begin(), cigar.end());
+
+    result.qStart = qInd + (lastAction % 2 == 0 ? 1 : 0);
+    result.tStart = tInd + (lastAction < 2 ? 1 : 0);
+    result.qAln = qAl;
+    result.tAln = tAl;
+    result.alnLen = qAl.size();
+
+    result.rawScore = bestScore;
+    result.bitScore = evalBitScore(result.rawScore);
+    result.eValue = evalEValue(result.bitScore, result.qLen, result.tLen);
+
+    result.pident = (double)identicalMatches / (double)qAl.size();
+    result.cigar = cigar;
 }
 
-void mmseq2::Query::executeAlignment() {
+void mmseq2::Query::executeAlignment(std::mutex *resMtx, const VecResPtr& mmseqResult) {
     const PrefilterKmerStageResults& kmerStageResults = mmseq2::Query::getPrefilterKmerStageResults();
     for (uint32_t i = 0; i < kmerStageResults.getTargetsNumber(); i++) {
         const int32_t diagonal = kmerStageResults.getDiagonal((int)i);
@@ -249,12 +295,17 @@ void mmseq2::Query::executeAlignment() {
 
         if (ungappedAlignment(querySequence, targetSequence, diagonal) >= this->ungappedAlignmentScore && filteredTargetIds.find(targetId) == filteredTargetIds.end()) {
             filteredTargetIds.insert(targetId);
-            StrPtr swResult = gappedAlignment(querySequence, targetSequence);
 
-            // postgres - stdout
-            std::string swOut = "SW alignment for qId: " + std::to_string(this->queryId) +
-                    ", tId: " + std::to_string(targetId) + "\n" + *swResult.get() + "\n";
-            mock::log_from_cpp(swOut.c_str());
+            mmseq2::MmseqResult result(this->queryId, targetId);
+            result.qLen = querySequence->size();
+            result.tLen = targetSequence->size();
+            gappedAlignment(querySequence, targetSequence, result);
+
+            if (result.eValue <= (double)this->evalTreshold) {
+                resMtx->lock();
+                mmseqResult->push_back(result);
+                resMtx->unlock();
+            }
         }
     }
 }

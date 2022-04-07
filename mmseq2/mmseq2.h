@@ -4,7 +4,6 @@
 #include <utility>
 #include <vector>
 #include <string>
-#include <thread>
 #include <set>
 #include <iostream>
 #include "mock_structures.h"
@@ -386,6 +385,10 @@ namespace mmseq2 {
             return ungappedAlignmentScore;
         }
 
+        [[nodiscard]] int32_t getEvalThreshold() const {
+            return evalTreshold;
+        }
+
         [[nodiscard]] int32_t getGapOpenCost() const {
             return gapOpenCost;
         }
@@ -423,7 +426,20 @@ namespace mmseq2 {
         uint32_t substitutionMatrixId;
     };
 
-    void MMSeq2(mmseq2::InputParams::InputParamsPtr inputParams);
+    struct MmseqResult {
+        uint64_t queryId, targetId;
+        double rawScore = 0.0, bitScore = 0.0, eValue = 0.0;
+        uint32_t qStart = 0, qEnd = 0, qLen = 0, tStart = 0, tEnd = 0, tLen = 0;
+        std::string qAln, tAln, cigar;
+        uint32_t alnLen = 0, mismatch = 0, gapOpen = 0;
+        double pident = 0.0;
+
+        MmseqResult(uint64_t queryId, uint64_t targetId) : queryId{queryId}, targetId{targetId} {}
+    };
+
+    using VecRes = std::vector<mmseq2::MmseqResult>;
+    using VecResPtr = std::shared_ptr<VecRes>;
+    VecRes MMSeq2(mmseq2::InputParams::InputParamsPtr inputParams);
 
     class Query {
     public:
@@ -438,6 +454,7 @@ namespace mmseq2 {
                                                                                  kMerGenThreshold{inputParams.get()->getKMerGenThreshold()},
                                                                                  ungappedAlignmentScore{inputParams.get()->getUngappedAlignmentScore()},
                                                                                  targetColumnName{inputParams.get()->getTargetColumnName()},
+                                                                                 evalTreshold{inputParams.get()->getEvalThreshold()},
                                                                                  gapOpenCost{inputParams.get()->getGapOpenCost()},
                                                                                  costGapExtended{inputParams.get()->getGapPenaltyCost()},
                                                                                  targetTableName{inputParams.get()->getTargetTableName()},
@@ -455,7 +472,7 @@ namespace mmseq2 {
 
         void findPrefilterKmerStageResults();
 
-        void executeAlignment();
+        void executeAlignment(std::mutex *resMtx, const VecResPtr& mmseqResult);
 
         [[nodiscard]] uint32_t getSubstitutionMatrixId() const {
             return substitutionMatrixId;
@@ -475,6 +492,7 @@ namespace mmseq2 {
         int32_t kMerGenThreshold;
         int32_t ungappedAlignmentScore;
         StrPtr targetColumnName;
+        int32_t evalTreshold;
         int32_t gapOpenCost;
         int32_t costGapExtended;
 
@@ -493,7 +511,7 @@ namespace mmseq2 {
 
         [[nodiscard]] int32_t ungappedAlignment(const StrPtr& querySequence, const StrPtr& targetSequence, int32_t diagonal) const;
 
-        [[nodiscard]] StrPtr gappedAlignment(const StrPtr& querySequence, const StrPtr& targetSequence) const;
+        void gappedAlignment(const StrPtr& querySequence, const StrPtr& targetSequence, MmseqResult& mmseqResult) const;
     };
 }
 

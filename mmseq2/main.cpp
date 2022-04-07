@@ -45,12 +45,33 @@ namespace {
                 matrixName, kMerLength, kMerGenThreshold, ungappedAlignmentScore,
                 evalTreshold, gapOpenCost, gapPenaltyCost, threadNumber);
 
-        mmseq2::MMSeq2(std::move(inputParams));
+        auto res = mmseq2::MMSeq2(std::move(inputParams));
+        std::cout << "[Next result]\n";
+        for (auto& el : res) {
+            std::cout << "qId: " << el.queryId << ", ";
+            std::cout << "tId: " << el.targetId << "\n";
+            std::cout << "rawScore: " << el.rawScore << ", ";
+            std::cout << "bitScore: " << el.bitScore << ", ";
+            std::cout << "evaLue: " << el.eValue << "\n";
+            std::cout << "qStart: " << el.qStart << ", ";
+            std::cout << "qEnd: " << el.qEnd << ", ";
+            std::cout << "qLen: " << el.qLen << "\n";
+            std::cout << "tStart: " << el.tStart << ", ";
+            std::cout << "tEnd: " << el.tEnd << ", ";
+            std::cout << "tLen: " << el.tLen << "\n";
+            std::cout << "qAln: " << el.qAln << "\n";
+            std::cout << "tAln: " << el.tAln << "\n";
+            std::cout << "cigar: " << el.cigar << "\n";
+            std::cout << "alnLen: " << el.alnLen << "\n";
+            std::cout << "mismatch: " << el.mismatch << "\n";
+            std::cout << "gapOpen: " << el.gapOpen << "\n";
+            std::cout << "pident: " << el.pident << "\n";
+            std::cout << "\n";
+        }
     }
 };
 
 int main() {
-    std::cout << "Dziękuję :), również pozdrawiam." << std::endl;
 
     runMMSeq2({"DDDDDAAGGGGG"},
             {"AADDDDDCCGGGGGAA"},
