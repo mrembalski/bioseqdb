@@ -55,20 +55,49 @@ extern "C"
         // Switch to the old memory context
         MemoryContextSwitchTo(oldcontext);
 
-        // Initialize arguments for the C++ function
-        /* uint32_t q_len = 2;
-        uint32_t t_len = 1;
-        uint64_t *q_ids = (uint64_t *)palloc(sizeof(uint64_t) * q_len);
-        uint64_t *t_ids = (uint64_t *)palloc(sizeof(uint64_t) * t_len);
-        char **queries = (char **)(memory + sizeof(int32));
-        char *target_table_name = "taco";
-        char *target_column_name = "sequence";
-        t_ids[0] = 1;
-        q_ids[0] = 1;
-        q_ids[1] = 2;
+        // Create the vectors to pass to cpp_mmseq2
+        Vec64Ptr qIds(new std::vector<uint64_t>{});
+        Vec64Ptr tIds(new std::vector<uint64_t>{});
+        VecStrPtr queries(new std::vector<StrPtr>{});
+
+        std::string getQueriesQuery =
+            std::string("SELECT id, ") +
+            query_colname +
+            std::string(" FROM ") +
+            query_tblname +
+            std::string(";");
+        std::string getTargetsQuery =
+            std::string("SELECT id FROM ") +
+            target_tblname +
+            std::string(";");
+
         SPI_connect();
-        cpp_mmseq2(q_len, t_len, q_ids, t_ids, queries, target_table_name, target_column_name);
-        SPI_finish(); */
+
+        // Queries
+        SPI_exec(getQueriesQuery.data(), 0);
+        TupleDesc spi_tupdesc = SPI_tuptable->tupdesc;
+        uint64_t processed = SPI_processed;
+        for (uint32_t i = 0; i < processed; i++)
+        {
+            HeapTuple spi_tuple = SPI_tuptable->vals[i];
+            std::string id_str = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
+            std::string sequence = SPI_getvalue(spi_tuple, spi_tupdesc, 2);
+            qIds->push_back(std::stol(id_str));
+            queries->push_back(std::make_shared<std::string>(sequence));
+        }
+
+        // Targets
+        SPI_exec(getTargetsQuery.data(), 0);
+        TupleDesc spi_tupdesc = SPI_tuptable->tupdesc;
+        processed = SPI_processed;
+        for (uint32_t i = 0; i < processed; i++)
+        {
+            HeapTuple spi_tuple = SPI_tuptable->vals[i];
+            std::string id_str = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
+            tIds->push_back(std::stol(id_str));
+        }
+
+        SPI_finish();
 
         mmseq2::MMseqOutTuple tuple;
         tuple.queryId = 12;

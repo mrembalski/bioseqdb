@@ -2,20 +2,32 @@
 #define BIOSEQDB_MMSEQ2_H
 
 #include <stdint.h>
-
-void cpp_mmseq2(uint32_t q_len, uint32_t t_len,
-                    uint64_t *q_ids, uint64_t *t_ids,
-                    char **queries,
-                    char* target_table_name, char* target_column_name);
-
+#include <memory>
 #include <exception>
 #include <vector>
 #include <string>
 #include <thread>
 #include <set>
 
-namespace mmseq2 {
-    struct MMseqOutTuple {
+struct InputParams
+{
+    uint32_t qLen, tLen;
+};
+
+using Vec64Ptr = std::shared_ptr<std::vector<uint64_t>>;
+using StrPtr = std::shared_ptr<std::string>;
+using VecStrPtr = std::shared_ptr<std::vector<StrPtr>>;
+using InputParamsPtr = std::shared_ptr<InputParams>;
+
+void cpp_mmseq2(uint32_t q_len, uint32_t t_len,
+                uint64_t *q_ids, uint64_t *t_ids,
+                char **queries,
+                char *target_table_name, char *target_column_name);
+
+namespace mmseq2
+{
+    struct MMseqOutTuple
+    {
         uint64_t queryId, targetId;
         double rawScore = 0.0, bitScore = 0.0, eValue = 0.0;
         uint32_t qStart = 0, qEnd = 0, qLen = 0, tStart = 0, tEnd = 0, tLen = 0;
@@ -24,37 +36,43 @@ namespace mmseq2 {
         double pident = 0.0;
     };
 
-    class PrefilterKmerStageResults {
+    class PrefilterKmerStageResults
+    {
     private:
         uint32_t queryId;
-        std::vector <uint32_t> targetIds;
-        std::vector <int32_t> diagonals;
+        std::vector<uint32_t> targetIds;
+        std::vector<int32_t> diagonals;
 
     public:
-        PrefilterKmerStageResults(uint32_t queryId) : queryId{ queryId }, targetIds{ std::vector<uint32_t> {}},
-        diagonals{ std::vector<int32_t> {}}  {}
+        PrefilterKmerStageResults(uint32_t queryId) : queryId{queryId}, targetIds{std::vector<uint32_t>{}},
+                                                      diagonals{std::vector<int32_t>{}} {}
 
         PrefilterKmerStageResults() = delete;
 
-        void addDiagonal(uint32_t targetId, int32_t diagonal) {
+        void addDiagonal(uint32_t targetId, int32_t diagonal)
+        {
             targetIds.push_back(targetId);
             diagonals.push_back(diagonal);
         }
 
-        int32_t getDiagonal(int index) const {
+        int32_t getDiagonal(int index) const
+        {
             return diagonals[index];
         }
 
-        uint32_t getTargetId(int index) const {
+        uint32_t getTargetId(int index) const
+        {
             return targetIds[index];
         }
 
-        uint32_t getTargetsNumber() const {
+        uint32_t getTargetsNumber() const
+        {
             return targetIds.size();
         }
     };
 
-    class Query {
+    class Query
+    {
     private:
         uint64_t queryId;
         std::string sequence;
@@ -78,10 +96,10 @@ namespace mmseq2 {
         void processSingleKmer(uint32_t diagonal, std::string &kMer);
 
         // returns best score on diagonal
-        static int32_t ungappedAlignment(const std::string& querySequence, const std::string& targetSequence, int32_t diagonal);
+        static int32_t ungappedAlignment(const std::string &querySequence, const std::string &targetSequence, int32_t diagonal);
 
         // returns the best alignment
-        static std::string gappedAlignment(const std::string& querySequence, const std::string& targetSequence);
+        static std::string gappedAlignment(const std::string &querySequence, const std::string &targetSequence);
 
     public:
         Query() = delete;
@@ -94,13 +112,15 @@ namespace mmseq2 {
                                                                    diagonalPreVVisited{std::vector<bool>(t_len, false)},
                                                                    diagonalPrev{std::vector<int32_t>(t_len, 0)},
                                                                    targetTableName{std::string(target_table_name)},
-                                                                   targetColumnName{std::string(target_column_name)} { }
+                                                                   targetColumnName{std::string(target_column_name)} {}
 
-        const PrefilterKmerStageResults& getPrefilterKmerStageResults() const {
+        const PrefilterKmerStageResults &getPrefilterKmerStageResults() const
+        {
             return prefilterKmerStageResults;
         }
 
-        void addMatch(uint32_t targetId, int32_t diagonal) {
+        void addMatch(uint32_t targetId, int32_t diagonal)
+        {
             prefilterKmerStageResults.addDiagonal(targetId, diagonal);
         }
 
@@ -110,4 +130,4 @@ namespace mmseq2 {
     };
 }
 
-#endif //BIOSEQDB_MMSEQ2_H
+#endif // BIOSEQDB_MMSEQ2_H
