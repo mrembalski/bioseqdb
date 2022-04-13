@@ -3,7 +3,7 @@
 namespace {
     mmseq2::InputParams::InputParamsPtr prepareInput(
             std::string matrixName, uint32_t kMerLength,
-            int32_t kMerGenThreshold, int32_t ungappedAlignmentScore, int32_t evalTreshold,
+            int32_t kMerGenThreshold, int32_t ungappedAlignmentScore, double evalTreshold,
             int32_t gapOpenCost, int32_t gapPenaltyCost, uint32_t threadNumber) {
 
         uint32_t qLen = mock::querySequences.size();
@@ -35,7 +35,7 @@ namespace {
 
     void runMMSeq2(std::vector<std::string> &&querySequences, std::vector<std::string> &&targetSequences,
                  std::string&& matrixName, uint32_t kMerLength,
-                 int32_t kMerGenThreshold, int32_t ungappedAlignmentScore, int32_t evalTreshold,
+                 int32_t kMerGenThreshold, int32_t ungappedAlignmentScore, double evalTreshold,
                  int32_t gapOpenCost, int32_t gapPenaltyCost, uint32_t threadNumber) {
 
         mock::querySequences = querySequences;
@@ -52,7 +52,7 @@ namespace {
             std::cout << "tId: " << el.targetId << "\n";
             std::cout << "rawScore: " << el.rawScore << ", ";
             std::cout << "bitScore: " << el.bitScore << ", ";
-            std::cout << "evaLue: " << el.eValue << "\n";
+            std::cout << "eValue: " << el.eValue << "\n";
             std::cout << "qStart: " << el.qStart << ", ";
             std::cout << "qEnd: " << el.qEnd << ", ";
             std::cout << "qLen: " << el.qLen << "\n";
@@ -75,15 +75,15 @@ int main() {
 
     runMMSeq2({"DDDDDAAGGGGG"},
             {"AADDDDDCCGGGGGAA"},
-            "blosum62", 5, 30, 0, 1, 4, 1, 1);
+            "blosum62", 5, 20, 0, 1, 4, 1, 1);
 
 //    runMMSeq2({"DDDDDDDDDCCGGGGGGGAA", "AAADDDDDDDCCGGGGGGGDD"},
 //            {"DDDDDDDAAGGGGGGG"},
-//            "blosum62", 7, 42, 0, 1, 4, 1, 2);
+//            "blosum62", 7, 22, 0, 1, 4, 1, 2);
 
 //    runMMSeq2({"AAADDDDDDDCCGGGGGGGDD"},
 //            {"DDDDDDDAAGGGGGGG", "DDDDDDDDDCCGGGGGGGAA"},
-//            "blosum62", 7, 42, 0, 1, 4, 1, 1);
+//            "blosum62", 7, 22, 0, 1, 4, 1, 1);
 
 //    runMMSeq2({"AACCTTGG", "ACTGACTGACTG", "TACTCAT"},
 //            {"TACGGTAGCTTACTGA", "CTAGCTTACGATGCAAG", "CTTACAGCATACAGCATCGAT"},

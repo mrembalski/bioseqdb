@@ -13,113 +13,19 @@ namespace mmseq2 {
     class AminoAcid {
     public:
         static uint32_t charToId(char aa_id) {
-            switch(aa_id) {
-                case 'A':
-                    return 0;
-                case 'R':
-                    return 1;
-                case 'N':
-                    return 2;
-                case 'D':
-                    return 3;
-                case 'C':
-                    return 4;
-                case 'Q':
-                    return 5;
-                case 'E':
-                    return 6;
-                case 'G':
-                    return 7;
-                case 'H':
-                    return 8;
-                case 'I':
-                    return 9;
-                case 'L':
-                    return 10;
-                case 'K':
-                    return 11;
-                case 'M':
-                    return 12;
-                case 'F':
-                    return 13;
-                case 'P':
-                    return 14;
-                case 'S':
-                    return 15;
-                case 'T':
-                    return 16;
-                case 'W':
-                    return 17;
-                case 'Y':
-                    return 18;
-                case 'V':
-                    return 19;
-                case 'B':
-                    return 20;
-                case 'J':
-                    return 21;
-                case 'Z':
-                    return 22;
-                case 'X':
-                    return 23;
-                default: // case '*'
-                    return 24;
+            for (uint32_t id = 0; id < alphabetSize; id++) {
+                if (charId[id] == aa_id) {
+                    return id;
+                }
             }
+            return alphabetSize - 1;
         }
 
         static char idToChar(uint32_t aa_char) {
-            switch(aa_char) {
-                case 0:
-                    return 'A';
-                case 1:
-                    return 'R';
-                case 2:
-                    return 'N';
-                case 3:
-                    return 'D';
-                case 4:
-                    return 'C';
-                case 5:
-                    return 'Q';
-                case 6:
-                    return 'E';
-                case 7:
-                    return 'G';
-                case 8:
-                    return 'H';
-                case 9:
-                    return 'I';
-                case 10:
-                    return 'L';
-                case 11:
-                    return 'K';
-                case 12:
-                    return 'M';
-                case 13:
-                    return 'F';
-                case 14:
-                    return 'P';
-                case 15:
-                    return 'S';
-                case 16:
-                    return 'T';
-                case 17:
-                    return 'W';
-                case 18:
-                    return 'Y';
-                case 19:
-                    return 'V';
-                case 20:
-                    return 'B';
-                case 21:
-                    return 'J';
-                case 22:
-                    return 'Z';
-                case 23:
-                    return 'X';
-                default: // case 24
-                    return '*';
+            if (aa_char >= alphabetSize) {
+                return '*';
             }
+            return charId[aa_char];
         }
 
         static int32_t getPenalty(uint32_t matrixId, uint32_t currentId, uint32_t replacementId) {
@@ -154,6 +60,8 @@ namespace mmseq2 {
 
     private:
         static constexpr uint32_t alphabetSize = 25;
+
+        static constexpr char charId[25] = {'A','R','N','D','C','Q','E','G','H','I','L','K','M','F','P','S','T','W','Y','V','B','J','Z','X', '*'};
 
         static constexpr int32_t blosum[5][25][25] = {
                 {
@@ -342,7 +250,7 @@ namespace mmseq2 {
 
         InputParams(uint32_t qLen, uint32_t tLen, Vec64Ptr qIds, Vec64Ptr tIds, VecStrPtr queries,
                     StrPtr targetTableName, StrPtr targetColumnName, const StrPtr& substitutionMatrixName, uint32_t kMerLength,
-                    int32_t kMerGenThreshold, int32_t ungappedAlignmentScore, int32_t evalTreshold, int32_t gapOpenCost,
+                    int32_t kMerGenThreshold, int32_t ungappedAlignmentScore, double evalTreshold, int32_t gapOpenCost,
                     int32_t gapPenaltyCost, uint32_t threadNumber);
 
         [[nodiscard]] uint32_t getQLen() const {
@@ -385,7 +293,7 @@ namespace mmseq2 {
             return ungappedAlignmentScore;
         }
 
-        [[nodiscard]] int32_t getEvalThreshold() const {
+        [[nodiscard]] double getEvalThreshold() const {
             return evalTreshold;
         }
 
@@ -419,7 +327,7 @@ namespace mmseq2 {
         uint32_t kMerLength;
         int32_t kMerGenThreshold;
         int32_t ungappedAlignmentScore;
-        int32_t evalTreshold;
+        double evalTreshold;
         int32_t gapOpenCost;
         int32_t gapPenaltyCost;
         uint32_t threadNumber;
@@ -492,7 +400,7 @@ namespace mmseq2 {
         int32_t kMerGenThreshold;
         int32_t ungappedAlignmentScore;
         StrPtr targetColumnName;
-        int32_t evalTreshold;
+        double evalTreshold;
         int32_t gapOpenCost;
         int32_t costGapExtended;
 
@@ -509,7 +417,7 @@ namespace mmseq2 {
 
         void processSingleKmer(uint32_t diagonal, std::string &kMer);
 
-        [[nodiscard]] int32_t ungappedAlignment(const StrPtr& querySequence, const StrPtr& targetSequence, int32_t diagonal) const;
+        [[nodiscard]] double ungappedAlignment(const StrPtr& querySequence, const StrPtr& targetSequence, int32_t diagonal) const;
 
         void gappedAlignment(const StrPtr& querySequence, const StrPtr& targetSequence, MmseqResult& mmseqResult) const;
     };

@@ -4,6 +4,19 @@
 #include <thread>
 #include <cmath>
 
+namespace {
+    // from hsp to bit score, using K, lambda
+    double evalBitScore(double rawScore) {
+        static double K = 3.0, lambda = 0.5;
+        return (lambda * rawScore - std::log(K)) / std::log(2);
+    }
+
+    // number of expected hits of similar score
+    double evalEValue(double bitScore, uint32_t m, uint32_t n) {
+        return (double)m * (double)n * (std::pow(2.0, -bitScore));
+    }
+}
+
 void processQueries(const mmseq2::InputParams::InputParamsPtr& inputParams, std::mutex *mtx, uint32_t *nextQuery, std::mutex *resMtx, const mmseq2::VecResPtr& resultPtr);
 
 void processSingleQuery(uint64_t qId, mmseq2::InputParams::StrPtr queryStr, mmseq2::InputParams::InputParamsPtr inputParams, std::mutex *resMtx, const mmseq2::VecResPtr& resultPtr);
@@ -81,7 +94,7 @@ void mmseq2::Query::findPrefilterKmerStageResults() {
 
 void mmseq2::Query::processSimilarKMers(uint32_t kMerPos, std::string &kMer, int32_t SMaxSuf,
                                         int32_t Spref, uint32_t indx) {
-    if (indx == 0 && Spref + SMaxSuf >= this->kMerGenThreshold) {
+    if (indx == 0 && evalBitScore(Spref + SMaxSuf) >= this->kMerGenThreshold) {
         processSingleKmer(kMerPos, kMer);
     }
 
@@ -98,7 +111,7 @@ void mmseq2::Query::processSimilarKMers(uint32_t kMerPos, std::string &kMer, int
     for (uint32_t aaId = 0; aaId < AminoAcid::getAlphabetSize(); ++aaId) {
         Spref += AminoAcid::getPenalty(this->substitutionMatrixId, currentAAId, aaId);
 
-        if (Spref + SMaxSuf >= this->kMerGenThreshold) {
+        if (evalBitScore(Spref + SMaxSuf) >= this->kMerGenThreshold) {
             kMer[indx] = AminoAcid::idToChar(aaId);
 
             if (currentAAId != aaId) {
@@ -135,7 +148,7 @@ void mmseq2::Query::processSingleKmer(uint32_t kMerPos, std::string &kMer) {
 
 }
 
-int32_t mmseq2::Query::ungappedAlignment(const StrPtr& querySequence, const StrPtr& targetSequence, int32_t diagonal) const {
+double mmseq2::Query::ungappedAlignment(const StrPtr& querySequence, const StrPtr& targetSequence, int32_t diagonal) const {
     uint32_t querySequenceLength = querySequence.get()->size(), targetSequenceLength = targetSequence.get()->size();
     int32_t queryPosition = 0, queryLastPosition = (int32_t)querySequenceLength - 1;
     int32_t targetPosition = queryPosition + diagonal;
@@ -159,18 +172,7 @@ int32_t mmseq2::Query::ungappedAlignment(const StrPtr& querySequence, const StrP
         targetPosition++;
     }
 
-    return maxScore;
-}
-
-// from hsp to bit score, using K, lambda
-double evalBitScore(double rawScore) {
-    static double K = 3.0, lambda = 0.5;
-    return (lambda * rawScore - std::log(K)) / std::log(2);
-}
-
-// number of expected hits of similar score
-double evalEValue(double bitScore, uint32_t m, uint32_t n) {
-    return (double)m * (double)n * (std::pow(2.0, -bitScore));
+    return evalBitScore(maxScore);
 }
 
 void mmseq2::Query::gappedAlignment(const StrPtr& querySequence, const StrPtr& targetSequence, MmseqResult& result) const {
@@ -301,7 +303,7 @@ void mmseq2::Query::executeAlignment(std::mutex *resMtx, const VecResPtr& mmseqR
             result.tLen = targetSequence->size();
             gappedAlignment(querySequence, targetSequence, result);
 
-            if (result.eValue <= (double)this->evalTreshold) {
+            if (result.eValue <= this->evalTreshold) {
                 resMtx->lock();
                 mmseqResult->push_back(result);
                 resMtx->unlock();
@@ -315,7 +317,7 @@ mmseq2::InputParams::InputParams(uint32_t qLen, uint32_t tLen, mmseq2::InputPara
                                  mmseq2::InputParams::StrPtr targetTableName,
                                  mmseq2::InputParams::StrPtr targetColumnName,
                                  const mmseq2::InputParams::StrPtr& substitutionMatrixName, uint32_t kMerLength,
-                                 int32_t kMerGenThreshold, int32_t ungappedAlignmentScore, int32_t evalTreshold,
+                                 int32_t kMerGenThreshold, int32_t ungappedAlignmentScore, double evalTreshold,
                                  int32_t gapOpenCost, int32_t gapPenaltyCost, uint32_t threadNumber) : qLen{qLen}, tLen{tLen}, qIds{std::move(qIds)}, tIds{std::move(tIds)},
                                                                                                        queries{std::move(queries)}, targetTableName{std::move(targetTableName)},
                                                                                                        targetColumnName{std::move(targetColumnName)},
