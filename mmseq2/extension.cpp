@@ -4,6 +4,7 @@
 extern "C"
 {
 #include <postgres.h>
+#include <fmgr.h>
 #include <access/htup_details.h>
 #include <catalog/pg_type.h>
 #include <executor/spi.h>
@@ -11,12 +12,14 @@ extern "C"
 #include <lib/stringinfo.h>
 #include <miscadmin.h>
 #include <executor/tablefunc.h>
+#include <utils/array.h>
 #include <utils/builtins.h>
+#include <utils/lsyscache.h>
 }
 
 #include "mmseq2.h"
 
-#define OUT_TUPLE_ARITY 18
+constexpr uint32_t OUT_TUPLE_ARITY = 18;
 
 extern "C"
 {
@@ -26,11 +29,41 @@ extern "C"
 
     Datum seq_search_mmseqs(PG_FUNCTION_ARGS)
     {
-        // Get all arguments
+        // Table and column names
         char *query_tblname = text_to_cstring(PG_GETARG_TEXT_PP(0));
         char *query_colname = text_to_cstring(PG_GETARG_TEXT_PP(1));
         char *target_tblname = text_to_cstring(PG_GETARG_TEXT_PP(2));
         char *target_colname = text_to_cstring(PG_GETARG_TEXT_PP(3));
+
+        // Determine the array element types.
+        ArrayType *queries_array_type = PG_GETARG_ARRAYTYPE_P(4);
+        ArrayType *targets_array_type = PG_GETARG_ARRAYTYPE_P(5);
+        Oid element_type = ARR_ELEMTYPE(queries_array_type);
+        int16 elem_type_width;
+        bool elem_type_by_val;
+        char elem_type_align;
+        get_typlenbyvalalign(element_type, &elem_type_width, &elem_type_by_val, &elem_type_align);
+
+        uint64_t *queries_array, *targets_array;
+        int queries_num, targets_num;
+        deconstruct_array(queries_array_type, element_type, elem_type_width, elem_type_by_val, elem_type_align,
+            &queries_array, NULL, &queries_num);
+        deconstruct_array(targets_array_type, element_type, elem_type_width, elem_type_by_val, elem_type_align,
+            &targets_array, NULL, &targets_num);
+
+        for (int i = 0; i < queries_num; i++)
+            elog(WARNING, "%d", queries_array[i]);
+        for (int i = 0; i < targets_num; i++)
+            elog(WARNING, "%d", targets_array[i]);
+
+        // Optional parameters
+        char *substitution_matrix_name = text_to_cstring(PG_GETARG_TEXT_PP(6));
+        uint32_t kmer_length = PG_GETARG_INT32(7);
+        uint32_t kmer_gen_threshold = PG_GETARG_INT32(8);
+		uint32_t ungapped_alignment_score = PG_GETARG_INT32(9);
+		double eval_threshold = PG_GETARG_FLOAT8(10);
+		uint32_t gap_open_cost = PG_GETARG_INT32(11);
+		uint32_t gap_penalty_cost = PG_GETARG_INT32(12);
 
         // Get rsinfo and per_query_ctx
         ReturnSetInfo *rsinfo = (ReturnSetInfo *)fcinfo->resultinfo;
