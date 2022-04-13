@@ -9,23 +9,17 @@
 #include <thread>
 #include <set>
 
-struct InputParams
-{
-    uint32_t qLen, tLen;
-};
-
-using Vec64Ptr = std::shared_ptr<std::vector<uint64_t>>;
-using StrPtr = std::shared_ptr<std::string>;
-using VecStrPtr = std::shared_ptr<std::vector<StrPtr>>;
-using InputParamsPtr = std::shared_ptr<InputParams>;
-
-void cpp_mmseq2(uint32_t q_len, uint32_t t_len,
-                uint64_t *q_ids, uint64_t *t_ids,
-                char **queries,
-                char *target_table_name, char *target_column_name);
-
 namespace mmseq2
 {
+    using Vec64Ptr = std::shared_ptr<std::vector<uint64_t>>;
+    using StrPtr = std::shared_ptr<std::string>;
+    using VecStrPtr = std::shared_ptr<std::vector<StrPtr>>;
+
+    void cpp_mmseq2(uint32_t q_len, uint32_t t_len,
+                    uint64_t *q_ids, uint64_t *t_ids,
+                    char **queries,
+                    char *target_table_name, char *target_column_name);
+
     struct MMseqOutTuple
     {
         uint64_t queryId, targetId;

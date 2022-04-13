@@ -56,9 +56,9 @@ extern "C"
         MemoryContextSwitchTo(oldcontext);
 
         // Create the vectors to pass to cpp_mmseq2
-        Vec64Ptr qIds(new std::vector<uint64_t>{});
-        Vec64Ptr tIds(new std::vector<uint64_t>{});
-        VecStrPtr queries(new std::vector<StrPtr>{});
+        mmseq2::Vec64Ptr qIds(new std::vector<uint64_t>{});
+        mmseq2::Vec64Ptr tIds(new std::vector<uint64_t>{});
+        mmseq2::VecStrPtr queries(new std::vector<mmseq2::StrPtr>{});
 
         std::string getQueriesQuery =
             std::string("SELECT id, ") +
@@ -88,7 +88,7 @@ extern "C"
 
         // Targets
         SPI_exec(getTargetsQuery.data(), 0);
-        TupleDesc spi_tupdesc = SPI_tuptable->tupdesc;
+        spi_tupdesc = SPI_tuptable->tupdesc;
         processed = SPI_processed;
         for (uint32_t i = 0; i < processed; i++)
         {

@@ -14,10 +14,10 @@ void processSingleQuery(uint64_t q_id, char *query,
                         uint32_t t_len, uint64_t *t_ids,
                         char *target_table_name, char *target_column_name);
 
-void cpp_mmseq2(uint32_t q_len, uint32_t t_len,
-                uint64_t *q_ids, uint64_t *t_ids,
-                char **queries,
-                char *target_table_name, char *target_column_name)
+void mmseq2::cpp_mmseq2(uint32_t q_len, uint32_t t_len,
+                        uint64_t *q_ids, uint64_t *t_ids,
+                        char **queries,
+                        char *target_table_name, char *target_column_name)
 {
     std::vector<std::thread> workers{};
     std::mutex mtx;
@@ -144,7 +144,7 @@ void mmseq2::Query::processSimilarKMers(uint32_t kMerPos, std::string &kMer, int
 
 void mmseq2::Query::processSingleKmer(uint32_t kMerPos, std::string &kMer)
 {
-    std::vector<std::pair<uint64_t, uint32_t> > indexes_vec;
+    std::vector<std::pair<uint64_t, uint32_t>> indexes_vec;
     if (kMer == "DDDDDAA")
         indexes_vec.push_back({1, 0});
     else if (kMer == "DDDDAAG")
@@ -213,9 +213,9 @@ std::string mmseq2::Query::gappedAlignment(const std::string &querySequence, con
     uint32_t qSeqLen = querySequence.size(), tSeqLen = targetSequence.size();
     int32_t costOp = mock::costGapOpen, costEx = mock::costGapExtend;
     // E - gap in row, F - gap in column, H - best score
-    std::vector<std::vector<int32_t> > E(qSeqLen, std::vector<int>(tSeqLen, -costOp));
-    std::vector<std::vector<int32_t> > F(qSeqLen, std::vector<int>(tSeqLen, -costOp));
-    std::vector<std::vector<int32_t> > H(qSeqLen, std::vector<int>(tSeqLen, 0));
+    std::vector<std::vector<int32_t>> E(qSeqLen, std::vector<int>(tSeqLen, -costOp));
+    std::vector<std::vector<int32_t>> F(qSeqLen, std::vector<int>(tSeqLen, -costOp));
+    std::vector<std::vector<int32_t>> H(qSeqLen, std::vector<int>(tSeqLen, 0));
 
     int32_t bestScore = 0;
     uint32_t qPos = -1, tPos = -1;
