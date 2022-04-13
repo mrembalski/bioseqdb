@@ -319,4 +319,3 @@ ON
 	sql_drop
 EXECUTE FUNCTION 
 	test_event_trigger_for_drops();
-
