@@ -34,4 +34,4 @@ CREATE OR REPLACE FUNCTION seq_search_mmseqs(
 		gap_open integer,
 		pident double precision
 	)
-    AS 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT;
+    AS 'MODULE_PATHNAME' LANGUAGE C;
