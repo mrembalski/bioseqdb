@@ -25,33 +25,39 @@ namespace
     void add_all_queries_and_ids(const std::string &query_tblname, const std::string &query_colname,
                                  const mmseq2::Vec64Ptr &qIds, const mmseq2::VecStrPtr &queries)
     {
-        std::string getQueriesQuery =
+        // Perform a query via SPI
+        const std::string getQueriesQuery =
             std::string("SELECT id, ") +
             query_colname +
             std::string(" FROM ") +
             query_tblname +
             std::string(";");
         SPI_exec(getQueriesQuery.data(), 0);
-        TupleDesc spi_tupdesc = SPI_tuptable->tupdesc;
-        uint64_t processed = SPI_processed;
+
+        // Move data from SPI_tuptable to std::vectors qIds and queries
+        const TupleDesc spi_tupdesc = SPI_tuptable->tupdesc;
+        const uint64_t processed = SPI_processed;
         for (uint32_t i = 0; i < processed; i++)
         {
-            HeapTuple spi_tuple = SPI_tuptable->vals[i];
-            std::string id_str = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
-            std::string sequence = SPI_getvalue(spi_tuple, spi_tupdesc, 2);
+            const HeapTuple spi_tuple = SPI_tuptable->vals[i];
+            const std::string id_str = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
+            const std::string sequence = SPI_getvalue(spi_tuple, spi_tupdesc, 2);
             qIds->push_back(std::stol(id_str));
             queries->push_back(std::make_shared<std::string>(sequence));
         }
     }
 
-    void add_some_queries_and_ids(const std::string query_tblname, const std::string query_colname,
-                                  ArrayType *queries_array_type, mmseq2::Vec64Ptr qIds, mmseq2::VecStrPtr queries)
+    void add_some_queries_and_ids(const std::string &query_tblname, const std::string &query_colname,
+                                  const mmseq2::Vec64Ptr &qIds, const mmseq2::VecStrPtr &queries,
+                                  ArrayType *queries_array_type)
     {
-        Oid element_type = ARR_ELEMTYPE(queries_array_type);
+        // Get the element type of the array of queries
+        const Oid element_type = ARR_ELEMTYPE(queries_array_type);
         int16 elem_type_width;
         bool elem_type_by_val;
         char elem_type_align;
 
+        // Deconstruct the array
         uint64_t *queries_array;
         int queries_num;
         get_typlenbyvalalign(element_type, &elem_type_width, &elem_type_by_val, &elem_type_align);
@@ -70,37 +76,40 @@ namespace
                 std::to_string(queries_array[i]) +
                 std::string(";");
             SPI_exec(getOneQueryQuery.data(), 0);
-            TupleDesc spi_tupdesc = SPI_tuptable->tupdesc;
-            HeapTuple spi_tuple = SPI_tuptable->vals[0];
+            const TupleDesc spi_tupdesc = SPI_tuptable->tupdesc;
+            const HeapTuple spi_tuple = SPI_tuptable->vals[0];
             const std::string sequence = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
             queries->push_back(std::make_shared<std::string>(sequence));
         }
 
+        // Free the allocated memory
         pfree(queries_array);
     }
 
-    void add_all_targets(const std::string target_tblname, const std::string target_colname,
-                         mmseq2::Vec64Ptr tIds)
+    void add_all_targets(const std::string &target_tblname, const std::string &target_colname,
+                         const mmseq2::Vec64Ptr &tIds)
     {
-        std::string getTargetsQuery =
+        const std::string getTargetsQuery =
             std::string("SELECT id FROM ") +
             target_tblname +
             std::string(";");
         SPI_exec(getTargetsQuery.data(), 0);
-        TupleDesc spi_tupdesc = SPI_tuptable->tupdesc;
-        uint64_t processed = SPI_processed;
+
+        const TupleDesc spi_tupdesc = SPI_tuptable->tupdesc;
+        const uint64_t processed = SPI_processed;
         for (uint32_t i = 0; i < processed; i++)
         {
-            HeapTuple spi_tuple = SPI_tuptable->vals[i];
-            std::string id_str = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
+            const HeapTuple spi_tuple = SPI_tuptable->vals[i];
+            const std::string id_str = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
             tIds->push_back(std::stol(id_str));
         }
     }
 
-    void add_some_targets(const std::string target_tblname, const std::string target_colname,
-                          ArrayType *targets_array_type, mmseq2::Vec64Ptr tIds)
+    void add_some_targets(const std::string &target_tblname, const std::string &target_colname,
+                          const mmseq2::Vec64Ptr &tIds,
+                          ArrayType *targets_array_type)
     {
-        Oid element_type = ARR_ELEMTYPE(targets_array_type);
+        const Oid element_type = ARR_ELEMTYPE(targets_array_type);
         int16 elem_type_width;
         bool elem_type_by_val;
         char elem_type_align;
@@ -152,13 +161,13 @@ extern "C"
         if (PG_ARGISNULL(4))
             add_all_queries_and_ids(query_tblname, query_colname, qIds, queries);
         else
-            add_some_queries_and_ids(query_tblname, query_colname, PG_GETARG_ARRAYTYPE_P(4), qIds, queries);
+            add_some_queries_and_ids(query_tblname, query_colname, qIds, queries, PG_GETARG_ARRAYTYPE_P(4));
 
         // Prepare targets
         if (PG_ARGISNULL(5))
             add_all_targets(target_tblname, target_colname, tIds);
         else
-            add_some_targets(target_tblname, target_colname, PG_GETARG_ARRAYTYPE_P(5), tIds);
+            add_some_targets(target_tblname, target_colname, tIds, PG_GETARG_ARRAYTYPE_P(5));
 
         SPI_finish();
 
@@ -220,8 +229,7 @@ extern "C"
             values[16] = std::to_string(t.gapOpen).data();
             values[17] = std::to_string(t.pident).data();
 
-            HeapTuple tuple;
-            tuple = BuildTupleFromCStrings(attinmeta, values);
+            const HeapTuple tuple = BuildTupleFromCStrings(attinmeta, values);
             tuplestore_puttuple(tupstore, tuple);
             heap_freetuple(tuple);
             pfree(values);
