@@ -1,5 +1,8 @@
 #ifndef BIOSEQDB_MMSEQ2_H
 #define BIOSEQDB_MMSEQ2_H
+
+#include <stdint.h>
+#include <memory>
 #include <exception>
 #include <utility>
 #include <vector>
@@ -423,4 +426,4 @@ namespace mmseq2 {
     };
 }
 
-#endif //BIOSEQDB_MMSEQ2_H
+#endif // BIOSEQDB_MMSEQ2_H
