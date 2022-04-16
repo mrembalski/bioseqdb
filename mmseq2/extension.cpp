@@ -1,22 +1,21 @@
-#include <vector>
-#include <string>
-
+// Postgres C libraries
 extern "C"
 {
 #include <postgres.h>
 #include <fmgr.h>
-#include <access/htup_details.h>
-#include <catalog/pg_type.h>
-#include <executor/spi.h>
-#include <funcapi.h>
-#include <lib/stringinfo.h>
-#include <miscadmin.h>
-#include <executor/tablefunc.h>
-#include <utils/array.h>
-#include <utils/builtins.h>
-#include <utils/lsyscache.h>
+#include <executor/spi.h>    // SPI_*
+#include <funcapi.h>         // get_call_result_type, AttInMetadata, TupleDescGetAttInMetadata, BuildTupleFromCStrings
+#include <miscadmin.h>       // work_mem
+#include <utils/array.h>     // deconstruct_array, ARR_ELEMTYPE, PG_GETARG_ARRAYTYPE_P
+#include <utils/builtins.h>  // text_to_cstring
+#include <utils/lsyscache.h> // get_typlenbyvalalign
 }
 
+// C++ STL
+#include <vector>
+#include <string>
+
+// C++ MMSeq microservice libraries
 #include "mmseq2.h"
 
 constexpr uint32_t OUT_TUPLE_ARITY = 18;
