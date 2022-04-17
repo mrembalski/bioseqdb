@@ -22,8 +22,39 @@ constexpr uint32_t OUT_TUPLE_ARITY = 18;
 
 namespace
 {
-    void add_all_queries_and_ids(const std::string &query_tblname, const std::string &query_colname,
-                                 const mmseq2::Vec64Ptr &qIds, const mmseq2::VecStrPtr &queries)
+    void add_one_sequence(const std::string &sequence,
+                          const mmseq2::Vec64Ptr &ids, const mmseq2::VecStrPtr &sequences)
+    {
+        ids->push_back(1);
+        sequences->push_back(std::make_shared<std::string>(sequence));
+    }
+
+    void add_array_of_sequences(ArrayType *const sequences_array_type,
+                                const mmseq2::Vec64Ptr &ids, const mmseq2::VecStrPtr &sequences)
+    {
+        // Get the element type of the array of queries
+        const Oid element_type = ARR_ELEMTYPE(sequences_array_type);
+        int16 elem_type_width;
+        bool elem_type_by_val;
+        char elem_type_align;
+
+        // Deconstruct the array
+        Datum *sequences_array;
+        int sequences_num;
+        get_typlenbyvalalign(element_type, &elem_type_width, &elem_type_by_val, &elem_type_align);
+        deconstruct_array(sequences_array_type, element_type, elem_type_width, elem_type_by_val, elem_type_align,
+                          &sequences_array, NULL, &sequences_num);
+
+        for (int i = 0; i < sequences_num; i++)
+        {
+            ids->push_back(i + 1);
+            const std::string sequence = TextDatumGetCString(sequences_array[i]);
+            sequences->push_back(std::make_shared<std::string>(sequence));
+        }
+    }
+
+    void add_queries_all(const std::string &query_tblname, const std::string &query_colname,
+                         const mmseq2::Vec64Ptr &qIds, const mmseq2::VecStrPtr &queries)
     {
         // Perform a query via SPI
         const std::string getQueriesQuery =
@@ -47,9 +78,9 @@ namespace
         }
     }
 
-    void add_some_queries_and_ids(const std::string &query_tblname, const std::string &query_colname,
-                                  const mmseq2::Vec64Ptr &qIds, const mmseq2::VecStrPtr &queries,
-                                  ArrayType *queries_array_type)
+    void add_queries_with_ids(const std::string &query_tblname, const std::string &query_colname,
+                              const mmseq2::Vec64Ptr &qIds, const mmseq2::VecStrPtr &queries,
+                              ArrayType *const queries_array_type)
     {
         // Get the element type of the array of queries
         const Oid element_type = ARR_ELEMTYPE(queries_array_type);
@@ -86,7 +117,7 @@ namespace
         pfree(queries_array);
     }
 
-    void add_all_targets(const std::string &target_tblname, const std::string &target_colname,
+    void add_targets_all(const std::string &target_tblname, const std::string &target_colname,
                          const mmseq2::Vec64Ptr &tIds)
     {
         const std::string getTargetsQuery =
@@ -105,9 +136,9 @@ namespace
         }
     }
 
-    void add_some_targets(const std::string &target_tblname, const std::string &target_colname,
-                          const mmseq2::Vec64Ptr &tIds,
-                          ArrayType *targets_array_type)
+    void add_targets_with_ids(const std::string &target_tblname, const std::string &target_colname,
+                              const mmseq2::Vec64Ptr &tIds,
+                              ArrayType *const targets_array_type)
     {
         const Oid element_type = ARR_ELEMTYPE(targets_array_type);
         int16 elem_type_width;
@@ -131,9 +162,79 @@ extern "C"
 {
     PG_MODULE_MAGIC;
 
-    PG_FUNCTION_INFO_V1(seq_search_mmseqs);
+    PG_FUNCTION_INFO_V1(seq_search_mmseqs_one_to_one);
+    PG_FUNCTION_INFO_V1(seq_search_mmseqs_arr_to_arr);
+    PG_FUNCTION_INFO_V1(seq_search_mmseqs_db_to_db);
 
-    Datum seq_search_mmseqs(PG_FUNCTION_ARGS)
+    Datum seq_search_mmseqs_one_to_one(PG_FUNCTION_ARGS)
+    {
+        // Optional parameters
+        char *substitution_matrix_name = text_to_cstring(PG_GETARG_TEXT_PP(2));
+        uint32_t kmer_length = PG_GETARG_INT32(3);
+        uint32_t kmer_gen_threshold = PG_GETARG_INT32(4);
+        uint32_t ungapped_alignment_score = PG_GETARG_INT32(5);
+        double eval_threshold = PG_GETARG_FLOAT8(6);
+        uint32_t gap_open_cost = PG_GETARG_INT32(7);
+        uint32_t gap_penalty_cost = PG_GETARG_INT32(8);
+
+        // Construct vectors of ids and queries
+        mmseq2::Vec64Ptr qIds(new std::vector<uint64_t>{});
+        mmseq2::Vec64Ptr tIds(new std::vector<uint64_t>{});
+        mmseq2::VecStrPtr queries(new std::vector<mmseq2::StrPtr>{});
+        mmseq2::VecStrPtr targets(new std::vector<mmseq2::StrPtr>{});
+
+        add_one_sequence(text_to_cstring(PG_GETARG_TEXT_PP(0)), qIds, queries);
+        add_one_sequence(text_to_cstring(PG_GETARG_TEXT_PP(1)), tIds, targets);
+
+        // Write out the contents of the vectors for testing purposes
+        for (int i = 0; i < qIds->size(); i++)
+            elog(WARNING, "%d", (*qIds)[i]);
+        for (int i = 0; i < queries->size(); i++)
+            elog(WARNING, "%s", ((*queries)[i])->data());
+        for (int i = 0; i < tIds->size(); i++)
+            elog(WARNING, "%d", (*tIds)[i]);
+        for (int i = 0; i < targets->size(); i++)
+            elog(WARNING, "%s", ((*targets)[i])->data());
+
+        // Just return null for now
+        PG_RETURN_NULL();
+    }
+
+    Datum seq_search_mmseqs_arr_to_arr(PG_FUNCTION_ARGS)
+    {
+        // Optional parameters
+        char *substitution_matrix_name = text_to_cstring(PG_GETARG_TEXT_PP(2));
+        uint32_t kmer_length = PG_GETARG_INT32(3);
+        uint32_t kmer_gen_threshold = PG_GETARG_INT32(4);
+        uint32_t ungapped_alignment_score = PG_GETARG_INT32(5);
+        double eval_threshold = PG_GETARG_FLOAT8(6);
+        uint32_t gap_open_cost = PG_GETARG_INT32(7);
+        uint32_t gap_penalty_cost = PG_GETARG_INT32(8);
+
+        // Construct vectors of ids and queries
+        mmseq2::Vec64Ptr qIds(new std::vector<uint64_t>{});
+        mmseq2::Vec64Ptr tIds(new std::vector<uint64_t>{});
+        mmseq2::VecStrPtr queries(new std::vector<mmseq2::StrPtr>{});
+        mmseq2::VecStrPtr targets(new std::vector<mmseq2::StrPtr>{});
+
+        add_array_of_sequences(PG_GETARG_ARRAYTYPE_P(0), qIds, queries);
+        add_array_of_sequences(PG_GETARG_ARRAYTYPE_P(1), tIds, targets);
+
+        // Write out the contents of the vectors for testing purposes
+        for (int i = 0; i < qIds->size(); i++)
+            elog(WARNING, "%d", (*qIds)[i]);
+        for (int i = 0; i < queries->size(); i++)
+            elog(WARNING, "%s", ((*queries)[i])->data());
+        for (int i = 0; i < tIds->size(); i++)
+            elog(WARNING, "%d", (*tIds)[i]);
+        for (int i = 0; i < targets->size(); i++)
+            elog(WARNING, "%s", ((*targets)[i])->data());
+
+        // Just return null for now
+        PG_RETURN_NULL();
+    }
+
+    Datum seq_search_mmseqs_db_to_db(PG_FUNCTION_ARGS)
     {
         // Table and column names
         char *query_tblname = text_to_cstring(PG_GETARG_TEXT_PP(0));
@@ -159,15 +260,15 @@ extern "C"
 
         // Prepare queries
         if (PG_ARGISNULL(4))
-            add_all_queries_and_ids(query_tblname, query_colname, qIds, queries);
+            add_queries_all(query_tblname, query_colname, qIds, queries);
         else
-            add_some_queries_and_ids(query_tblname, query_colname, qIds, queries, PG_GETARG_ARRAYTYPE_P(4));
+            add_queries_with_ids(query_tblname, query_colname, qIds, queries, PG_GETARG_ARRAYTYPE_P(4));
 
         // Prepare targets
         if (PG_ARGISNULL(5))
-            add_all_targets(target_tblname, target_colname, tIds);
+            add_targets_all(target_tblname, target_colname, tIds);
         else
-            add_some_targets(target_tblname, target_colname, tIds, PG_GETARG_ARRAYTYPE_P(5));
+            add_targets_with_ids(target_tblname, target_colname, tIds, PG_GETARG_ARRAYTYPE_P(5));
 
         SPI_finish();
 
