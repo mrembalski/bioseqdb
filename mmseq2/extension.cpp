@@ -18,10 +18,10 @@ extern "C"
 // C++ MMSeq microservice libraries
 #include "mmseq2.h"
 
-constexpr uint32_t OUT_TUPLE_ARITY = 18;
-
 namespace
 {
+    constexpr uint32_t OUT_TUPLE_ARITY = 18;
+
     void add_one_sequence(const std::string &sequence,
                           const mmseq2::Vec64Ptr &ids, const mmseq2::VecStrPtr &sequences)
     {
