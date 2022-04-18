@@ -166,6 +166,87 @@ extern "C"
     PG_FUNCTION_INFO_V1(seq_search_mmseqs_arr_to_arr);
     PG_FUNCTION_INFO_V1(seq_search_mmseqs_db_to_db);
 
+    Datum seq_search_mmseqs_main(const std::optional<std::string> target_tblname,
+                                 const std::optional<std::string> target_colname,
+                                 const mmseq2::Vec64Ptr &qIds,
+                                 const mmseq2::Vec64Ptr &tIds,
+                                 const mmseq2::VecStrPtr &queries,
+                                 const mmseq2::VecStrPtr &targets,
+                                 const FunctionCallInfo &fcinfo,
+                                 uint32_t fst_opt_param)
+    {
+        // Optional parameters
+        char *substitution_matrix_name = text_to_cstring(PG_GETARG_TEXT_PP(fst_opt_param));
+        uint32_t kmer_length = PG_GETARG_INT32(fst_opt_param + 1);
+        uint32_t kmer_gen_threshold = PG_GETARG_INT32(fst_opt_param + 2);
+        uint32_t ungapped_alignment_score = PG_GETARG_INT32(fst_opt_param + 3);
+        double eval_threshold = PG_GETARG_FLOAT8(fst_opt_param + 4);
+        uint32_t gap_open_cost = PG_GETARG_INT32(fst_opt_param + 5);
+        uint32_t gap_penalty_cost = PG_GETARG_INT32(fst_opt_param + 6);
+
+        // Get rsinfo and per_query_ctx
+        ReturnSetInfo *rsinfo = (ReturnSetInfo *)fcinfo->resultinfo;
+        MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+        MemoryContext oldcontext;
+
+        // Tuple descriptor
+        TupleDesc tupdesc;
+        get_call_result_type(fcinfo, NULL, &tupdesc);
+        AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tupdesc);
+
+        // Switch to per_query memory context
+        oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+        // Initialize the output table as empty
+        tupdesc = CreateTupleDescCopy(tupdesc);
+        Tuplestorestate *tupstore = tuplestore_begin_heap(
+            rsinfo->allowedModes & SFRM_Materialize_Random,
+            false,
+            work_mem);
+
+        // Switch to the old memory context
+        MemoryContextSwitchTo(oldcontext);
+
+        std::vector<mmseq2::MMseqOutTuple> mmseq_result;
+        uint32_t n = mmseq_result.size();
+
+        // Build the output table
+        for (uint32_t i = 0; i < n; i++)
+        {
+            mmseq2::MMseqOutTuple t = mmseq_result[i];
+            char **values = (char **)palloc0(sizeof(char *) * OUT_TUPLE_ARITY);
+            values[0] = std::to_string(t.queryId).data();
+            values[1] = std::to_string(t.targetId).data();
+            values[2] = std::to_string(t.rawScore).data();
+            values[3] = std::to_string(t.bitScore).data();
+            values[4] = std::to_string(t.eValue).data();
+            values[5] = std::to_string(t.qStart).data();
+            values[6] = std::to_string(t.qEnd).data();
+            values[7] = std::to_string(t.qLen).data();
+            values[8] = std::to_string(t.tStart).data();
+            values[9] = std::to_string(t.tEnd).data();
+            values[10] = std::to_string(t.tLen).data();
+            values[11] = t.qAln.data();
+            values[12] = t.tAln.data();
+            values[13] = t.cigar.data();
+            values[14] = std::to_string(t.alnLen).data();
+            values[15] = std::to_string(t.mismatch).data();
+            values[16] = std::to_string(t.gapOpen).data();
+            values[17] = std::to_string(t.pident).data();
+
+            const HeapTuple tuple = BuildTupleFromCStrings(attinmeta, values);
+            tuplestore_puttuple(tupstore, tuple);
+            heap_freetuple(tuple);
+            pfree(values);
+        }
+
+        // Set the return mode to materialize and return tupstore
+        rsinfo->returnMode = SFRM_Materialize;
+        rsinfo->setResult = tupstore;
+        rsinfo->setDesc = tupdesc;
+        return (Datum)0;
+    }
+
     Datum seq_search_mmseqs_one_to_one(PG_FUNCTION_ARGS)
     {
         // Optional parameters
@@ -237,24 +318,16 @@ extern "C"
     Datum seq_search_mmseqs_db_to_db(PG_FUNCTION_ARGS)
     {
         // Table and column names
-        char *query_tblname = text_to_cstring(PG_GETARG_TEXT_PP(0));
-        char *query_colname = text_to_cstring(PG_GETARG_TEXT_PP(1));
-        char *target_tblname = text_to_cstring(PG_GETARG_TEXT_PP(2));
-        char *target_colname = text_to_cstring(PG_GETARG_TEXT_PP(3));
-
-        // Optional parameters
-        char *substitution_matrix_name = text_to_cstring(PG_GETARG_TEXT_PP(6));
-        uint32_t kmer_length = PG_GETARG_INT32(7);
-        uint32_t kmer_gen_threshold = PG_GETARG_INT32(8);
-        uint32_t ungapped_alignment_score = PG_GETARG_INT32(9);
-        double eval_threshold = PG_GETARG_FLOAT8(10);
-        uint32_t gap_open_cost = PG_GETARG_INT32(11);
-        uint32_t gap_penalty_cost = PG_GETARG_INT32(12);
+        std::string query_tblname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+        std::string query_colname = text_to_cstring(PG_GETARG_TEXT_PP(1));
+        std::string target_tblname = text_to_cstring(PG_GETARG_TEXT_PP(2));
+        std::string target_colname = text_to_cstring(PG_GETARG_TEXT_PP(3));
 
         // Construct vectors of ids and queries
         mmseq2::Vec64Ptr qIds(new std::vector<uint64_t>{});
         mmseq2::Vec64Ptr tIds(new std::vector<uint64_t>{});
         mmseq2::VecStrPtr queries(new std::vector<mmseq2::StrPtr>{});
+        mmseq2::VecStrPtr targets(new std::vector<mmseq2::StrPtr>{});
 
         SPI_connect();
 
@@ -280,66 +353,9 @@ extern "C"
         for (int i = 0; i < tIds->size(); i++)
             elog(WARNING, "%d", (*tIds)[i]);
 
-        // Get rsinfo and per_query_ctx
-        ReturnSetInfo *rsinfo = (ReturnSetInfo *)fcinfo->resultinfo;
-        MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-        MemoryContext oldcontext;
-
-        // Tuple descriptor
-        TupleDesc tupdesc;
-        get_call_result_type(fcinfo, NULL, &tupdesc);
-        AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tupdesc);
-
-        // Switch to per_query memory context
-        oldcontext = MemoryContextSwitchTo(per_query_ctx);
-
-        // Initialize the output table as empty
-        tupdesc = CreateTupleDescCopy(tupdesc);
-        Tuplestorestate *tupstore = tuplestore_begin_heap(
-            rsinfo->allowedModes & SFRM_Materialize_Random,
-            false,
-            work_mem);
-
-        // Switch to the old memory context
-        MemoryContextSwitchTo(oldcontext);
-
-        std::vector<mmseq2::MMseqOutTuple> mmseq_result;
-        uint32_t n = mmseq_result.size();
-
-        // Build the output table
-        for (uint32_t i = 0; i < n; i++)
-        {
-            mmseq2::MMseqOutTuple t = mmseq_result[i];
-            char **values = (char **)palloc0(sizeof(char *) * OUT_TUPLE_ARITY);
-            values[0] = std::to_string(t.queryId).data();
-            values[1] = std::to_string(t.targetId).data();
-            values[2] = std::to_string(t.rawScore).data();
-            values[3] = std::to_string(t.bitScore).data();
-            values[4] = std::to_string(t.eValue).data();
-            values[5] = std::to_string(t.qStart).data();
-            values[6] = std::to_string(t.qEnd).data();
-            values[7] = std::to_string(t.qLen).data();
-            values[8] = std::to_string(t.tStart).data();
-            values[9] = std::to_string(t.tEnd).data();
-            values[10] = std::to_string(t.tLen).data();
-            values[11] = t.qAln.data();
-            values[12] = t.tAln.data();
-            values[13] = t.cigar.data();
-            values[14] = std::to_string(t.alnLen).data();
-            values[15] = std::to_string(t.mismatch).data();
-            values[16] = std::to_string(t.gapOpen).data();
-            values[17] = std::to_string(t.pident).data();
-
-            const HeapTuple tuple = BuildTupleFromCStrings(attinmeta, values);
-            tuplestore_puttuple(tupstore, tuple);
-            heap_freetuple(tuple);
-            pfree(values);
-        }
-
-        // Set the return mode to materialize and return tupstore
-        rsinfo->returnMode = SFRM_Materialize;
-        rsinfo->setResult = tupstore;
-        rsinfo->setDesc = tupdesc;
-        return (Datum)0;
+        return seq_search_mmseqs_main(std::optional<std::string>{target_tblname},
+                                      std::optional<std::string>{target_colname},
+                                      qIds, tIds, queries, targets,
+                                      fcinfo, 6);
     }
 }
