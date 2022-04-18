@@ -184,6 +184,31 @@ extern "C"
         uint32_t gap_open_cost = PG_GETARG_INT32(fst_opt_param + 5);
         uint32_t gap_penalty_cost = PG_GETARG_INT32(fst_opt_param + 6);
 
+        // Write out the contents of the vectors
+        elog(WARNING, "%s", "----- Passed sequences -----");
+        elog(WARNING, "%s%ld%s", "Query ids (", qIds->size(), "):");
+        for (int i = 0; i < qIds->size(); i++)
+            elog(WARNING, "%ld", (*qIds)[i]);
+        elog(WARNING, "%s%ld%s", "Queries (", queries->size(), "):");
+        for (int i = 0; i < queries->size(); i++)
+            elog(WARNING, "%s", ((*queries)[i])->data());
+        elog(WARNING, "%s%ld%s", "Target ids (", tIds->size(), "):");
+        for (int i = 0; i < tIds->size(); i++)
+            elog(WARNING, "%ld", (*tIds)[i]);
+        elog(WARNING, "%s%ld%s", "Targets (", targets->size(), "):");
+        for (int i = 0; i < targets->size(); i++)
+            elog(WARNING, "%s", ((*targets)[i])->data());
+
+        // Write out the values of the optional parameters
+        elog(WARNING, "%s", "----- Optional parameters -----");
+        elog(WARNING, "%s%s", "Substitution matrix: ", substitution_matrix_name);
+        elog(WARNING, "%s%d", "Kmer length: ", kmer_length);
+        elog(WARNING, "%s%d", "Kmer gen threshold: ", kmer_gen_threshold);
+        elog(WARNING, "%s%d", "Ungapped alignment score: ", ungapped_alignment_score);
+        elog(WARNING, "%s%f", "Eval threshold: ", eval_threshold);
+        elog(WARNING, "%s%d", "Gap open cost: ", gap_open_cost);
+        elog(WARNING, "%s%d", "Gap penalty cost: ", gap_penalty_cost);
+
         // Get rsinfo and per_query_ctx
         ReturnSetInfo *rsinfo = (ReturnSetInfo *)fcinfo->resultinfo;
         MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
@@ -267,16 +292,6 @@ extern "C"
         add_one_sequence(text_to_cstring(PG_GETARG_TEXT_PP(0)), qIds, queries);
         add_one_sequence(text_to_cstring(PG_GETARG_TEXT_PP(1)), tIds, targets);
 
-        // Write out the contents of the vectors for testing purposes
-        for (int i = 0; i < qIds->size(); i++)
-            elog(WARNING, "%d", (*qIds)[i]);
-        for (int i = 0; i < queries->size(); i++)
-            elog(WARNING, "%s", ((*queries)[i])->data());
-        for (int i = 0; i < tIds->size(); i++)
-            elog(WARNING, "%d", (*tIds)[i]);
-        for (int i = 0; i < targets->size(); i++)
-            elog(WARNING, "%s", ((*targets)[i])->data());
-
         // Just return null for now
         PG_RETURN_NULL();
     }
@@ -300,16 +315,6 @@ extern "C"
 
         add_array_of_sequences(PG_GETARG_ARRAYTYPE_P(0), qIds, queries);
         add_array_of_sequences(PG_GETARG_ARRAYTYPE_P(1), tIds, targets);
-
-        // Write out the contents of the vectors for testing purposes
-        for (int i = 0; i < qIds->size(); i++)
-            elog(WARNING, "%d", (*qIds)[i]);
-        for (int i = 0; i < queries->size(); i++)
-            elog(WARNING, "%s", ((*queries)[i])->data());
-        for (int i = 0; i < tIds->size(); i++)
-            elog(WARNING, "%d", (*tIds)[i]);
-        for (int i = 0; i < targets->size(); i++)
-            elog(WARNING, "%s", ((*targets)[i])->data());
 
         // Just return null for now
         PG_RETURN_NULL();
@@ -344,14 +349,6 @@ extern "C"
             add_targets_with_ids(target_tblname, target_colname, tIds, PG_GETARG_ARRAYTYPE_P(5));
 
         SPI_finish();
-
-        // Write out the contents of the vectors for testing purposes
-        for (int i = 0; i < qIds->size(); i++)
-            elog(WARNING, "%d", (*qIds)[i]);
-        for (int i = 0; i < queries->size(); i++)
-            elog(WARNING, "%s", ((*queries)[i])->data());
-        for (int i = 0; i < tIds->size(); i++)
-            elog(WARNING, "%d", (*tIds)[i]);
 
         return seq_search_mmseqs_main(std::optional<std::string>{target_tblname},
                                       std::optional<std::string>{target_colname},
