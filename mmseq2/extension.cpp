@@ -274,15 +274,6 @@ extern "C"
 
     Datum seq_search_mmseqs_one_to_one(PG_FUNCTION_ARGS)
     {
-        // Optional parameters
-        char *substitution_matrix_name = text_to_cstring(PG_GETARG_TEXT_PP(2));
-        uint32_t kmer_length = PG_GETARG_INT32(3);
-        uint32_t kmer_gen_threshold = PG_GETARG_INT32(4);
-        uint32_t ungapped_alignment_score = PG_GETARG_INT32(5);
-        double eval_threshold = PG_GETARG_FLOAT8(6);
-        uint32_t gap_open_cost = PG_GETARG_INT32(7);
-        uint32_t gap_penalty_cost = PG_GETARG_INT32(8);
-
         // Construct vectors of ids and queries
         mmseq2::Vec64Ptr qIds(new std::vector<uint64_t>{});
         mmseq2::Vec64Ptr tIds(new std::vector<uint64_t>{});
@@ -300,15 +291,6 @@ extern "C"
 
     Datum seq_search_mmseqs_arr_to_arr(PG_FUNCTION_ARGS)
     {
-        // Optional parameters
-        char *substitution_matrix_name = text_to_cstring(PG_GETARG_TEXT_PP(2));
-        uint32_t kmer_length = PG_GETARG_INT32(3);
-        uint32_t kmer_gen_threshold = PG_GETARG_INT32(4);
-        uint32_t ungapped_alignment_score = PG_GETARG_INT32(5);
-        double eval_threshold = PG_GETARG_FLOAT8(6);
-        uint32_t gap_open_cost = PG_GETARG_INT32(7);
-        uint32_t gap_penalty_cost = PG_GETARG_INT32(8);
-
         // Construct vectors of ids and queries
         mmseq2::Vec64Ptr qIds(new std::vector<uint64_t>{});
         mmseq2::Vec64Ptr tIds(new std::vector<uint64_t>{});
