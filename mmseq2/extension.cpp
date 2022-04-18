@@ -293,7 +293,9 @@ extern "C"
         add_one_sequence(text_to_cstring(PG_GETARG_TEXT_PP(1)), tIds, targets);
 
         // Just return null for now
-        PG_RETURN_NULL();
+        return seq_search_mmseqs_main(std::nullopt, std::nullopt,
+                                      qIds, tIds, queries, targets,
+                                      fcinfo, 2);
     }
 
     Datum seq_search_mmseqs_arr_to_arr(PG_FUNCTION_ARGS)
@@ -317,7 +319,9 @@ extern "C"
         add_array_of_sequences(PG_GETARG_ARRAYTYPE_P(1), tIds, targets);
 
         // Just return null for now
-        PG_RETURN_NULL();
+        return seq_search_mmseqs_main(std::nullopt, std::nullopt,
+                                      qIds, tIds, queries, targets,
+                                      fcinfo, 2);
     }
 
     Datum seq_search_mmseqs_db_to_db(PG_FUNCTION_ARGS)
