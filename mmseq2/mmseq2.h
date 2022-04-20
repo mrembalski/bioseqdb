@@ -10,6 +10,7 @@
 #include <set>
 #include <iostream>
 #include "mock_structures.h"
+#include "rpc/server.h"
 
 namespace mmseq2 {
     class InputParams;
@@ -249,7 +250,7 @@ namespace mmseq2 {
         using VecStrPtr = std::shared_ptr<std::vector<StrPtr>>;
         using InputParamsPtr = std::shared_ptr<InputParams>;
 
-        InputParams() = delete;
+        InputParams() {}
 
         InputParams(uint32_t qLen, uint32_t tLen, Vec64Ptr qIds, Vec64Ptr tIds, VecStrPtr queries,
                     StrPtr targetTableName, StrPtr targetColumnName, const StrPtr& substitutionMatrixName, uint32_t kMerLength,
@@ -316,6 +317,12 @@ namespace mmseq2 {
             return substitutionMatrixId;
         }
 
+        MSGPACK_DEFINE_MAP(qLen, tLen, qIds, tIds,
+                           queries, targetTableName, targetColumnName, substitutionMatrixName,
+                           kMerLength, kMerGenThreshold, ungappedAlignmentScore, evalTreshold, gapOpenCost,
+                           gapPenaltyCost, threadNumber, substitutionMatrixId
+        );
+
     private:
         uint32_t qLen;
         uint32_t tLen;
@@ -337,7 +344,8 @@ namespace mmseq2 {
         uint32_t substitutionMatrixId;
     };
 
-    struct MmseqResult {
+    class MmseqResult {
+    private:
         uint64_t queryId, targetId;
         double rawScore = 0.0, bitScore = 0.0, eValue = 0.0;
         uint32_t qStart = 0, qEnd = 0, qLen = 0, tStart = 0, tEnd = 0, tLen = 0;
@@ -345,12 +353,104 @@ namespace mmseq2 {
         uint32_t alnLen = 0, mismatch = 0, gapOpen = 0;
         double pident = 0.0;
 
+    public:
         MmseqResult(uint64_t queryId, uint64_t targetId) : queryId{queryId}, targetId{targetId} {}
+
+        double getRawScore() const {
+            return rawScore;
+        }
+
+        double getBitScore() const {
+            return bitScore;
+        }
+
+        uint32_t getQLen() const {
+            return qLen;
+        }
+
+        double getEValue() const {
+            return eValue;
+        }
+
+        uint32_t getTLen() const {
+            return tLen;
+        }
+
+        void setQLen(uint32_t qLen) {
+            MmseqResult::qLen = qLen;
+        }
+
+        void setTLen(uint32_t tLen) {
+            MmseqResult::tLen = tLen;
+        }
+
+        void setQEnd(uint32_t qEnd) {
+            this->qEnd = qEnd;
+        }
+
+        void setTEnd(uint32_t tEnd) {
+            this->tEnd = tEnd;
+        }
+
+        void incrMismatch() {
+            this->mismatch++;
+        }
+
+        void incrGapOpen() {
+            this->gapOpen++;
+        }
+
+        void setQStart(uint32_t qStart) {
+            this->qStart = qStart;
+        }
+
+        void setRawScore(double rawScore) {
+            MmseqResult::rawScore = rawScore;
+        }
+
+        void setBitScore(double bitScore) {
+            MmseqResult::bitScore = bitScore;
+        }
+
+        void setEValue(double eValue) {
+            MmseqResult::eValue = eValue;
+        }
+
+        void setTStart(uint32_t tStart) {
+            MmseqResult::tStart = tStart;
+        }
+
+        void setQAln(const std::string &qAln) {
+            MmseqResult::qAln = qAln;
+        }
+
+        void setTAln(const std::string &tAln) {
+            MmseqResult::tAln = tAln;
+        }
+
+        void setCigar(const std::string &cigar) {
+            MmseqResult::cigar = cigar;
+        }
+
+        void setAlnLen(uint32_t alnLen) {
+            MmseqResult::alnLen = alnLen;
+        }
+
+        void setPident(double pident) {
+            MmseqResult::pident = pident;
+        }
+
+        MSGPACK_DEFINE_MAP(queryId, targetId,
+                           rawScore, bitScore, eValue, qStart, qEnd, qLen, tStart, tEnd, tLen,
+                           qAln, tAln, cigar,
+                           alnLen, mismatch, gapOpen,
+                           pident
+                           );
     };
 
     using VecRes = std::vector<mmseq2::MmseqResult>;
     using VecResPtr = std::shared_ptr<VecRes>;
-    VecRes MMSeq2(mmseq2::InputParams::InputParamsPtr inputParams);
+    VecRes MMSeq2(mmseq2::InputParams::InputParamsPtr& inputParams);
 
     class Query {
     public:

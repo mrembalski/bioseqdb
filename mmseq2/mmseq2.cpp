@@ -21,7 +21,7 @@ void processQueries(const mmseq2::InputParams::InputParamsPtr &inputParams, std:
 
 void processSingleQuery(uint64_t qId, mmseq2::InputParams::StrPtr queryStr, mmseq2::InputParams::InputParamsPtr inputParams, std::mutex *resMtx, const mmseq2::VecResPtr &resultPtr);
 
-mmseq2::VecRes mmseq2::MMSeq2(mmseq2::InputParams::InputParamsPtr inputParams) {
+mmseq2::VecRes mmseq2::MMSeq2(mmseq2::InputParams::InputParamsPtr& inputParams) {
     std::vector<std::thread> workers{};
     std::mutex mtx, resMtx;
     uint32_t nextQuery = 0;
@@ -211,8 +211,8 @@ void mmseq2::Query::gappedAlignment(const StrPtr &querySequence, const StrPtr &t
         }
     }
 
-    result.qEnd = qPos;
-    result.tEnd = tPos;
+    result.setQEnd(qPos);
+    result.setTEnd(tPos);
     std::string qAl, tAl, cigar;
     int lastAction = -1, identicalMatches = 0;
     auto qInd = (int32_t)qPos, tInd = (int32_t)tPos;
@@ -223,7 +223,7 @@ void mmseq2::Query::gappedAlignment(const StrPtr &querySequence, const StrPtr &t
                                               querySequence.get()->at(qInd), targetSequence.get()->at(tInd));
         if ((qInd > 0 && tInd > 0 && H[qInd][tInd] == H[qInd - 1][tInd - 1] + match) || (H[qInd][tInd] == match)) {
             if (querySequence.get()->at(qInd) != targetSequence.get()->at(tInd)) {
-                result.mismatch += 1;
+                result.incrMismatch();
             } else {
                 identicalMatches += 1;
             }
@@ -234,7 +234,7 @@ void mmseq2::Query::gappedAlignment(const StrPtr &querySequence, const StrPtr &t
             tInd--;
             lastAction = 0;
         } else if (H[qInd][tInd] == E[qInd][tInd]) {
-            result.gapOpen += 1;
+            result.incrGapOpen();
             while (tInd > 0 && E[qInd][tInd] == E[qInd][tInd - 1] - costEx) {
                 cigar += 'D';
                 qAl += ' ';
@@ -249,7 +249,7 @@ void mmseq2::Query::gappedAlignment(const StrPtr &querySequence, const StrPtr &t
             }
             lastAction = 1;
         } else if (H[qInd][tInd] == F[qInd][tInd]) {
-            result.gapOpen += 1;
+            result.incrGapOpen();
             while (qInd > 0 && F[qInd][tInd] == F[qInd - 1][tInd] - costEx) {
                 cigar += 'I';
                 tAl += ' ';
@@ -270,18 +270,18 @@ void mmseq2::Query::gappedAlignment(const StrPtr &querySequence, const StrPtr &t
     std::reverse(tAl.begin(), tAl.end());
     std::reverse(cigar.begin(), cigar.end());
 
-    result.qStart = qInd + (lastAction % 2 == 0 ? 1 : 0);
-    result.tStart = tInd + (lastAction < 2 ? 1 : 0);
-    result.qAln = qAl;
-    result.tAln = tAl;
-    result.alnLen = qAl.size();
+    result.setQStart(qInd + (lastAction % 2 == 0 ? 1 : 0));
+    result.setTStart(tInd + (lastAction < 2 ? 1 : 0));
+    result.setQAln(qAl);
+    result.setTAln(tAl);
+    result.setAlnLen(qAl.size());
 
-    result.rawScore = bestScore;
-    result.bitScore = evalBitScore(result.rawScore);
-    result.eValue = evalEValue(result.bitScore, result.qLen, result.tLen);
+    result.setRawScore(bestScore);
+    result.setBitScore(evalBitScore(result.getRawScore()));
+    result.setEValue(evalEValue(result.getBitScore(), result.getQLen(), result.getTLen()));
 
-    result.pident = (double)identicalMatches / (double)qAl.size();
-    result.cigar = cigar;
+    result.setPident((double)identicalMatches / (double)qAl.size());
+    result.setCigar(cigar);
 }
 
 void mmseq2::Query::executeAlignment(std::mutex *resMtx, const VecResPtr &mmseqResult) {
@@ -298,11 +298,11 @@ void mmseq2::Query::executeAlignment(std::mutex *resMtx, const VecResPtr &mmseqR
             filteredTargetIds.insert(targetId);
 
             mmseq2::MmseqResult result(this->queryId, targetId);
-            result.qLen = querySequence->size();
-            result.tLen = targetSequence->size();
+            result.setQLen(querySequence->size());
+            result.setTLen(targetSequence->size());
             gappedAlignment(querySequence, targetSequence, result);
 
-            if (result.eValue <= this->evalTreshold) {
+            if (result.getEValue() <= this->evalTreshold) {
                 resMtx->lock();
                 mmseqResult->push_back(result);
                 resMtx->unlock();
