@@ -1,56 +1,47 @@
-#include <postgres.h>
+#include "dbconn.h"
 #include <libpq-fe.h>
 #include <unistd.h>
+#include <string>
 
-static void exit_nicely(PGconn *conn)
-{
-    PQfinish(conn);
-    exit(1);
-}
+// class DBConn
+// {
+// private:
+//     PGconn *connection;
+//     PGnotify *notify;
 
-class DBConn
-{
-private:
-    PGconn *connection;
-    PGnotify *notify;
+//     std::string tableName;
+//     std::string columnName;
 
-    std::string tableName;
-    std::string columnName;
+// public:
+//     DBConn()
+//     {
+//         connection = PQconnectdb("host=localhost port=5433 dbname=bioseqdb user=postgres password=postgres");
 
-public:
-    DBConn()
-    {
-        connection = PQconnectdb("host=localhost port=5433 dbname=bioseqdb user=postgres password=postgres");
+//         if (PQstatus(connection) != CONNECTION_OK)
+//         {
+//             fprintf(stderr, "%s", PQerrorMessage(connection));
 
-        if (PQstatus(connection) != CONNECTION_OK)
-        {
-            fprintf(stderr, "%s", PQerrorMessage(conn));
+//             exit_nicely(connection);
+//         }
+//     }
 
-            exit_nicely(conn);
-        }
-    }
+//     uint64_t GetIndexPosition(std::string kmer, uint64_t id)
+//     {
+//         std::string getIndexQuery =
+//             "SELECT starting_position FROM " +
+//             tableName + "_" + columnName + "__index" +
+//             "WHERE kmer=\'" + kmer + "\'" + ";";
 
-    uint64_t GetIndexPosition(std::string kmer, uint64_t id)
-    {
-        std::string getIndexQuery =
-            "SELECT id FROM " +
-            tableName + "_" + columnName + "__index" +
-            "WHERE kmer=\'" + kmer + "\'" + ";";
+//         PGresult *res = PQexec(connection, getIndexQuery.c_str());
 
-        PGresult *res = PQexec(conn, getIndexQuery.cStr());
+//         if (PQresultStatus(res) != PGRES_COMMAND_OK)
+//         {
+//             fprintf(stderr, "%s", PQerrorMessage(connection));
 
-        if (PQresultStatus(res) != PGRES_COMMAND_OK)
-        {
-            fprintf(stderr, "%s", PQerrorMessage(conn));
+//             PQclear(res);
+//             exit_nicely(connection);
+//         }
 
-            PQclear(res);
-            exit_nicely(conn);
-        }
-
-        PQclear(res);
-    }
-};
-
-int main()
-{
-}
+//         PQclear(res);
+//     }
+// };

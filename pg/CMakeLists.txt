@@ -5,6 +5,9 @@ set(CMAKE_CXX_STANDARD 20)
 
 find_package(PostgreSQL REQUIRED)
 
+add_subdirectory(rpclib)
+include_directories(rpclib/include)
+
 add_library(mmseq2 SHARED extension.cpp)
 
 target_link_libraries(mmseq2 PRIVATE PostgreSQL::PostgreSQL)

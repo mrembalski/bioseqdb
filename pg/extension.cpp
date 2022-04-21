@@ -14,7 +14,7 @@ extern "C"
 #include <utils/builtins.h>
 }
 
-#include "mmseq2.h"
+#include "../mmseq2/mmseq2.h"
 
 #define OUT_TUPLE_ARITY 18
 

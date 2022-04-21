@@ -4,8 +4,10 @@
 #include <exception>
 #include <string>
 #include <vector>
+#include <memory>
 
-namespace mock {
+namespace mock
+{
     extern std::vector<std::string> querySequences;
     extern std::vector<std::string> targetSequences;
 
@@ -28,4 +30,4 @@ namespace mock {
     // changed interface
     void get_ith_index(int32_t i, uint64_t *target_id, uint32_t *position, const char *kmer, uint32_t kMerLength);
 };
-#endif //BIOSEQDB_MOCK_STRUCTURES_H
+#endif // BIOSEQDB_MOCK_STRUCTURES_H
