@@ -105,7 +105,7 @@ extern "C"
 
         std::vector<mmseq2::MmseqResult> mmseq_result;
         mmseq_result.push_back(tuple);
-        uint32_t n = mmseq_result->size();
+        uint32_t n = mmseq_result.size();
 
         // Build the output table
         for (uint32_t i = 0; i < n; i++)
