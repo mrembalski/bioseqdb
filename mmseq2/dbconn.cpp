@@ -2,46 +2,55 @@
 #include <libpq-fe.h>
 #include <unistd.h>
 #include <string>
+#include <stdio.h>
+#include <iostream>
 
-// class DBConn
-// {
-// private:
-//     PGconn *connection;
-//     PGnotify *notify;
+DB::DBconn::DBconn(std::string tableName, std::string columnName)
+{
+    this->columnName = columnName;
+    this->tableName = tableName;
 
-//     std::string tableName;
-//     std::string columnName;
+    this->connection = PQconnectdb("host=localhost port=5433 dbname=bioseqdb user=postgres password=postgres");
 
-// public:
-//     DBConn()
-//     {
-//         connection = PQconnectdb("host=localhost port=5433 dbname=bioseqdb user=postgres password=postgres");
+    if (PQstatus(this->connection) != CONNECTION_OK)
+    {
+        fprintf(stderr, "%s", PQerrorMessage(this->connection));
 
-//         if (PQstatus(connection) != CONNECTION_OK)
-//         {
-//             fprintf(stderr, "%s", PQerrorMessage(connection));
+        PQfinish(this->connection);
+        exit(1);
+    }
+}
 
-//             exit_nicely(connection);
-//         }
-//     }
+uint64_t DB::DBconn::GetIndexPosition(std::string kmer, uint64_t id)
+{
+    std::string getIndexQuery =
+        "SELECT starting_position FROM " +
+        this->tableName + "_" + this->columnName + "__index" + " "
+                                                               "WHERE kmer=\'" +
+        kmer + "\'" + " AND dna_sequence_id = " + std::to_string(id) +
+        ";";
 
-//     uint64_t GetIndexPosition(std::string kmer, uint64_t id)
-//     {
-//         std::string getIndexQuery =
-//             "SELECT starting_position FROM " +
-//             tableName + "_" + columnName + "__index" +
-//             "WHERE kmer=\'" + kmer + "\'" + ";";
+    PGresult *res = PQexec(connection, getIndexQuery.c_str());
 
-//         PGresult *res = PQexec(connection, getIndexQuery.c_str());
+    if (PQresultStatus(res) != PGRES_TUPLES_OK)
+    {
+        fprintf(stderr, "%s", PQerrorMessage(connection));
 
-//         if (PQresultStatus(res) != PGRES_COMMAND_OK)
-//         {
-//             fprintf(stderr, "%s", PQerrorMessage(connection));
+        PQclear(res);
 
-//             PQclear(res);
-//             exit_nicely(connection);
-//         }
+        PQfinish(this->connection);
+        exit(1);
+    }
 
-//         PQclear(res);
-//     }
-// };
+    int starting_position_fnum = PQfnumber(res, "starting_position");
+
+    for (auto i = 0; i < PQntuples(res); i++)
+    {
+        auto iptr = PQgetvalue(res, i, starting_position_fnum);
+        std::cout << iptr << std::endl;
+    }
+
+    PQclear(res);
+
+    return 0;
+}

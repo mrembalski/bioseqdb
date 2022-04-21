@@ -381,75 +381,93 @@ namespace mmseq2
     public:
         MmseqResult(uint64_t queryId, uint64_t targetId) : queryId{queryId}, targetId{targetId} {}
 
-        uint64_t getQueryId() const {
+        uint64_t getQueryId() const
+        {
             return queryId;
         }
 
-        uint64_t getTargetId() const {
+        uint64_t getTargetId() const
+        {
             return targetId;
         }
 
-        double getRawScore() const {
+        double getRawScore() const
+        {
             return rawScore;
         }
 
-        double getBitScore() const {
+        double getBitScore() const
+        {
             return bitScore;
         }
 
-        double getEValue() const {
+        double getEValue() const
+        {
             return eValue;
         }
 
-        uint32_t getQStart() const {
+        uint32_t getQStart() const
+        {
             return qStart;
         }
 
-        uint32_t getQEnd() const {
+        uint32_t getQEnd() const
+        {
             return qEnd;
         }
 
-        uint32_t getQLen() const {
+        uint32_t getQLen() const
+        {
             return qLen;
         }
 
-        uint32_t getTStart() const {
+        uint32_t getTStart() const
+        {
             return tStart;
         }
 
-        uint32_t getTEnd() const {
+        uint32_t getTEnd() const
+        {
             return tEnd;
         }
 
-        uint32_t getTLen() const {
+        uint32_t getTLen() const
+        {
             return tLen;
         }
 
-        std::string getQAln() const {
+        std::string getQAln() const
+        {
             return qAln;
         }
 
-        std::string getTAln() const {
+        std::string getTAln() const
+        {
             return tAln;
         }
 
-        std::string getCigar() const {
+        std::string getCigar() const
+        {
             return cigar;
         }
 
-        uint32_t getAlnLen() const {
+        uint32_t getAlnLen() const
+        {
             return alnLen;
         }
 
-        uint32_t getMismatch() const {
+        uint32_t getMismatch() const
+        {
             return mismatch;
         }
 
-        uint32_t getGapOpen() const {
+        uint32_t getGapOpen() const
+        {
             return gapOpen;
         }
 
-        double getPident() const {
+        double getPident() const
+        {
             return pident;
         }
 
