@@ -62,4 +62,6 @@ mmseq2/build
 mmseq2/cmake-build-debug
 mmseq2/dev
 
+pg/build
+
 .env
