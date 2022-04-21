@@ -1,4 +1,5 @@
 #include "mmseq2.h"
+#include "../common/mmseq2lib.h"
 
 #include <utility>
 #include <thread>
@@ -17,15 +18,15 @@ namespace {
     }
 }
 
-void processQueries(const mmseq2::InputParams::InputParamsPtr &inputParams, std::mutex *mtx, uint32_t *nextQuery, std::mutex *resMtx, const mmseq2::VecResPtr &resultPtr);
+void processQueries(const common::InputParams::InputParamsPtr &inputParams, std::mutex *mtx, uint32_t *nextQuery, std::mutex *resMtx, const common::VecResPtr &resultPtr);
 
-void processSingleQuery(uint64_t qId, mmseq2::InputParams::StrPtr queryStr, mmseq2::InputParams::InputParamsPtr inputParams, std::mutex *resMtx, const mmseq2::VecResPtr &resultPtr);
+void processSingleQuery(uint64_t qId, common::InputParams::StrPtr queryStr, common::InputParams::InputParamsPtr inputParams, std::mutex *resMtx, const common::VecResPtr &resultPtr);
 
-mmseq2::VecRes mmseq2::MMSeq2(mmseq2::InputParams::InputParamsPtr& inputParams) {
+common::VecRes mmseq2::MMSeq2(common::InputParams::InputParamsPtr& inputParams) {
     std::vector<std::thread> workers{};
     std::mutex mtx, resMtx;
     uint32_t nextQuery = 0;
-    mmseq2::VecResPtr resultPtr = std::make_shared<mmseq2::VecRes>();
+    common::VecResPtr resultPtr = std::make_shared<common::VecRes>();
 
     for (uint32_t i = 0; i < inputParams.get()->getThreadNumber(); ++i) {
         workers.emplace_back(std::thread(
@@ -56,7 +57,7 @@ uint32_t getNextQuery(uint32_t q_len, std::mutex *mtx, uint32_t *nextQuery) {
     return res;
 }
 
-void processQueries(const mmseq2::InputParams::InputParamsPtr &inputParams, std::mutex *mtx, uint32_t *nextQuery, std::mutex *resMtx, const mmseq2::VecResPtr &resultPtr) {
+void processQueries(const common::InputParams::InputParamsPtr &inputParams, std::mutex *mtx, uint32_t *nextQuery, std::mutex *resMtx, const common::VecResPtr &resultPtr) {
     uint32_t tmpNextQuery;
 
     while ((tmpNextQuery = getNextQuery(inputParams.get()->getQLen(), mtx, nextQuery)) != -1) {
@@ -64,7 +65,7 @@ void processQueries(const mmseq2::InputParams::InputParamsPtr &inputParams, std:
     }
 }
 
-void processSingleQuery(uint64_t qId, mmseq2::InputParams::StrPtr queryStr, mmseq2::InputParams::InputParamsPtr inputParams, std::mutex *resMtx, const mmseq2::VecResPtr &resultPtr) {
+void processSingleQuery(uint64_t qId, common::InputParams::StrPtr queryStr, common::InputParams::InputParamsPtr inputParams, std::mutex *resMtx, const common::VecResPtr &resultPtr) {
 
     mmseq2::Query query{qId, std::move(queryStr), std::move(inputParams)};
 
@@ -173,7 +174,7 @@ double mmseq2::Query::ungappedAlignment(const StrPtr &querySequence, const StrPt
     return evalBitScore(maxScore);
 }
 
-void mmseq2::Query::gappedAlignment(const StrPtr &querySequence, const StrPtr &targetSequence, MmseqResult &result) const {
+void mmseq2::Query::gappedAlignment(const StrPtr &querySequence, const StrPtr &targetSequence, common::MmseqResult &result) const {
     uint32_t qSeqLen = querySequence.get()->size(), tSeqLen = targetSequence.get()->size();
     int32_t costOp = this->gapOpenCost, costEx = this->costGapExtended;
     // E - gap in row, F - gap in column, H - best score
@@ -284,7 +285,7 @@ void mmseq2::Query::gappedAlignment(const StrPtr &querySequence, const StrPtr &t
     result.setCigar(cigar);
 }
 
-void mmseq2::Query::executeAlignment(std::mutex *resMtx, const VecResPtr &mmseqResult) {
+void mmseq2::Query::executeAlignment(std::mutex *resMtx, const common::VecResPtr &mmseqResult) {
     const PrefilterKmerStageResults &kmerStageResults = mmseq2::Query::getPrefilterKmerStageResults();
     for (uint32_t i = 0; i < kmerStageResults.getTargetsNumber(); i++) {
         const int32_t diagonal = kmerStageResults.getDiagonal((int)i);
@@ -297,7 +298,7 @@ void mmseq2::Query::executeAlignment(std::mutex *resMtx, const VecResPtr &mmseqR
         if (ungappedAlignment(querySequence, targetSequence, diagonal) >= this->ungappedAlignmentScore && filteredTargetIds.find(targetId) == filteredTargetIds.end()) {
             filteredTargetIds.insert(targetId);
 
-            mmseq2::MmseqResult result(this->queryId, targetId);
+            common::MmseqResult result(this->queryId, targetId);
             result.setQLen(querySequence->size());
             result.setTLen(targetSequence->size());
             gappedAlignment(querySequence, targetSequence, result);
@@ -309,28 +310,4 @@ void mmseq2::Query::executeAlignment(std::mutex *resMtx, const VecResPtr &mmseqR
             }
         }
     }
-}
-
-mmseq2::InputParams::InputParams(uint32_t qLen, uint32_t tLen, mmseq2::InputParams::Vec64Ptr qIds,
-                                 mmseq2::InputParams::Vec64Ptr tIds, mmseq2::InputParams::VecStrPtr queries,
-                                 mmseq2::InputParams::StrPtr targetTableName,
-                                 mmseq2::InputParams::StrPtr targetColumnName,
-                                 const mmseq2::InputParams::StrPtr &substitutionMatrixName, uint32_t kMerLength,
-                                 int32_t kMerGenThreshold, int32_t ungappedAlignmentScore, double evalTreshold,
-                                 int32_t gapOpenCost, int32_t gapPenaltyCost, uint32_t threadNumber) : qLen{qLen}, tLen{tLen}, qIds{std::move(qIds)}, tIds{std::move(tIds)},
-                                                                                                       queries{std::move(queries)}, targetTableName{std::move(targetTableName)},
-                                                                                                       targetColumnName{std::move(targetColumnName)},
-                                                                                                       substitutionMatrixName{substitutionMatrixName}, kMerLength{kMerLength},
-                                                                                                       kMerGenThreshold{kMerGenThreshold}, ungappedAlignmentScore{ungappedAlignmentScore},
-                                                                                                       evalTreshold{evalTreshold}, gapOpenCost{gapOpenCost}, gapPenaltyCost{gapPenaltyCost},
-                                                                                                       threadNumber{threadNumber} {
-    if (substitutionMatrixName.get()->length() != 8
-        || substitutionMatrixName.get()->compare(0, 6, "blosum") != 0) {
-        std::cout << "Wrong substitution matrix name" << std::endl;
-        exit(1);
-    }
-
-    uint32_t blosumId = 10 * (substitutionMatrixName.get()->at(6) - '0') + (substitutionMatrixName.get()->at(7) - '0');
-
-    substitutionMatrixId = AminoAcid::blosumIdToMatrixId(blosumId);
 }

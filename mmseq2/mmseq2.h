@@ -10,12 +10,11 @@
 #include <set>
 #include <iostream>
 #include <mutex>
+#include "../common/mmseq2lib.h"
 #include "mock_structures.h"
-#include "rpc/server.h"
 
 namespace mmseq2
 {
-    class InputParams;
     class AminoAcid
     {
     public:
@@ -53,26 +52,6 @@ namespace mmseq2
         static uint32_t getAlphabetSize()
         {
             return alphabetSize;
-        }
-
-        static uint32_t blosumIdToMatrixId(uint32_t blosumId)
-        {
-            switch (blosumId)
-            {
-            case 45:
-                return 0;
-            case 50:
-                return 1;
-            case 62:
-                return 2;
-            case 80:
-                return 3;
-            case 90:
-                return 4;
-            default:
-                std::cout << "Wrong blosum number" << std::endl;
-                exit(1);
-            }
         }
 
     private:
@@ -252,19 +231,17 @@ namespace mmseq2
         }
     };
 
-    using VecRes = std::vector<mmseq2::MmseqResult>;
-    using VecResPtr = std::shared_ptr<VecRes>;
-    VecRes MMSeq2(mmseq2::InputParams::InputParamsPtr &inputParams);
+    common::VecRes MMSeq2(common::InputParams::InputParamsPtr &inputParams);
 
     class Query
     {
     public:
-        using StrPtr = mmseq2::InputParams::StrPtr;
-        using VecStrPtr = mmseq2::InputParams::VecStrPtr;
+        using StrPtr = common::InputParams::StrPtr;
+        using VecStrPtr = common::InputParams::VecStrPtr;
 
         Query() = delete;
 
-        Query(uint64_t queryId, StrPtr query, mmseq2::InputParams::InputParamsPtr inputParams) : queryId{queryId}, sequence{std::move(query)},
+        Query(uint64_t queryId, StrPtr query, common::InputParams::InputParamsPtr inputParams) : queryId{queryId}, sequence{std::move(query)},
                                                                                                  kMerLength{inputParams.get()->getKMerLength()},
                                                                                                  substitutionMatrixId{inputParams.get()->getSubstitutionMatrixId()},
                                                                                                  kMerGenThreshold{inputParams.get()->getKMerGenThreshold()},
@@ -290,7 +267,7 @@ namespace mmseq2
 
         void findPrefilterKmerStageResults();
 
-        void executeAlignment(std::mutex *resMtx, const VecResPtr &mmseqResult);
+        void executeAlignment(std::mutex *resMtx, const common::VecResPtr &mmseqResult);
 
         [[nodiscard]] uint32_t getSubstitutionMatrixId() const
         {
@@ -331,7 +308,7 @@ namespace mmseq2
 
         [[nodiscard]] double ungappedAlignment(const StrPtr &querySequence, const StrPtr &targetSequence, int32_t diagonal) const;
 
-        void gappedAlignment(const StrPtr &querySequence, const StrPtr &targetSequence, MmseqResult &mmseqResult) const;
+        void gappedAlignment(const StrPtr &querySequence, const StrPtr &targetSequence, common::MmseqResult &mmseqResult) const;
     };
 }
 

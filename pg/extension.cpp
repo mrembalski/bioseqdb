@@ -14,7 +14,7 @@ extern "C"
 #include <utils/builtins.h>
 }
 
-#include "../mmseq2/mmseq2.h"
+#include "../common/mmseq2lib.h"
 
 #define OUT_TUPLE_ARITY 18
 
@@ -56,9 +56,9 @@ extern "C"
         MemoryContextSwitchTo(oldcontext);
 
         // Create the vectors to pass to cpp_mmseq2
-        mmseq2::InputParams::Vec64Ptr qIds(new std::vector<uint64_t>{});
-        mmseq2::InputParams::Vec64Ptr tIds(new std::vector<uint64_t>{});
-        mmseq2::InputParams::VecStrPtr queries(new std::vector<mmseq2::InputParams::StrPtr>{});
+        common::InputParams::Vec64Ptr qIds(new std::vector<uint64_t>{});
+        common::InputParams::Vec64Ptr tIds(new std::vector<uint64_t>{});
+        common::InputParams::VecStrPtr queries(new std::vector<common::InputParams::StrPtr>{});
 
         std::string getQueriesQuery =
             std::string("SELECT id, ") +
@@ -99,18 +99,18 @@ extern "C"
 
         SPI_finish();
 
-        mmseq2::MmseqResult tuple(12, 34);
+        common::MmseqResult tuple(12, 34);
         tuple.setRawScore(5.34);
         tuple.setBitScore(11.2323);
 
-        std::vector<mmseq2::MmseqResult> mmseq_result;
+        std::vector<common::MmseqResult> mmseq_result;
         mmseq_result.push_back(tuple);
         uint32_t n = mmseq_result.size();
 
         // Build the output table
         for (uint32_t i = 0; i < n; i++)
         {
-            mmseq2::MmseqResult t = mmseq_result[i];
+            common::MmseqResult t = mmseq_result[i];
             char **values = (char **)palloc0(sizeof(char *) * OUT_TUPLE_ARITY);
             values[0] = std::to_string(t.getQueryId()).data();
             values[1] = std::to_string(t.getTargetId()).data();

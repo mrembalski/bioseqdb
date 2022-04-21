@@ -76,7 +76,7 @@
 
 int main()
 {
-    mmseq2::InputParams b;
+    common::InputParams b;
     DB::DBconn a("my_table", "my_column");
 
     a.GetIndexPosition("CCCCCCC", 1);
