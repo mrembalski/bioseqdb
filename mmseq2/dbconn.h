@@ -10,7 +10,7 @@ namespace DB
     {
     public:
         DBconn(std::string, std::string);
-        uint64_t GetIndexPosition(std::string, uint64_t);
+        void GetIthIndex(std::string, uint32_t, uint64_t *, uint32_t *);
 
     private:
         PGconn *connection;

@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <stdint.h>
+#include <iostream>
 #include "rpc/server.h"
 
 namespace common

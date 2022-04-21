@@ -1,5 +1,6 @@
 #include <vector>
 #include <string>
+#include "../common/mmseq2lib.h"
 
 extern "C"
 {
@@ -13,8 +14,6 @@ extern "C"
 #include <executor/tablefunc.h>
 #include <utils/builtins.h>
 }
-
-#include "../common/mmseq2lib.h"
 
 #define OUT_TUPLE_ARITY 18
 

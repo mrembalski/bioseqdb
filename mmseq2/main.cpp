@@ -76,21 +76,33 @@
 
 int main()
 {
+    // Example usage of dbconn:
+    // DB::DBconn a("my_table", "my_column");
+
+    // uint64_t aa;
+    // uint32_t bb;
+
+    // std::cout << "XD" << std::endl;
+
+    // for (auto i = 0; i < 5; i++)
+    // {
+    //     a.GetIthIndex("GACTGAC", i, &aa, &bb);
+
+    //     std::cout << aa << " " << bb << std::endl;
+    // }
+
     common::InputParams b;
-    DB::DBconn a("my_table", "my_column");
 
-    a.GetIndexPosition("CCCCCCC", 1);
+    uint32_t port;
+    std::cin >> port;
 
-    // uint32_t port;
-    // std::cin >> port;
+    rpc::server srv(port);
 
-    // rpc::server srv(port);
+    srv.bind("mmseq2", [](common::InputParams::InputParamsPtr &inputParamsPtr)
+             { return mmseq2::MMSeq2(inputParamsPtr); });
 
-    // srv.bind("mmseq2", [](mmseq2::InputParams::InputParamsPtr &inputParamsPtr)
-    //          { return mmseq2::MMSeq2(inputParamsPtr); });
-
-    // srv.run();
-    // return 0;
+    srv.run();
+    return 0;
 }
 
 //    runMMSeq2({"DDDDDAAGGGGG"},

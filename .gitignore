@@ -58,10 +58,11 @@ dkms.conf
 *.DS_Store
 
 # CMakeBuild
+mmseq2/build/*
 mmseq2/build
 mmseq2/cmake-build-debug
 mmseq2/dev
 
+pg/build/*
 pg/build
-
 .env
