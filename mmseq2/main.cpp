@@ -1,8 +1,9 @@
 #include "mmseq2.h"
 #include "rpc/server.h"
+#include "dbconn.h"
 
 // Marcin - I commented your tests. We need to add them to new microservice "tests"
-//namespace {
+// namespace {
 //    mmseq2::InputParams::InputParamsPtr prepareInput(
 //            std::string matrixName, uint32_t kMerLength,
 //            int32_t kMerGenThreshold, int32_t ungappedAlignmentScore, double evalTreshold,
@@ -73,15 +74,32 @@
 //    }
 //};
 
-int main() {
+int main()
+{
+    // Example usage of dbconn:
+    // DB::DBconn a("my_table", "my_column");
+
+    // uint64_t aa;
+    // uint32_t bb;
+
+    // std::cout << "XD" << std::endl;
+
+    // for (auto i = 0; i < 5; i++)
+    // {
+    //     a.GetIthIndex("GACTGAC", i, &aa, &bb);
+
+    //     std::cout << aa << " " << bb << std::endl;
+    // }
+
+    common::InputParams b;
+
     uint32_t port;
     std::cin >> port;
 
     rpc::server srv(port);
 
-    srv.bind("mmseq2", [](mmseq2::InputParams::InputParamsPtr& inputParamsPtr) {
-        return mmseq2::MMSeq2(inputParamsPtr);
-    });
+    srv.bind("mmseq2", [](common::InputParams::InputParamsPtr &inputParamsPtr)
+             { return mmseq2::MMSeq2(inputParamsPtr); });
 
     srv.run();
     return 0;
