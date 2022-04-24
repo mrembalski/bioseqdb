@@ -76,6 +76,10 @@ void processSingleQuery(uint64_t qId, mmseq2::InputParams::StrPtr queryStr, mmse
 void mmseq2::Query::findPrefilterKmerStageResults() {
     int32_t SMaxSuf = 0;
 
+    if (this->kMerLength > this->sequence->size()) {
+        return;
+    }
+
     for (uint32_t i = 0; i < this->kMerLength - 1; ++i) {
         SMaxSuf += AminoAcid::getPenalty(this->substitutionMatrixId, this->sequence.get()->at(i), this->sequence.get()->at(i));
     }
