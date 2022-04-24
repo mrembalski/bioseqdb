@@ -1,6 +1,5 @@
 #include "mmseq2.h"
 #include "rpc/server.h"
-#include "dbconn.h"
 
 // Marcin - I commented your tests. We need to add them to new microservice "tests"
 // namespace {
@@ -76,21 +75,6 @@
 
 int main()
 {
-    // Example usage of dbconn:
-    // DB::DBconn a("my_table", "my_column");
-
-    // uint64_t aa;
-    // uint32_t bb;
-
-    // std::cout << "XD" << std::endl;
-
-    // for (auto i = 0; i < 5; i++)
-    // {
-    //     a.GetIthIndex("GACTGAC", i, &aa, &bb);
-
-    //     std::cout << aa << " " << bb << std::endl;
-    // }
-
     common::InputParams b;
 
     uint32_t port;
@@ -105,9 +89,6 @@ int main()
     return 0;
 }
 
-//    runMMSeq2({"DDDDDAAGGGGG"},
-//            {"AADDDDDCCGGGGGAA"},
-//            "blosum62", 5, 20, 0, 1, 4, 1, 1);
 
 //    runMMSeq2({"DDDDDDDDDCCGGGGGGGAA", "AAADDDDDDDCCGGGGGGGDD"},
 //            {"DDDDDDDAAGGGGGGG"},

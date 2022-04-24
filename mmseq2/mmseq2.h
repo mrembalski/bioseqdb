@@ -11,7 +11,7 @@
 #include <iostream>
 #include <mutex>
 #include "../common/mmseq2lib.h"
-#include "mock_structures.h"
+#include "dbconn.h"
 
 namespace mmseq2
 {
@@ -265,9 +265,9 @@ namespace mmseq2
             prefilterKmerStageResults.addDiagonal(targetId, diagonal);
         }
 
-        void findPrefilterKmerStageResults();
+        void findPrefilterKmerStageResults(DB::DBconn& dbconn);
 
-        void executeAlignment(std::mutex *resMtx, const common::VecResPtr &mmseqResult);
+        void executeAlignment(DB::DBconn& dbconn, std::mutex *resMtx, const common::VecResPtr &mmseqResult);
 
         [[nodiscard]] uint32_t getSubstitutionMatrixId() const
         {
@@ -301,10 +301,10 @@ namespace mmseq2
 
         std::set<uint32_t> filteredTargetIds;
 
-        void processSimilarKMers(uint32_t diagonalNumber, std::string &kMer, int32_t SMaxSuf,
+        void processSimilarKMers(DB::DBconn& dbconn, uint32_t diagonalNumber, std::string &kMer, int32_t SMaxSuf,
                                  int32_t Spref = 0, uint32_t indx = 0);
 
-        void processSingleKmer(uint32_t diagonal, std::string &kMer);
+        void processSingleKmer(DB::DBconn& dbconn, uint32_t diagonal, std::string &kMer);
 
         [[nodiscard]] double ungappedAlignment(const StrPtr &querySequence, const StrPtr &targetSequence, int32_t diagonal) const;
 

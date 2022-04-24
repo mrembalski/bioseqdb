@@ -3,6 +3,7 @@
 
 #include <libpq-fe.h>
 #include <string>
+#include <memory>
 
 namespace DB
 {
@@ -11,6 +12,8 @@ namespace DB
     public:
         DBconn(std::string, std::string);
         void GetIthIndex(std::string, uint32_t, uint64_t *, uint32_t *);
+        void CloseConnection();
+        std::shared_ptr<std::string> GetTargetById(uint64_t);
 
     private:
         PGconn *connection;

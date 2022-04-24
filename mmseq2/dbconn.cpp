@@ -32,23 +32,15 @@ void DB::DBconn::GetIthIndex(std::string kmer, uint32_t i, uint64_t *target_id, 
 
     PGresult *res = PQexec(connection, getIndexQuery.c_str());
 
-    if (PQresultStatus(res) != PGRES_TUPLES_OK)
-    {
-        fprintf(stderr, "%s", PQerrorMessage(connection));
-
-        PQclear(res);
-
-        PQfinish(this->connection);
-        exit(1);
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        throw std::invalid_argument("not PGRES_TUPLES_OK");
     }
 
     int starting_position_fnum = PQfnumber(res, "starting_position");
     int dna_sequence_id_fnum = PQfnumber(res, "dna_sequence_id");
 
     /* TODO: do something when no value is returned */
-    if (PQntuples(res) != 1)
-    {
-        PQfinish(this->connection);
+    if (PQntuples(res) != 1) {
         throw std::invalid_argument("No ith index exists");
     }
 
@@ -57,4 +49,38 @@ void DB::DBconn::GetIthIndex(std::string kmer, uint32_t i, uint64_t *target_id, 
 
     *position = strtoul(starting_position, NULL, 0);
     *target_id = strtoull(dna_sequence_id, NULL, 0);
+
+    PQclear(res);
+}
+
+
+void DB::DBconn::CloseConnection()
+{
+    PQfinish(this->connection);
+}
+
+std::shared_ptr<std::string> DB::DBconn::GetTargetById(uint64_t id)
+{
+    std::string getTargetQuery =
+        "SELECT " + this->columnName + " FROM " +
+        this->tableName + "WHERE id=" + std::to_string(id) + ";";
+
+    PGresult *res = PQexec(connection, getTargetQuery.c_str());
+
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        throw std::invalid_argument("not PGRES_TUPLES_OK");
+    }
+
+    int target_seq_fnum = PQfnumber(res, this->columnName.c_str());
+
+    /* TODO: do something when no value is returned */
+    if (PQntuples(res) != 1) {        
+        throw std::invalid_argument("No ith target exists");
+    }
+
+    char *target_seq = PQgetvalue(res, 0, target_seq_fnum);
+    
+    PQclear(res);
+
+    return std::make_shared<std::string>(target_seq);
 }
