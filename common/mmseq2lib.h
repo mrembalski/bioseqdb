@@ -46,14 +46,19 @@ namespace common
             {
             case 45:
                 substitutionMatrixId = 0;
+                break;
             case 50:
                 substitutionMatrixId = 1;
+                break;
             case 62:
                 substitutionMatrixId = 2;
+                break;
             case 80:
                 substitutionMatrixId = 3;
+                break;
             case 90:
                 substitutionMatrixId = 4;
+                break;
             default:
                 std::cout << "Wrong blosum number" << std::endl;
                 exit(1);
@@ -172,6 +177,7 @@ namespace common
         double pident = 0.0;
 
     public:
+        MmseqResult() = default;
         MmseqResult(uint64_t queryId, uint64_t targetId) : queryId{queryId}, targetId{targetId} {}
 
         uint64_t getQueryId() const

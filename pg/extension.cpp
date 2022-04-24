@@ -1,6 +1,7 @@
 #include <vector>
 #include <string>
 #include "../common/mmseq2lib.h"
+#include "rpc/client.h"
 
 extern "C"
 {
@@ -179,12 +180,13 @@ extern "C"
     {
         // Optional parameters
         uint32_t kmer_length = PG_GETARG_INT32(fst_opt_param);
-        char *substitution_matrix_name = text_to_cstring(PG_GETARG_TEXT_PP(fst_opt_param + 1));
+        std::string substitution_matrix_name = text_to_cstring(PG_GETARG_TEXT_PP(fst_opt_param + 1));
         uint32_t kmer_gen_threshold = PG_GETARG_INT32(fst_opt_param + 2);
         uint32_t ungapped_alignment_score = PG_GETARG_INT32(fst_opt_param + 3);
         double eval_threshold = PG_GETARG_FLOAT8(fst_opt_param + 4);
         uint32_t gap_open_cost = PG_GETARG_INT32(fst_opt_param + 5);
         uint32_t gap_penalty_cost = PG_GETARG_INT32(fst_opt_param + 6);
+        uint32_t thread_number = PG_GETARG_INT32(fst_opt_param + 7);
 
         // Write out the contents of the vectors
         elog(WARNING, "%s", "----- Passed sequences -----");
@@ -203,7 +205,7 @@ extern "C"
 
         // Write out the values of the optional parameters
         elog(WARNING, "%s", "----- Optional parameters -----");
-        elog(WARNING, "%s%s", "Substitution matrix: ", substitution_matrix_name);
+        elog(WARNING, "%s%s", "Substitution matrix: ", substitution_matrix_name.data());
         elog(WARNING, "%s%d", "Kmer length: ", kmer_length);
         elog(WARNING, "%s%d", "Kmer gen threshold: ", kmer_gen_threshold);
         elog(WARNING, "%s%d", "Ungapped alignment score: ", ungapped_alignment_score);
@@ -234,9 +236,24 @@ extern "C"
         // Switch to the old memory context
         MemoryContextSwitchTo(oldcontext);
 
-        std::vector<common::MmseqResult> mmseq_result;
-        /** TODO: CLIENT */
+        // Input params
+        common::InputParams input_params(qIds->size(), tIds->size(), qIds, tIds, queries,
+                                         std::make_shared<std::string>(target_tblname.value()),
+                                         std::make_shared<std::string>(target_colname.value()),
+                                         std::make_shared<std::string>(substitution_matrix_name),
+                                         kmer_length,
+                                         kmer_gen_threshold,
+                                         ungapped_alignment_score,
+                                         eval_threshold,
+                                         gap_open_cost,
+                                         gap_penalty_cost,
+                                         thread_number);
+
+        // Client
+        rpc::client c("localhost", 8080);
+        common::VecRes mmseq_result(c.call("mmseq2", std::make_shared<common::InputParams>(input_params)).as<common::VecRes>());
         uint32_t n = mmseq_result.size();
+        elog(WARNING, "%s%d", "Returned rows: ", n);
 
         // Build the output table
         for (uint32_t i = 0; i < n; i++)
