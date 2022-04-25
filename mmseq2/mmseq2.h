@@ -231,7 +231,7 @@ namespace mmseq2
         }
     };
 
-    common::VecRes MMSeq2(common::InputParams::InputParamsPtr &inputParams);
+    common::VecRes MMSeq2(common::InputParams inputParams);
 
     class Query
     {
