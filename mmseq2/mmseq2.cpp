@@ -21,15 +21,16 @@ void processQueries(const common::InputParams::InputParamsPtr &inputParams, std:
 
 void processSingleQuery(DB::DBconn& dbconn, uint64_t qId, common::InputParams::StrPtr queryStr, common::InputParams::InputParamsPtr inputParams, std::mutex *resMtx, const common::VecResPtr &resultPtr);
 
-common::VecRes mmseq2::MMSeq2(common::InputParams::InputParamsPtr& inputParams) {
+common::VecRes mmseq2::MMSeq2(common::InputParams inputParams) {
+    common::InputParams::InputParamsPtr inputParamsPtr = std::make_shared<common::InputParams>(inputParams);
     std::vector<std::thread> workers{};
     std::mutex mtx, resMtx;
     uint32_t nextQuery = 0;
     common::VecResPtr resultPtr = std::make_shared<common::VecRes>();
 
-    for (uint32_t i = 0; i < inputParams.get()->getThreadNumber(); ++i) {
+    for (uint32_t i = 0; i < inputParamsPtr.get()->getThreadNumber(); ++i) {
         workers.emplace_back(std::thread(
-            processQueries, inputParams, &mtx, &nextQuery, &resMtx, resultPtr));
+            processQueries, inputParamsPtr, &mtx, &nextQuery, &resMtx, resultPtr));
     }
 
     for (std::thread &worker : workers) {
