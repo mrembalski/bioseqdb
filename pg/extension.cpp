@@ -19,7 +19,7 @@ for (uint32_t i = 0; i < n; i++) \
     if (PG_ARGISNULL(i) && pred) \
         PG_RETURN_NULL()
 
-#define DECLARE_VECTORS() \
+#define DECLARE_VECTORS_AND_TARGET_NAMES() \
 common::InputParams::Vec64Ptr qIds(new std::vector<uint64_t>{}); \
 common::InputParams::Vec64Ptr tIds(new std::vector<uint64_t>{}); \
 common::InputParams::VecStrPtr queries(new std::vector<common::InputParams::StrPtr>{}); \
@@ -61,18 +61,36 @@ if (PG_ARGISNULL(n)) \
 else \
     add_targets_with_ids(target_tblname.value(), target_colname.value(), tIds, PG_GETARG_ARRAYTYPE_P(n))
 
-#define CALL_MAIN_FUNCTION() \
-return seq_search_mmseqs_main(target_tblname, target_colname, \
-                              qIds, tIds, queries, targets, \
-                              kmer_length, \
-                              subst_matrix_name, \
-                              kmer_gen_threshold, \
-                              ungapped_alignment_score, \
-                              eval_threshold, \
-                              gap_open_cost, \
-                              gap_penalty_cost, \
-                              thread_number, \
-                              fcinfo)
+#define SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION() \
+ReturnSetInfo *rsinfo = (ReturnSetInfo *)fcinfo->resultinfo; \
+MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory; \
+MemoryContext oldcontext; \
+TupleDesc tupdesc; \
+get_call_result_type(fcinfo, NULL, &tupdesc); \
+AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tupdesc); \
+oldcontext = MemoryContextSwitchTo(per_query_ctx); \
+tupdesc = CreateTupleDescCopy(tupdesc); \
+Tuplestorestate *tupstore = tuplestore_begin_heap( \
+    rsinfo->allowedModes & SFRM_Materialize_Random, \
+    false, \
+    work_mem); \
+MemoryContextSwitchTo(oldcontext); \
+seq_search_mmseqs_main(target_tblname, target_colname, \
+                       qIds, tIds, queries, targets, \
+                       kmer_length, \
+                       subst_matrix_name, \
+                       kmer_gen_threshold, \
+                       ungapped_alignment_score, \
+                       eval_threshold, \
+                       gap_open_cost, \
+                       gap_penalty_cost, \
+                       thread_number, \
+                       tupstore, \
+                       attinmeta); \
+rsinfo->returnMode = SFRM_Materialize; \
+rsinfo->setResult = tupstore; \
+rsinfo->setDesc = tupdesc; \
+return (Datum)0
 
 namespace
 {
@@ -219,37 +237,23 @@ namespace
             tIds->push_back(targets_array[i]);
         }
     }
-}
 
-extern "C"
-{
-    PG_MODULE_MAGIC;
-
-    PG_FUNCTION_INFO_V1(seq_search_mmseqs_one_to_one);
-    PG_FUNCTION_INFO_V1(seq_search_mmseqs_arr_to_one);
-    PG_FUNCTION_INFO_V1(seq_search_mmseqs_db_to_one);
-    PG_FUNCTION_INFO_V1(seq_search_mmseqs_one_to_arr);
-    PG_FUNCTION_INFO_V1(seq_search_mmseqs_arr_to_arr);
-    PG_FUNCTION_INFO_V1(seq_search_mmseqs_db_to_arr);
-    PG_FUNCTION_INFO_V1(seq_search_mmseqs_one_to_db);
-    PG_FUNCTION_INFO_V1(seq_search_mmseqs_arr_to_db);
-    PG_FUNCTION_INFO_V1(seq_search_mmseqs_db_to_db);
-
-    Datum seq_search_mmseqs_main(std::optional<std::string> target_tblname,
-                                 std::optional<std::string> target_colname,
-                                 common::InputParams::Vec64Ptr qIds,
-                                 common::InputParams::Vec64Ptr tIds,
-                                 common::InputParams::VecStrPtr queries,
-                                 common::InputParams::VecStrPtr targets,
-                                 const uint32_t kmer_length,
-                                 const std::string &subst_matrix_name,
-                                 const uint32_t kmer_gen_threshold,
-                                 const uint32_t ungapped_alignment_score,
-                                 const double eval_threshold,
-                                 const uint32_t gap_open_cost,
-                                 const uint32_t gap_penalty_cost,
-                                 const uint32_t thread_number,
-                                 const FunctionCallInfo &fcinfo)
+    void seq_search_mmseqs_main(std::optional<std::string> target_tblname,
+                                std::optional<std::string> target_colname,
+                                common::InputParams::Vec64Ptr qIds,
+                                common::InputParams::Vec64Ptr tIds,
+                                common::InputParams::VecStrPtr queries,
+                                common::InputParams::VecStrPtr targets,
+                                const uint32_t kmer_length,
+                                const std::string &subst_matrix_name,
+                                const uint32_t kmer_gen_threshold,
+                                const uint32_t ungapped_alignment_score,
+                                const double eval_threshold,
+                                const uint32_t gap_open_cost,
+                                const uint32_t gap_penalty_cost,
+                                const uint32_t thread_number,
+                                Tuplestorestate *tupstore,
+                                AttInMetadata *attinmeta)
     {
         // Log debug info
         elog(WARNING, "%s", "----- Passed sequences -----");
@@ -273,29 +277,6 @@ extern "C"
         elog(WARNING, "%s%f", "Eval threshold: ", eval_threshold);
         elog(WARNING, "%s%d", "Gap open cost: ", gap_open_cost);
         elog(WARNING, "%s%d", "Gap penalty cost: ", gap_penalty_cost);
-
-        // Get rsinfo and per_query_ctx
-        ReturnSetInfo *rsinfo = (ReturnSetInfo *)fcinfo->resultinfo;
-        MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-        MemoryContext oldcontext;
-
-        // Tuple descriptor
-        TupleDesc tupdesc;
-        get_call_result_type(fcinfo, NULL, &tupdesc);
-        AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tupdesc);
-
-        // Switch to per_query memory context
-        oldcontext = MemoryContextSwitchTo(per_query_ctx);
-
-        // Initialize the output table as empty
-        tupdesc = CreateTupleDescCopy(tupdesc);
-        Tuplestorestate *tupstore = tuplestore_begin_heap(
-            rsinfo->allowedModes & SFRM_Materialize_Random,
-            false,
-            work_mem);
-
-        // Switch to the old memory context
-        MemoryContextSwitchTo(oldcontext);
 
         std::vector<common::MmseqResult> mmseq_result;
         /** TODO: CLIENT */
@@ -330,101 +311,110 @@ extern "C"
             heap_freetuple(tuple);
             pfree(values);
         }
-
-        // Set the return mode to materialize and return tupstore
-        rsinfo->returnMode = SFRM_Materialize;
-        rsinfo->setResult = tupstore;
-        rsinfo->setDesc = tupdesc;
-        return (Datum)0;
     }
+}
+
+extern "C"
+{
+    PG_MODULE_MAGIC;
+
+    PG_FUNCTION_INFO_V1(seq_search_mmseqs_one_to_one);
+    PG_FUNCTION_INFO_V1(seq_search_mmseqs_one_to_arr);
+    PG_FUNCTION_INFO_V1(seq_search_mmseqs_one_to_db);
+    PG_FUNCTION_INFO_V1(seq_search_mmseqs_arr_to_one);
+    PG_FUNCTION_INFO_V1(seq_search_mmseqs_arr_to_arr);
+    PG_FUNCTION_INFO_V1(seq_search_mmseqs_arr_to_db);
+    PG_FUNCTION_INFO_V1(seq_search_mmseqs_db_to_one);
+    PG_FUNCTION_INFO_V1(seq_search_mmseqs_db_to_arr);
+    PG_FUNCTION_INFO_V1(seq_search_mmseqs_db_to_db);
 
     Datum seq_search_mmseqs_one_to_one(PG_FUNCTION_ARGS)
     {
         TEST_ARGS_FOR_NULL(10, true);
-        DECLARE_VECTORS();
+        DECLARE_VECTORS_AND_TARGET_NAMES();
         GET_OPTIONAL_PARAMS(2);
         ADD_QUERIES_ONE(0);
         ADD_TARGETS_ONE(1);
-        CALL_MAIN_FUNCTION();
-    }
-
-    Datum seq_search_mmseqs_arr_to_one(PG_FUNCTION_ARGS)
-    {
-        TEST_ARGS_FOR_NULL(10, true);
-        DECLARE_VECTORS();
-        GET_OPTIONAL_PARAMS(2);
-        ADD_QUERIES_ARR(0);
-        ADD_TARGETS_ONE(1);
-        CALL_MAIN_FUNCTION();
-    }
-
-    Datum seq_search_mmseqs_db_to_one(PG_FUNCTION_ARGS)
-    {
-        TEST_ARGS_FOR_NULL(12, i != 3);
-        DECLARE_VECTORS();
-        GET_OPTIONAL_PARAMS(4);
-        ADD_QUERIES_DB(3, 0, 1);
-        ADD_TARGETS_ONE(2);
-        CALL_MAIN_FUNCTION();
+        SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION();
     }
 
     Datum seq_search_mmseqs_one_to_arr(PG_FUNCTION_ARGS)
     {
         TEST_ARGS_FOR_NULL(10, true);
-        DECLARE_VECTORS();
+        DECLARE_VECTORS_AND_TARGET_NAMES();
         GET_OPTIONAL_PARAMS(2);
         ADD_QUERIES_ONE(0);
         ADD_TARGETS_ARR(1);
-        CALL_MAIN_FUNCTION();
-    }
-
-    Datum seq_search_mmseqs_arr_to_arr(PG_FUNCTION_ARGS)
-    {
-        TEST_ARGS_FOR_NULL(10, true);
-        DECLARE_VECTORS();
-        GET_OPTIONAL_PARAMS(2);
-        ADD_QUERIES_ARR(0);
-        ADD_TARGETS_ARR(1);
-        CALL_MAIN_FUNCTION();
-    }
-
-    Datum seq_search_mmseqs_db_to_arr(PG_FUNCTION_ARGS)
-    {
-        TEST_ARGS_FOR_NULL(12, i != 3);
-        DECLARE_VECTORS();
-        GET_OPTIONAL_PARAMS(4);
-        ADD_QUERIES_DB(3, 0, 1);
-        ADD_TARGETS_ARR(2);
-        CALL_MAIN_FUNCTION();
+        SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION();
     }
 
     Datum seq_search_mmseqs_one_to_db(PG_FUNCTION_ARGS)
     {
         TEST_ARGS_FOR_NULL(12, i != 3);
-        DECLARE_VECTORS();
+        DECLARE_VECTORS_AND_TARGET_NAMES();
         GET_OPTIONAL_PARAMS(4);
         ADD_QUERIES_ONE(0);
         ADD_TARGETS_DB(3, 1, 2);
-        CALL_MAIN_FUNCTION();
+        SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION();
+    }
+
+    Datum seq_search_mmseqs_arr_to_one(PG_FUNCTION_ARGS)
+    {
+        TEST_ARGS_FOR_NULL(10, true);
+        DECLARE_VECTORS_AND_TARGET_NAMES();
+        GET_OPTIONAL_PARAMS(2);
+        ADD_QUERIES_ARR(0);
+        ADD_TARGETS_ONE(1);
+        SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION();
+    }
+
+    Datum seq_search_mmseqs_arr_to_arr(PG_FUNCTION_ARGS)
+    {
+        TEST_ARGS_FOR_NULL(10, true);
+        DECLARE_VECTORS_AND_TARGET_NAMES();
+        GET_OPTIONAL_PARAMS(2);
+        ADD_QUERIES_ARR(0);
+        ADD_TARGETS_ARR(1);
+        SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION();
     }
 
     Datum seq_search_mmseqs_arr_to_db(PG_FUNCTION_ARGS)
     {
         TEST_ARGS_FOR_NULL(12, i != 3);
-        DECLARE_VECTORS();
+        DECLARE_VECTORS_AND_TARGET_NAMES();
         GET_OPTIONAL_PARAMS(4);
         ADD_QUERIES_ARR(0);
         ADD_TARGETS_DB(3, 1, 2);
-        CALL_MAIN_FUNCTION();
+        SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION();
+    }
+
+    Datum seq_search_mmseqs_db_to_one(PG_FUNCTION_ARGS)
+    {
+        TEST_ARGS_FOR_NULL(12, i != 3);
+        DECLARE_VECTORS_AND_TARGET_NAMES();
+        GET_OPTIONAL_PARAMS(4);
+        ADD_QUERIES_DB(3, 0, 1);
+        ADD_TARGETS_ONE(2);
+        SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION();
+    }
+
+    Datum seq_search_mmseqs_db_to_arr(PG_FUNCTION_ARGS)
+    {
+        TEST_ARGS_FOR_NULL(12, i != 3);
+        DECLARE_VECTORS_AND_TARGET_NAMES();
+        GET_OPTIONAL_PARAMS(4);
+        ADD_QUERIES_DB(3, 0, 1);
+        ADD_TARGETS_ARR(2);
+        SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION();
     }
 
     Datum seq_search_mmseqs_db_to_db(PG_FUNCTION_ARGS)
     {
         TEST_ARGS_FOR_NULL(14, i != 4 && i != 5);
-        DECLARE_VECTORS();
+        DECLARE_VECTORS_AND_TARGET_NAMES();
         GET_OPTIONAL_PARAMS(6);
         ADD_QUERIES_DB(4, 0, 1);
         ADD_TARGETS_DB(5, 2, 3);
-        CALL_MAIN_FUNCTION();
+        SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION();
     }
 }
