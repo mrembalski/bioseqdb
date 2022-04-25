@@ -5,16 +5,65 @@
 #include <stdio.h>
 #include <iostream>
 #include <exception>
+#include <cstdlib>
 
 DB::DBconn::DBconn(std::string tableName, std::string columnName)
 {
     this->columnName = columnName;
     this->tableName = tableName;
 
-    this->connection = PQconnectdb("host=localhost port=5433 dbname=bioseqdb user=postgres password=postgres");
+	/* A list of possible environment variables*/
+	const char *env_var[5] = {
+        "MMSEQ_HOST",
+        "MMSEQ_PORT",
+        "MMSEQ_DBNAME",
+        "MMSEQ_USER",
+        "MMSEQ_PASSWORD"
+    };
 
-    if (PQstatus(this->connection) != CONNECTION_OK)
-    {
+	/* A list of keys passed to libpq */
+	const char *conn_str_var[5] = {
+        "host",
+        "port",
+        "dbname",
+        "user",
+        "password"
+    };
+
+	/* A list of default values for keys passed to libpq */
+	const char *default_value[5] = {
+        "localhost",
+        "5432",
+        "bioseqdb",
+        "postgres",
+        "password"
+    };
+
+    /* Example connection string: host=localhost port=5433 dbname=bioseqdb user=postgres password=postgres */
+    std::string connection_string; 
+    char *env_val[5];
+
+	for(int i = 0; i < 5; i++) {
+		/* Getting environment value if exists */
+		env_val[i] = getenv(env_var[i]);
+        
+        /* Append string 'key=' */
+        connection_string += conn_str_var[i];
+        connection_string += "=";
+
+		if (env_val[i] != NULL) {
+            connection_string += env_val[i];
+        }
+		else {
+            connection_string += default_value[i];
+        }
+
+        connection_string += " ";
+	}
+
+    this->connection = PQconnectdb(connection_string.c_str());
+
+    if (PQstatus(this->connection) != CONNECTION_OK) {
         fprintf(stderr, "%s", PQerrorMessage(this->connection));
 
         PQfinish(this->connection);
