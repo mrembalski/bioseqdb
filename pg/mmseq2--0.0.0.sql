@@ -367,8 +367,8 @@ CREATE TYPE mmseq_result AS (
 );
 
 CREATE OR REPLACE FUNCTION seq_search_mmseqs(
-		dna_sequence,
-		dna_sequence,
+		nucl_seq,
+		nucl_seq,
 		kmer_length integer = 7,
 		substitution_matrix_name text = 'blosum62',
 		kmer_gen_threshold integer = 2147483647,
@@ -382,8 +382,8 @@ CREATE OR REPLACE FUNCTION seq_search_mmseqs(
     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_one' LANGUAGE C;
 
 -- CREATE OR REPLACE FUNCTION seq_search_mmseqs(
--- 		dna_sequence[],
--- 		dna_sequence,
+-- 		nucl_seq[],
+-- 		nucl_seq,
 -- 		kmer_length integer = 7,
 -- 		substitution_matrix_name text = 'blosum62',
 -- 		kmer_gen_threshold integer = 2147483647,
@@ -399,7 +399,7 @@ CREATE OR REPLACE FUNCTION seq_search_mmseqs(
 -- CREATE OR REPLACE FUNCTION seq_search_mmseqs(
 -- 		text,
 -- 		text,
--- 		dna_sequence,
+-- 		nucl_seq,
 -- 		query_ids bigint[] = NULL,
 -- 		kmer_length integer = 7,
 -- 		substitution_matrix_name text = 'blosum62',
@@ -414,8 +414,8 @@ CREATE OR REPLACE FUNCTION seq_search_mmseqs(
 --     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_one' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION seq_search_mmseqs(
-		dna_sequence,
-		dna_sequence[],
+		nucl_seq,
+		nucl_seq[],
 		kmer_length integer = 7,
 		substitution_matrix_name text = 'blosum62',
 		kmer_gen_threshold integer = 2147483647,
@@ -429,8 +429,8 @@ CREATE OR REPLACE FUNCTION seq_search_mmseqs(
     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_arr' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION seq_search_mmseqs(
-		dna_sequence[],
-		dna_sequence[],
+		nucl_seq[],
+		nucl_seq[],
 		kmer_length integer = 7,
 		substitution_matrix_name text = 'blosum62',
 		kmer_gen_threshold integer = 2147483647,
@@ -446,7 +446,7 @@ CREATE OR REPLACE FUNCTION seq_search_mmseqs(
 -- CREATE OR REPLACE FUNCTION seq_search_mmseqs(
 -- 		text,
 -- 		text,
--- 		dna_sequence[],
+-- 		nucl_seq[],
 -- 		query_ids bigint[] = NULL,
 -- 		kmer_length integer = 7,
 -- 		substitution_matrix_name text = 'blosum62',
@@ -461,7 +461,7 @@ CREATE OR REPLACE FUNCTION seq_search_mmseqs(
 --     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_arr' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION seq_search_mmseqs(
-		dna_sequence,
+		nucl_seq,
 		text,
 		text,
 		target_ids bigint[] = NULL,
@@ -478,7 +478,7 @@ CREATE OR REPLACE FUNCTION seq_search_mmseqs(
     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_db' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION seq_search_mmseqs(
-		dna_sequence[],
+		nucl_seq[],
 		text,
 		text,
 		target_ids bigint[] = NULL,
