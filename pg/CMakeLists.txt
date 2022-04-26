@@ -3,8 +3,18 @@ cmake_minimum_required(VERSION 3.17)
 project(mmseq2 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpic")
 
-add_library(mmseq2 SHARED extension.cpp ../common/mmseq2lib.h)
+if (NOT DEFINED MMSEQ_HOST)
+    set(MMSEQ_HOST "localhost")
+endif()
+if (NOT DEFINED MMSEQ_PORT)
+    set(MMSEQ_PORT "8080")
+endif()
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+configure_file(config.h.in config.h @ONLY)
+add_library(mmseq2 SHARED extension.cpp config.h ../common/mmseq2lib.h)
 
 # Add RPC support
 add_subdirectory(rpclib)

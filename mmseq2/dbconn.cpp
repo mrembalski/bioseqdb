@@ -112,7 +112,7 @@ std::shared_ptr<std::string> DB::DBconn::GetTargetById(uint64_t id)
 {
     std::string getTargetQuery =
         "SELECT " + this->columnName + " FROM " +
-        this->tableName + "WHERE id=" + std::to_string(id) + ";";
+        this->tableName + " WHERE id=" + std::to_string(id) + ";";
 
     PGresult *res = PQexec(connection, getTargetQuery.c_str());
 
