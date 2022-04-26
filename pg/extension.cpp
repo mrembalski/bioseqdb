@@ -30,8 +30,8 @@ std::optional<std::string> target_tblname = std::nullopt; \
 std::optional<std::string> target_colname = std::nullopt
 
 #define GET_OPTIONAL_PARAMS(n) \
-uint32_t kmer_length = PG_GETARG_INT32(n); \
-std::string subst_matrix_name = text_to_cstring(PG_GETARG_TEXT_PP(n + 1)); \
+std::string subst_matrix_name = text_to_cstring(PG_GETARG_TEXT_PP(n)); \
+uint32_t kmer_length = PG_GETARG_INT32(n + 1); \
 uint32_t kmer_gen_threshold = PG_GETARG_INT32(n + 2); \
 uint32_t ungapped_alignment_score = PG_GETARG_INT32(n + 3); \
 double eval_threshold = PG_GETARG_FLOAT8(n + 4); \
