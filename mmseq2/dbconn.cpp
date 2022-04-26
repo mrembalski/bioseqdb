@@ -14,11 +14,11 @@ DB::DBconn::DBconn(std::string tableName, std::string columnName)
 
 	/* A list of possible environment variables*/
 	const char *env_var[5] = {
-        "MMSEQ_HOST",
-        "MMSEQ_PORT",
-        "MMSEQ_DBNAME",
-        "MMSEQ_USER",
-        "MMSEQ_PASSWORD"
+        "PG_HOST",
+        "PG_PORT",
+        "PG_DBNAME",
+        "PG_USER",
+        "PG_PASSWORD"
     };
 
 	/* A list of keys passed to libpq */
