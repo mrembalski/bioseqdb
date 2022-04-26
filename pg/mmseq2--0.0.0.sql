@@ -1,7 +1,11 @@
-CREATE DOMAIN DNA_SEQUENCE AS TEXT
+CREATE DOMAIN nucl_seq AS TEXT
 CHECK(
-	-- Some PostgreSQL magic using \m and \M
-   VALUE ~ '(\m[ACGT]*\M)'
+   VALUE ~ '^[ACGT]*$'
+);
+
+CREATE DOMAIN aa_seq AS TEXT
+CHECK(
+   VALUE ~ '^[ARNDCQEGHILKMFPSTWYVBJZX]*$'
 );
 
 -- TABLES STARTING WITH A PREFIX
@@ -53,15 +57,15 @@ CREATE OR REPLACE FUNCTION create_index_table(
 ) RETURNS void AS
 $BODY$
 BEGIN
-	
 	-- There could be a foreign key, but if someone wanted to delete 
 	-- their table they would have to use 'CASCADE'
-	-- FOREIGN KEY (dna_sequence_id) REFERENCES %I(id) 
+	-- FOREIGN KEY (seq_id) REFERENCES %I(id) 
 	EXECUTE format(
+		-- using text, so aa_seq and nucl_seq can both be used
 	    'CREATE TABLE %I (
-	        kmer	DNA_SEQUENCE NOT NULL,
+	        kmer text NOT NULL,
 	        starting_position INT NOT NULL, 
-	        dna_sequence_id BIGINT NOT NULL
+	        seq_id BIGINT NOT NULL
 		)',
 	   	(t_name || '_' || c_name || '__index'), 
 	   	(t_name)
@@ -75,16 +79,16 @@ CREATE OR REPLACE FUNCTION insert_index(
 	t_name information_schema.sql_identifier, 
 	c_name information_schema.sql_identifier, 
 
-	kmer DNA_SEQUENCE,
+	kmer text,
 	starting_position INT, 
-	dna_sequence_id BIGINT
+	seq_id BIGINT
 ) RETURNS void AS
 $BODY$
 BEGIN 
 	EXECUTE FORMAT('
-		INSERT INTO %I("kmer", "starting_position", "dna_sequence_id") VALUES(%L, %L, %L)', 
+		INSERT INTO %I("kmer", "starting_position", "seq_id") VALUES(%L, %L, %L)', 
 	   (t_name || '_' || c_name || '__index'),
-	   kmer, starting_position, dna_sequence_id
+	   kmer, starting_position, seq_id
 	);
 END;
 $BODY$
@@ -94,8 +98,8 @@ CREATE OR REPLACE FUNCTION insert_indexes(
 	t_name information_schema.sql_identifier, 
 	c_name information_schema.sql_identifier, 
 	
-	dna_sequence_id BIGINT,
-	dna_sequence DNA_SEQUENCE 
+	seq_id BIGINT,
+	seq text 
 ) RETURNS void AS
 $BODY$
 DECLARE
@@ -104,7 +108,7 @@ DECLARE
 	ending_position SMALLINT := -1;
 
 BEGIN
-    FOR ch IN SELECT regexp_split_to_table(dna_sequence, '') LOOP
+    FOR ch IN SELECT regexp_split_to_table(seq, '') LOOP
 		ending_position := (ending_position + 1);
 		kmer := (kmer || ch);
 		
@@ -113,7 +117,7 @@ BEGIN
 	  	END IF;
 	
 	  	IF ending_position >= 6 THEN 	  		
-			EXECUTE insert_index(t_name, c_name, kmer, ending_position - 6, dna_sequence_id);
+			EXECUTE insert_index(t_name, c_name, kmer, ending_position - 6, seq_id);
 	  	END IF;
 
     END LOOP;
@@ -127,18 +131,24 @@ $BODY$
 DECLARE 
 	c_name information_schema.sql_identifier;
 
-	dna_sequence text;
+	seq text;
 BEGIN
-	FOR c_name IN SELECT column_name FROM show_domain_usage('dna_sequence') WHERE table_name = TG_TABLE_NAME 
+	FOR c_name IN (
+		SELECT column_name FROM show_domain_usage('nucl_seq')
+		WHERE table_name = TG_TABLE_NAME 
+		UNION
+		SELECT column_name FROM show_domain_usage('aa_seq')
+		WHERE table_name = TG_TABLE_NAME 
+	)
 	LOOP 
-		EXECUTE FORMAT('DELETE FROM %I WHERE "dna_sequence_id" = %L', 
+		EXECUTE FORMAT('DELETE FROM %I WHERE "seq_id" = %L', 
 			(TG_TABLE_NAME || '_' || c_name || '__index'), OLD.id);
 
 		EXECUTE FORMAT ('SELECT %I FROM %I WHERE id = %L', 
-			c_name, TG_TABLE_NAME, NEW.id) INTO dna_sequence;
+			c_name, TG_TABLE_NAME, NEW.id) INTO seq;
 
 		EXECUTE FORMAT ('SELECT insert_indexes(%L, %L, %s, %L)', 
-			TG_TABLE_NAME, c_name, NEW.id, dna_sequence);
+			TG_TABLE_NAME, c_name, NEW.id, seq);
 		
 	END LOOP;
 
@@ -152,15 +162,21 @@ $BODY$
 DECLARE 
 	c_name information_schema.sql_identifier;
 
-	dna_sequence text;
+	seq text;
 BEGIN
-	FOR c_name IN SELECT column_name FROM show_domain_usage('dna_sequence') WHERE table_name = TG_TABLE_NAME 
+	FOR c_name IN (
+		SELECT column_name FROM show_domain_usage('nucl_seq')
+		WHERE table_name = TG_TABLE_NAME 
+		UNION
+		SELECT column_name FROM show_domain_usage('aa_seq')
+		WHERE table_name = TG_TABLE_NAME 
+	)
 	LOOP 
 		EXECUTE FORMAT ('SELECT %I FROM %I WHERE id = %L', 
-			c_name, TG_TABLE_NAME, NEW.id) INTO dna_sequence;
+			c_name, TG_TABLE_NAME, NEW.id) INTO seq;
 
 		EXECUTE FORMAT ('SELECT insert_indexes(%L, %L, %s, %L)', 
-			TG_TABLE_NAME, c_name, NEW.id, dna_sequence);
+			TG_TABLE_NAME, c_name, NEW.id, seq);
 		
 	END LOOP;
 
@@ -173,14 +189,18 @@ CREATE OR REPLACE FUNCTION delete_index_trigger() RETURNS TRIGGER AS
 $BODY$
 DECLARE 
 	c_name information_schema.sql_identifier;
-
-	dna_sequence text;
 BEGIN
-	FOR c_name IN SELECT column_name FROM show_domain_usage('dna_sequence') WHERE table_name = TG_TABLE_NAME 
+	FOR c_name IN (
+		SELECT column_name FROM show_domain_usage('nucl_seq')
+		WHERE table_name = TG_TABLE_NAME 
+		UNION
+		SELECT column_name FROM show_domain_usage('aa_seq')
+		WHERE table_name = TG_TABLE_NAME 
+	)
 	LOOP 
 		
 		EXECUTE FORMAT('
-			DELETE FROM %I WHERE "dna_sequence_id" = %L
+			DELETE FROM %I WHERE "seq_id" = %L
 		', 
 		(TG_TABLE_NAME || '_' || c_name || '__index'), 
 		OLD.id);
@@ -202,8 +222,8 @@ DECLARE
 	t_name information_schema.sql_identifier; 
 	c_name information_schema.sql_identifier;
 
-	sequence_id BIGINT;
-	dna_sequence DNA_SEQUENCE;
+	seq_id BIGINT;
+	seq text;
 BEGIN
     FOR changed_object IN SELECT * FROM pg_event_trigger_ddl_commands()
     LOOP		
@@ -218,14 +238,19 @@ BEGIN
 		    LOOP EXECUTE format('DROP TABLE %I CASCADE', row.tbl_name); END LOOP;
 			
 			-- Creating new tables
-			FOR c_name IN SELECT column_name FROM show_domain_usage('dna_sequence') 
-			WHERE "table_schema" || '.' || "table_name" = changed_object.object_identity
+			FOR c_name IN (
+				SELECT column_name FROM show_domain_usage('nucl_seq')
+				WHERE "table_schema" || '.' || "table_name" = changed_object.object_identity
+				UNION
+				SELECT column_name FROM show_domain_usage('aa_seq')
+				WHERE "table_schema" || '.' || "table_name" = changed_object.object_identity
+			)
 			LOOP 
-				
+
 			   	EXECUTE create_index_table(SPLIT_PART(changed_object.object_identity, '.', 2), c_name);
 												
-				FOR sequence_id, dna_sequence IN EXECUTE format('SELECT id, %I as clmn from %I', c_name, t_name) LOOP
-					EXECUTE insert_indexes(t_name, c_name, sequence_id, dna_sequence);
+				FOR seq_id, seq IN EXECUTE format('SELECT id, %I as clmn from %I', c_name, t_name) LOOP
+					EXECUTE insert_indexes(t_name, c_name, seq_id, seq);
 				END LOOP;
 				
 			END LOOP;
