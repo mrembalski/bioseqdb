@@ -1,7 +1,10 @@
 #include <vector>
 #include <string>
+#include <exception>
+#include <signal.h>
 #include "../common/mmseq2lib.h"
 #include "rpc/client.h"
+#include "rpc/rpc_error.h"
 #include "config.h"
 
 extern "C"
@@ -154,6 +157,12 @@ namespace
             tIds->push_back(targets_array[i]);
         }
     }
+
+    void sigint_handler(int signo)
+    {
+        if (signo == SIGINT)
+            elog(ERROR, "%s", "Received SIGINT");
+    }
 }
 
 extern "C"
@@ -189,30 +198,10 @@ extern "C"
         uint32_t gap_penalty_cost = PG_GETARG_INT32(fst_opt_param + 6);
         uint32_t thread_number = PG_GETARG_INT32(fst_opt_param + 7);
 
-        // Write out the contents of the vectors
-        elog(WARNING, "%s", "----- Passed sequences -----");
-        elog(WARNING, "%s%ld%s", "Query ids (", qIds->size(), "):");
-        for (int i = 0; i < qIds->size(); i++)
-            elog(WARNING, "%ld", (*qIds)[i]);
-        elog(WARNING, "%s%ld%s", "Queries (", queries->size(), "):");
-        for (int i = 0; i < queries->size(); i++)
-            elog(WARNING, "%s", ((*queries)[i])->data());
-        elog(WARNING, "%s%ld%s", "Target ids (", tIds->size(), "):");
-        for (int i = 0; i < tIds->size(); i++)
-            elog(WARNING, "%ld", (*tIds)[i]);
-        elog(WARNING, "%s%ld%s", "Targets (", targets->size(), "):");
-        for (int i = 0; i < targets->size(); i++)
-            elog(WARNING, "%s", ((*targets)[i])->data());
-
-        // Write out the values of the optional parameters
-        elog(WARNING, "%s", "----- Optional parameters -----");
-        elog(WARNING, "%s%s", "Substitution matrix: ", substitution_matrix_name.data());
-        elog(WARNING, "%s%d", "Kmer length: ", kmer_length);
-        elog(WARNING, "%s%d", "Kmer gen threshold: ", kmer_gen_threshold);
-        elog(WARNING, "%s%d", "Ungapped alignment score: ", ungapped_alignment_score);
-        elog(WARNING, "%s%f", "Eval threshold: ", eval_threshold);
-        elog(WARNING, "%s%d", "Gap open cost: ", gap_open_cost);
-        elog(WARNING, "%s%d", "Gap penalty cost: ", gap_penalty_cost);
+        struct sigaction act;
+        act.sa_handler = sigint_handler;
+        if (sigaction(SIGINT, &act, NULL) == -1)
+            elog(ERROR, "%s", "Couldn't set SIGINT handler");
 
         // Get rsinfo and per_query_ctx
         ReturnSetInfo *rsinfo = (ReturnSetInfo *)fcinfo->resultinfo;
@@ -253,9 +242,19 @@ extern "C"
         // Client
         rpc::client c(MMSEQ_HOSTNAME, MMSEQ_PORT);
         common::VecRes mmseq_result;
-        c.call("mmseq2", input_params).get().convert(mmseq_result);
+        try {
+            c.call("mmseq2", input_params).get().convert(mmseq_result);
+        }
+        catch (rpc::rpc_error &e) {
+            std::string error_msg;
+            e.get_error().get().convert(error_msg);
+            elog(ERROR, "%s", error_msg.data());
+        }
+        catch (const std::exception &e) {
+            std::string error_msg = e.what();
+            elog(ERROR, "%s", error_msg.data());
+        }
         uint32_t n = mmseq_result.size();
-        elog(WARNING, "%s%d", "Returned rows: ", n);
 
         // Build the output table
         for (uint32_t i = 0; i < n; i++)
