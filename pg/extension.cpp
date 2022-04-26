@@ -252,8 +252,8 @@ extern "C"
 
         // Client
         rpc::client c(MMSEQ_HOSTNAME, MMSEQ_PORT);
-        // https://github.com/msgpack/msgpack-c/issues/480
-        common::VecRes mmseq_result(c.call("mmseq2", std::make_shared<common::InputParams>(input_params)).as<common::VecRes>());
+        common::VecRes mmseq_result;
+        c.call("mmseq2", input_params).get().convert(mmseq_result);
         uint32_t n = mmseq_result.size();
         elog(WARNING, "%s%d", "Returned rows: ", n);
 
