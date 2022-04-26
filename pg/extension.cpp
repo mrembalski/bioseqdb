@@ -62,19 +62,9 @@ else \
     add_targets_with_ids(target_tblname.value(), target_colname.value(), tIds, PG_GETARG_ARRAYTYPE_P(n))
 
 #define SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION() \
-ReturnSetInfo *rsinfo = (ReturnSetInfo *)fcinfo->resultinfo; \
-MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory; \
-MemoryContext oldcontext; \
-TupleDesc tupdesc; \
-get_call_result_type(fcinfo, NULL, &tupdesc); \
-AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tupdesc); \
-oldcontext = MemoryContextSwitchTo(per_query_ctx); \
-tupdesc = CreateTupleDescCopy(tupdesc); \
-Tuplestorestate *tupstore = tuplestore_begin_heap( \
-    rsinfo->allowedModes & SFRM_Materialize_Random, \
-    false, \
-    work_mem); \
-MemoryContextSwitchTo(oldcontext); \
+Tuplestorestate *tupstore; \
+AttInMetadata *attinmeta; \
+enable_materialize_mode(fcinfo, tupstore, attinmeta); \
 seq_search_mmseqs_main(target_tblname, target_colname, \
                        qIds, tIds, queries, targets, \
                        kmer_length, \
@@ -87,9 +77,6 @@ seq_search_mmseqs_main(target_tblname, target_colname, \
                        thread_number, \
                        tupstore, \
                        attinmeta); \
-rsinfo->returnMode = SFRM_Materialize; \
-rsinfo->setResult = tupstore; \
-rsinfo->setDesc = tupdesc; \
 return (Datum)0
 
 namespace
@@ -311,6 +298,41 @@ namespace
             heap_freetuple(tuple);
             pfree(values);
         }
+    }
+
+    void enable_materialize_mode(FunctionCallInfo &fcinfo,
+                                 Tuplestorestate * &tupstore,
+                                 AttInMetadata * &attinmeta)
+    {
+        // Get rsinfo and per_query_ctx
+        ReturnSetInfo *rsinfo = (ReturnSetInfo *)fcinfo->resultinfo;
+        MemoryContext per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+        MemoryContext oldcontext;
+
+        // Tuple descriptor
+        TupleDesc tupdesc;
+        get_call_result_type(fcinfo, NULL, &tupdesc);
+
+        // Get the AttInMetadata (out parameter)
+        attinmeta = TupleDescGetAttInMetadata(tupdesc);
+
+        // Switch to per_query memory context
+        oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+        // Initialize the output table as empty
+        tupdesc = CreateTupleDescCopy(tupdesc);
+        tupstore = tuplestore_begin_heap(
+            rsinfo->allowedModes & SFRM_Materialize_Random,
+            false,
+            work_mem);
+
+        // Switch back to the old memory context
+        MemoryContextSwitchTo(oldcontext);
+
+        // Set return mode to materialize and make the function return the tupstore
+        rsinfo->returnMode = SFRM_Materialize;
+        rsinfo->setResult = tupstore;
+        rsinfo->setDesc = tupdesc;
     }
 }
 
