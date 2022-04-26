@@ -59,7 +59,7 @@ uint32_t getNextQuery(uint32_t q_len, std::mutex *mtx, uint32_t *nextQuery) {
 
 void processQueries(const common::InputParams::InputParamsPtr &inputParams, std::mutex *mtx, uint32_t *nextQuery, std::mutex *resMtx, const common::VecResPtr &resultPtr) {
     //TODO: names as variables, possibly in InputParams
-    DB::DBconn dbconn("my_table", "my_column");
+    DB::DBconn dbconn(*inputParams->getTargetTableName(), *inputParams->getTargetColumnName());
 
     uint32_t tmpNextQuery;
 

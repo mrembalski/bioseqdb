@@ -1,0 +1,7 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+constexpr char MMSEQ_HOSTNAME[] = "@MMSEQ_HOSTNAME@";
+constexpr uint16_t MMSEQ_PORT = @MMSEQ_PORT@;
+
+#endif // CONFIG_H

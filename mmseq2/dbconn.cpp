@@ -11,7 +11,7 @@ DB::DBconn::DBconn(std::string tableName, std::string columnName)
     this->columnName = columnName;
     this->tableName = tableName;
 
-    this->connection = PQconnectdb("host=localhost port=5433 dbname=bioseqdb user=postgres password=postgres");
+    this->connection = PQconnectdb("host=localhost port=5432 dbname=bioseqdb user=postgres password=postgres");
 
     if (PQstatus(this->connection) != CONNECTION_OK)
     {
@@ -63,7 +63,7 @@ std::shared_ptr<std::string> DB::DBconn::GetTargetById(uint64_t id)
 {
     std::string getTargetQuery =
         "SELECT " + this->columnName + " FROM " +
-        this->tableName + "WHERE id=" + std::to_string(id) + ";";
+        this->tableName + " WHERE id=" + std::to_string(id) + ";";
 
     PGresult *res = PQexec(connection, getTargetQuery.c_str());
 
