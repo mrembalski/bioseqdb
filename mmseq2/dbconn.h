@@ -10,7 +10,7 @@ namespace DB
     class DBconn
     {
     public:
-        DBconn(std::string, std::string);
+        DBconn(const std::string &, const std::string &);
         void GetIthIndex(std::string, uint32_t, uint64_t *, uint32_t *);
         void CloseConnection();
         std::shared_ptr<std::string> GetTargetById(uint64_t);

@@ -1,6 +1,8 @@
 #include <vector>
 #include <string>
 #include "../common/mmseq2lib.h"
+#include "rpc/client.h"
+#include "config.h"
 
 extern "C"
 {
@@ -265,9 +267,25 @@ namespace
         elog(WARNING, "%s%d", "Gap open cost: ", gap_open_cost);
         elog(WARNING, "%s%d", "Gap penalty cost: ", gap_penalty_cost);
 
-        std::vector<common::MmseqResult> mmseq_result;
-        /** TODO: CLIENT */
+        // Input params
+        common::InputParams input_params(qIds->size(), tIds->size(), qIds, tIds, queries,
+                                         std::make_shared<std::string>(target_tblname.value()),
+                                         std::make_shared<std::string>(target_colname.value()),
+                                         std::make_shared<std::string>(subst_matrix_name),
+                                         kmer_length,
+                                         kmer_gen_threshold,
+                                         ungapped_alignment_score,
+                                         eval_threshold,
+                                         gap_open_cost,
+                                         gap_penalty_cost,
+                                         thread_number);
+
+        // Client
+        rpc::client c(MMSEQ_HOSTNAME, MMSEQ_PORT);
+        common::VecRes mmseq_result;
+        c.call("mmseq2", input_params).get().convert(mmseq_result);
         uint32_t n = mmseq_result.size();
+        elog(WARNING, "%s%d", "Returned rows: ", n);
 
         // Build the output table
         for (uint32_t i = 0; i < n; i++)

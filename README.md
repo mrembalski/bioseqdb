@@ -4,3 +4,12 @@
 3. Code. 
 4. Create branch with given name on origin with `git push --set-upstream origin zpp-2137-do-something`. 
 5. Create a pull request to master. 
+
+
+# Environment variables
+MMseq uses env varibales to connect to db: 
+`"PG_HOST",
+"PG_PORT",
+"PG_DBNAME",
+"PG_USER",
+"PG_PASSWORD"`
