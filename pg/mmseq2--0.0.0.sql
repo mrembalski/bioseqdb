@@ -1,4 +1,4 @@
-CREATE DOMAIN DNA_SEQUENCE AS TEXT
+CREATE DOMAIN NUCL_SEQ AS TEXT
 CHECK(
 	-- Some PostgreSQL magic using \m and \M
    VALUE ~ '(\m[ACGT]*\M)'
@@ -56,12 +56,12 @@ BEGIN
 	
 	-- There could be a foreign key, but if someone wanted to delete 
 	-- their table they would have to use 'CASCADE'
-	-- FOREIGN KEY (dna_sequence_id) REFERENCES %I(id) 
+	-- FOREIGN KEY (nucl_seq_id) REFERENCES %I(id) 
 	EXECUTE format(
 	    'CREATE TABLE %I (
-	        kmer	DNA_SEQUENCE NOT NULL,
+	        kmer	NUCL_SEQ NOT NULL,
 	        starting_position INT NOT NULL, 
-	        dna_sequence_id BIGINT NOT NULL
+	        nucl_seq_id BIGINT NOT NULL
 		)',
 	   	(t_name || '_' || c_name || '__index'), 
 	   	(t_name)
@@ -75,16 +75,16 @@ CREATE OR REPLACE FUNCTION insert_index(
 	t_name information_schema.sql_identifier, 
 	c_name information_schema.sql_identifier, 
 
-	kmer DNA_SEQUENCE,
+	kmer NUCL_SEQ,
 	starting_position INT, 
-	dna_sequence_id BIGINT
+	nucl_seq_id BIGINT
 ) RETURNS void AS
 $BODY$
 BEGIN 
 	EXECUTE FORMAT('
-		INSERT INTO %I("kmer", "starting_position", "dna_sequence_id") VALUES(%L, %L, %L)', 
+		INSERT INTO %I("kmer", "starting_position", "nucl_seq_id") VALUES(%L, %L, %L)', 
 	   (t_name || '_' || c_name || '__index'),
-	   kmer, starting_position, dna_sequence_id
+	   kmer, starting_position, nucl_seq_id
 	);
 END;
 $BODY$
@@ -94,8 +94,8 @@ CREATE OR REPLACE FUNCTION insert_indexes(
 	t_name information_schema.sql_identifier, 
 	c_name information_schema.sql_identifier, 
 	
-	dna_sequence_id BIGINT,
-	dna_sequence DNA_SEQUENCE 
+	nucl_seq_id BIGINT,
+	nucl_seq NUCL_SEQ
 ) RETURNS void AS
 $BODY$
 DECLARE
@@ -104,7 +104,7 @@ DECLARE
 	ending_position SMALLINT := -1;
 
 BEGIN
-    FOR ch IN SELECT regexp_split_to_table(dna_sequence, '') LOOP
+    FOR ch IN SELECT regexp_split_to_table(nucl_seq, '') LOOP
 		ending_position := (ending_position + 1);
 		kmer := (kmer || ch);
 		
@@ -113,7 +113,7 @@ BEGIN
 	  	END IF;
 	
 	  	IF ending_position >= 6 THEN 	  		
-			EXECUTE insert_index(t_name, c_name, kmer, ending_position - 6, dna_sequence_id);
+			EXECUTE insert_index(t_name, c_name, kmer, ending_position - 6, nucl_seq_id);
 	  	END IF;
 
     END LOOP;
@@ -127,18 +127,18 @@ $BODY$
 DECLARE 
 	c_name information_schema.sql_identifier;
 
-	dna_sequence text;
+	nucl_seq text;
 BEGIN
-	FOR c_name IN SELECT column_name FROM show_domain_usage('dna_sequence') WHERE table_name = TG_TABLE_NAME 
+	FOR c_name IN SELECT column_name FROM show_domain_usage('nucl_seq') WHERE table_name = TG_TABLE_NAME 
 	LOOP 
-		EXECUTE FORMAT('DELETE FROM %I WHERE "dna_sequence_id" = %L', 
+		EXECUTE FORMAT('DELETE FROM %I WHERE "nucl_seq_id" = %L', 
 			(TG_TABLE_NAME || '_' || c_name || '__index'), OLD.id);
 
 		EXECUTE FORMAT ('SELECT %I FROM %I WHERE id = %L', 
-			c_name, TG_TABLE_NAME, NEW.id) INTO dna_sequence;
+			c_name, TG_TABLE_NAME, NEW.id) INTO nucl_seq;
 
 		EXECUTE FORMAT ('SELECT insert_indexes(%L, %L, %s, %L)', 
-			TG_TABLE_NAME, c_name, NEW.id, dna_sequence);
+			TG_TABLE_NAME, c_name, NEW.id, nucl_seq);
 		
 	END LOOP;
 
@@ -152,15 +152,15 @@ $BODY$
 DECLARE 
 	c_name information_schema.sql_identifier;
 
-	dna_sequence text;
+	nucl_seq text;
 BEGIN
-	FOR c_name IN SELECT column_name FROM show_domain_usage('dna_sequence') WHERE table_name = TG_TABLE_NAME 
+	FOR c_name IN SELECT column_name FROM show_domain_usage('nucl_seq') WHERE table_name = TG_TABLE_NAME 
 	LOOP 
 		EXECUTE FORMAT ('SELECT %I FROM %I WHERE id = %L', 
-			c_name, TG_TABLE_NAME, NEW.id) INTO dna_sequence;
+			c_name, TG_TABLE_NAME, NEW.id) INTO nucl_seq;
 
 		EXECUTE FORMAT ('SELECT insert_indexes(%L, %L, %s, %L)', 
-			TG_TABLE_NAME, c_name, NEW.id, dna_sequence);
+			TG_TABLE_NAME, c_name, NEW.id, nucl_seq);
 		
 	END LOOP;
 
@@ -174,13 +174,13 @@ $BODY$
 DECLARE 
 	c_name information_schema.sql_identifier;
 
-	dna_sequence text;
+	nucl_seq text;
 BEGIN
-	FOR c_name IN SELECT column_name FROM show_domain_usage('dna_sequence') WHERE table_name = TG_TABLE_NAME 
+	FOR c_name IN SELECT column_name FROM show_domain_usage('nucl_seq') WHERE table_name = TG_TABLE_NAME 
 	LOOP 
 		
 		EXECUTE FORMAT('
-			DELETE FROM %I WHERE "dna_sequence_id" = %L
+			DELETE FROM %I WHERE "nucl_seq_id" = %L
 		', 
 		(TG_TABLE_NAME || '_' || c_name || '__index'), 
 		OLD.id);
@@ -203,7 +203,7 @@ DECLARE
 	c_name information_schema.sql_identifier;
 
 	sequence_id BIGINT;
-	dna_sequence DNA_SEQUENCE;
+	nucl_seq NUCL_SEQ;
 BEGIN
     FOR changed_object IN SELECT * FROM pg_event_trigger_ddl_commands()
     LOOP		
@@ -218,14 +218,14 @@ BEGIN
 		    LOOP EXECUTE format('DROP TABLE %I CASCADE', row.tbl_name); END LOOP;
 			
 			-- Creating new tables
-			FOR c_name IN SELECT column_name FROM show_domain_usage('dna_sequence') 
+			FOR c_name IN SELECT column_name FROM show_domain_usage('nucl_seq') 
 			WHERE "table_schema" || '.' || "table_name" = changed_object.object_identity
 			LOOP 
 				
 			   	EXECUTE create_index_table(SPLIT_PART(changed_object.object_identity, '.', 2), c_name);
 												
-				FOR sequence_id, dna_sequence IN EXECUTE format('SELECT id, %I as clmn from %I', c_name, t_name) LOOP
-					EXECUTE insert_indexes(t_name, c_name, sequence_id, dna_sequence);
+				FOR sequence_id, nucl_seq IN EXECUTE format('SELECT id, %I as clmn from %I', c_name, t_name) LOOP
+					EXECUTE insert_indexes(t_name, c_name, sequence_id, nucl_seq);
 				END LOOP;
 				
 			END LOOP;
@@ -320,7 +320,7 @@ ON
 EXECUTE FUNCTION 
 	test_event_trigger_for_drops();
 
-CREATE TYPE mmseq_result AS (
+CREATE TYPE nucl_mmseq_result AS (
 	query_id bigint,
 	target_id bigint,
 	raw_score double precision,
@@ -332,8 +332,8 @@ CREATE TYPE mmseq_result AS (
 	t_start integer,
 	t_end integer,
 	t_len integer,
-	q_aln text,
-	t_aln text,
+	q_aln nucl_seq,
+	t_aln nucl_seq,
 	cigar text,
 	aln_len integer,
 	mismatch integer,
@@ -341,9 +341,30 @@ CREATE TYPE mmseq_result AS (
 	pident double precision
 );
 
-CREATE OR REPLACE FUNCTION seq_search_mmseqs(
-		dna_sequence,
-		dna_sequence,
+-- CREATE TYPE aa_mmseq_result AS (
+-- 	query_id bigint,
+-- 	target_id bigint,
+-- 	raw_score double precision,
+-- 	bit_score double precision,
+-- 	e_value double precision,
+-- 	q_start integer,
+-- 	q_end integer,
+-- 	q_len integer,
+-- 	t_start integer,
+-- 	t_end integer,
+-- 	t_len integer,
+-- 	q_aln aa_seq,
+-- 	t_aln aa_seq,
+-- 	cigar text,
+-- 	aln_len integer,
+-- 	mismatch integer,
+-- 	gap_open integer,
+-- 	pident double precision
+-- );
+
+CREATE OR REPLACE FUNCTION nucl_search_one_to_one(
+		nucl_seq,
+		nucl_seq,
 		kmer_length integer = 7,
 		substitution_matrix_name text = 'blosum62',
 		kmer_gen_threshold integer = 2147483647,
@@ -353,44 +374,12 @@ CREATE OR REPLACE FUNCTION seq_search_mmseqs(
 		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
-    RETURNS SETOF mmseq_result
+    RETURNS SETOF nucl_mmseq_result
     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_one' LANGUAGE C;
 
--- CREATE OR REPLACE FUNCTION seq_search_mmseqs(
--- 		dna_sequence[],
--- 		dna_sequence,
--- 		kmer_length integer = 7,
--- 		substitution_matrix_name text = 'blosum62',
--- 		kmer_gen_threshold integer = 2147483647,
--- 		ungapped_alignment_score integer = 15,
--- 		eval_threshold double precision = 0.001,
--- 		gap_open_cost integer = 11,
--- 		gap_penalty_cost integer = 1,
--- 		thread_number integer = 1
--- 	)
---     RETURNS SETOF mmseq_result
---     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_one' LANGUAGE C;
-
--- CREATE OR REPLACE FUNCTION seq_search_mmseqs(
--- 		text,
--- 		text,
--- 		dna_sequence,
--- 		query_ids bigint[] = NULL,
--- 		kmer_length integer = 7,
--- 		substitution_matrix_name text = 'blosum62',
--- 		kmer_gen_threshold integer = 2147483647,
--- 		ungapped_alignment_score integer = 15,
--- 		eval_threshold double precision = 0.001,
--- 		gap_open_cost integer = 11,
--- 		gap_penalty_cost integer = 1,
--- 		thread_number integer = 1
--- 	)
---     RETURNS SETOF mmseq_result
---     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_one' LANGUAGE C;
-
-CREATE OR REPLACE FUNCTION seq_search_mmseqs(
-		dna_sequence,
-		dna_sequence[],
+CREATE OR REPLACE FUNCTION nucl_search_one_to_arr(
+		nucl_seq,
+		nucl_seq[],
 		kmer_length integer = 7,
 		substitution_matrix_name text = 'blosum62',
 		kmer_gen_threshold integer = 2147483647,
@@ -400,43 +389,11 @@ CREATE OR REPLACE FUNCTION seq_search_mmseqs(
 		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
-    RETURNS SETOF mmseq_result
+    RETURNS SETOF nucl_mmseq_result
     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_arr' LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION seq_search_mmseqs(
-		dna_sequence[],
-		dna_sequence[],
-		kmer_length integer = 7,
-		substitution_matrix_name text = 'blosum62',
-		kmer_gen_threshold integer = 2147483647,
-		ungapped_alignment_score integer = 15,
-		eval_threshold double precision = 0.001,
-		gap_open_cost integer = 11,
-		gap_penalty_cost integer = 1,
-		thread_number integer = 1
-	)
-    RETURNS SETOF mmseq_result
-    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_arr' LANGUAGE C;
-
--- CREATE OR REPLACE FUNCTION seq_search_mmseqs(
--- 		text,
--- 		text,
--- 		dna_sequence[],
--- 		query_ids bigint[] = NULL,
--- 		kmer_length integer = 7,
--- 		substitution_matrix_name text = 'blosum62',
--- 		kmer_gen_threshold integer = 2147483647,
--- 		ungapped_alignment_score integer = 15,
--- 		eval_threshold double precision = 0.001,
--- 		gap_open_cost integer = 11,
--- 		gap_penalty_cost integer = 1,
--- 		thread_number integer = 1
--- 	)
---     RETURNS SETOF mmseq_result
---     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_arr' LANGUAGE C;
-
-CREATE OR REPLACE FUNCTION seq_search_mmseqs(
-		dna_sequence,
+CREATE OR REPLACE FUNCTION nucl_search_one_to_db(
+		nucl_seq,
 		text,
 		text,
 		target_ids bigint[] = NULL,
@@ -449,11 +406,41 @@ CREATE OR REPLACE FUNCTION seq_search_mmseqs(
 		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
-    RETURNS SETOF mmseq_result
+    RETURNS SETOF nucl_mmseq_result
     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_db' LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION seq_search_mmseqs(
-		dna_sequence[],
+CREATE OR REPLACE FUNCTION nucl_search_arr_to_one(
+		nucl_seq[],
+		nucl_seq,
+		kmer_length integer = 7,
+		substitution_matrix_name text = 'blosum62',
+		kmer_gen_threshold integer = 2147483647,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
+		thread_number integer = 1
+	)
+    RETURNS SETOF nucl_mmseq_result
+    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_one' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION nucl_search_arr_to_arr(
+		nucl_seq[],
+		nucl_seq[],
+		kmer_length integer = 7,
+		substitution_matrix_name text = 'blosum62',
+		kmer_gen_threshold integer = 2147483647,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
+		thread_number integer = 1
+	)
+    RETURNS SETOF nucl_mmseq_result
+    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_arr' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION nucl_search_arr_to_db(
+		nucl_seq[],
 		text,
 		text,
 		target_ids bigint[] = NULL,
@@ -466,10 +453,44 @@ CREATE OR REPLACE FUNCTION seq_search_mmseqs(
 		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
-    RETURNS SETOF mmseq_result
+    RETURNS SETOF nucl_mmseq_result
     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_db' LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION seq_search_mmseqs(
+CREATE OR REPLACE FUNCTION nucl_search_db_to_one(
+		text,
+		text,
+		nucl_seq,
+		query_ids bigint[] = NULL,
+		kmer_length integer = 7,
+		substitution_matrix_name text = 'blosum62',
+		kmer_gen_threshold integer = 2147483647,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
+		thread_number integer = 1
+	)
+    RETURNS SETOF nucl_mmseq_result
+    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_one' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION nucl_search_db_to_arr(
+		text,
+		text,
+		nucl_seq[],
+		query_ids bigint[] = NULL,
+		kmer_length integer = 7,
+		substitution_matrix_name text = 'blosum62',
+		kmer_gen_threshold integer = 2147483647,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
+		thread_number integer = 1
+	)
+    RETURNS SETOF nucl_mmseq_result
+    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_arr' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION nucl_search_db_to_db(
 		text,
 		text,
 		text,
@@ -483,7 +504,154 @@ CREATE OR REPLACE FUNCTION seq_search_mmseqs(
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 11,
 		gap_penalty_cost integer = 1,
-		thread_number integer = 1 -- TODO: increase when we have multithreading
+		thread_number integer = 1
 	)
-    RETURNS SETOF mmseq_result
+    RETURNS SETOF nucl_mmseq_result
     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_db' LANGUAGE C;
+
+-- CREATE OR REPLACE FUNCTION aa_search_one_to_one(
+-- 		aa_seq,
+-- 		aa_seq,
+-- 		kmer_length integer = 7,
+-- 		substitution_matrix_name text = 'blosum62',
+-- 		kmer_gen_threshold integer = 2147483647,
+-- 		ungapped_alignment_score integer = 15,
+-- 		eval_threshold double precision = 0.001,
+-- 		gap_open_cost integer = 11,
+-- 		gap_penalty_cost integer = 1,
+-- 		thread_number integer = 1
+-- 	)
+--     RETURNS SETOF aa_mmseq_result
+--     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_one' LANGUAGE C;
+
+-- CREATE OR REPLACE FUNCTION aa_search_one_to_arr(
+-- 		aa_seq,
+-- 		aa_seq[],
+-- 		kmer_length integer = 7,
+-- 		substitution_matrix_name text = 'blosum62',
+-- 		kmer_gen_threshold integer = 2147483647,
+-- 		ungapped_alignment_score integer = 15,
+-- 		eval_threshold double precision = 0.001,
+-- 		gap_open_cost integer = 11,
+-- 		gap_penalty_cost integer = 1,
+-- 		thread_number integer = 1
+-- 	)
+--     RETURNS SETOF aa_mmseq_result
+--     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_arr' LANGUAGE C;
+
+-- CREATE OR REPLACE FUNCTION aa_search_one_to_db(
+-- 		aa_seq,
+-- 		text,
+-- 		text,
+-- 		target_ids bigint[] = NULL,
+-- 		kmer_length integer = 7,
+-- 		substitution_matrix_name text = 'blosum62',
+-- 		kmer_gen_threshold integer = 2147483647,
+-- 		ungapped_alignment_score integer = 15,
+-- 		eval_threshold double precision = 0.001,
+-- 		gap_open_cost integer = 11,
+-- 		gap_penalty_cost integer = 1,
+-- 		thread_number integer = 1
+-- 	)
+--     RETURNS SETOF aa_mmseq_result
+--     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_db' LANGUAGE C;
+
+-- CREATE OR REPLACE FUNCTION aa_search_arr_to_one(
+-- 		aa_seq[],
+-- 		aa_seq,
+-- 		kmer_length integer = 7,
+-- 		substitution_matrix_name text = 'blosum62',
+-- 		kmer_gen_threshold integer = 2147483647,
+-- 		ungapped_alignment_score integer = 15,
+-- 		eval_threshold double precision = 0.001,
+-- 		gap_open_cost integer = 11,
+-- 		gap_penalty_cost integer = 1,
+-- 		thread_number integer = 1
+-- 	)
+--     RETURNS SETOF aa_mmseq_result
+--     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_one' LANGUAGE C;
+
+-- CREATE OR REPLACE FUNCTION aa_search_arr_to_arr(
+-- 		aa_seq[],
+-- 		aa_seq[],
+-- 		kmer_length integer = 7,
+-- 		substitution_matrix_name text = 'blosum62',
+-- 		kmer_gen_threshold integer = 2147483647,
+-- 		ungapped_alignment_score integer = 15,
+-- 		eval_threshold double precision = 0.001,
+-- 		gap_open_cost integer = 11,
+-- 		gap_penalty_cost integer = 1,
+-- 		thread_number integer = 1
+-- 	)
+--     RETURNS SETOF aa_mmseq_result
+--     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_arr' LANGUAGE C;
+
+-- CREATE OR REPLACE FUNCTION aa_search_arr_to_db(
+-- 		aa_seq[],
+-- 		text,
+-- 		text,
+-- 		target_ids bigint[] = NULL,
+-- 		kmer_length integer = 7,
+-- 		substitution_matrix_name text = 'blosum62',
+-- 		kmer_gen_threshold integer = 2147483647,
+-- 		ungapped_alignment_score integer = 15,
+-- 		eval_threshold double precision = 0.001,
+-- 		gap_open_cost integer = 11,
+-- 		gap_penalty_cost integer = 1,
+-- 		thread_number integer = 1
+-- 	)
+--     RETURNS SETOF aa_mmseq_result
+--     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_db' LANGUAGE C;
+
+-- CREATE OR REPLACE FUNCTION aa_search_db_to_one(
+-- 		text,
+-- 		text,
+-- 		aa_seq,
+-- 		query_ids bigint[] = NULL,
+-- 		kmer_length integer = 7,
+-- 		substitution_matrix_name text = 'blosum62',
+-- 		kmer_gen_threshold integer = 2147483647,
+-- 		ungapped_alignment_score integer = 15,
+-- 		eval_threshold double precision = 0.001,
+-- 		gap_open_cost integer = 11,
+-- 		gap_penalty_cost integer = 1,
+-- 		thread_number integer = 1
+-- 	)
+--     RETURNS SETOF aa_mmseq_result
+--     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_one' LANGUAGE C;
+
+-- CREATE OR REPLACE FUNCTION aa_search_db_to_arr(
+-- 		text,
+-- 		text,
+-- 		aa_seq[],
+-- 		query_ids bigint[] = NULL,
+-- 		kmer_length integer = 7,
+-- 		substitution_matrix_name text = 'blosum62',
+-- 		kmer_gen_threshold integer = 2147483647,
+-- 		ungapped_alignment_score integer = 15,
+-- 		eval_threshold double precision = 0.001,
+-- 		gap_open_cost integer = 11,
+-- 		gap_penalty_cost integer = 1,
+-- 		thread_number integer = 1
+-- 	)
+--     RETURNS SETOF aa_mmseq_result
+--     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_arr' LANGUAGE C;
+
+-- CREATE OR REPLACE FUNCTION aa_search_db_to_db(
+-- 		text,
+-- 		text,
+-- 		text,
+-- 		text,
+-- 		query_ids bigint[] = NULL,
+-- 		target_ids bigint[] = NULL,
+-- 		kmer_length integer = 7,
+-- 		substitution_matrix_name text = 'blosum62',
+-- 		kmer_gen_threshold integer = 2147483647,
+-- 		ungapped_alignment_score integer = 15,
+-- 		eval_threshold double precision = 0.001,
+-- 		gap_open_cost integer = 11,
+-- 		gap_penalty_cost integer = 1,
+-- 		thread_number integer = 1
+-- 	)
+--     RETURNS SETOF aa_mmseq_result
+--     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_db' LANGUAGE C;

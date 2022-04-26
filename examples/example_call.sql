@@ -2,18 +2,18 @@ CREATE EXTENSION mmseq2;
 
 CREATE TABLE query(
     id bigint,
-    seq dna_sequence
+    seq nucl_seq
 );
 
 CREATE TABLE target(
     id bigint,
-    seq dna_sequence
+    seq nucl_seq
 );
 
-INSERT INTO query VALUES (1, 'ACGT');
-INSERT INTO query VALUES (2, 'TTTT');
+INSERT INTO query VALUES (1, 'ACGTCACACACGAGGGGCGGTTTG');
+INSERT INTO query VALUES (2, 'TTTTAGAGGAGACCCACCAGAGGAC');
 
-INSERT INTO target VALUES (11, 'ATTA');
-INSERT INTO target VALUES (12, 'GGGGG');
+INSERT INTO target VALUES (11, 'ATTAGCGAGAGCGCGTGTATTTT');
+INSERT INTO target VALUES (12, 'GGGGGAGATATATTAGGGGACCCCCAGTTTAC');
 
-SELECT * FROM seq_search_mmseqs('query', 'seq', 'target', 'seq', ARRAY(SELECT id FROM query), ARRAY(SELECT id FROM target));
+SELECT * FROM nucl_search_db_to_db('query', 'seq', 'target', 'seq');
