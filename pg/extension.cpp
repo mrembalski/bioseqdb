@@ -2,6 +2,7 @@
 #include <string>
 #include "../common/mmseq2lib.h"
 #include "rpc/client.h"
+#include "config.h"
 
 extern "C"
 {
@@ -250,7 +251,7 @@ extern "C"
                                          thread_number);
 
         // Client
-        rpc::client c("localhost", 8080);
+        rpc::client c(MMSEQ_HOSTNAME, MMSEQ_PORT);
         // https://github.com/msgpack/msgpack-c/issues/480
         common::VecRes mmseq_result(c.call("mmseq2", std::make_shared<common::InputParams>(input_params)).as<common::VecRes>());
         uint32_t n = mmseq_result.size();
