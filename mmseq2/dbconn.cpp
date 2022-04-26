@@ -7,7 +7,7 @@
 #include <exception>
 #include <cstdlib>
 
-DB::DBconn::DBconn(std::string tableName, std::string columnName)
+DB::DBconn::DBconn(const std::string &tableName, const std::string &columnName)
 {
     this->columnName = columnName;
     this->tableName = tableName;
