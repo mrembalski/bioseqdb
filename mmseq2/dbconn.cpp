@@ -94,10 +94,10 @@ void DB::DBconn::GetIthIndex(std::string kmer, uint32_t i, uint64_t *target_id, 
     }
 
     char *starting_position = PQgetvalue(res, 0, starting_position_fnum);
-    char *dna_sequence_id = PQgetvalue(res, 0, dna_sequence_id_fnum);
+    char *seq_id = PQgetvalue(res, 0, seq_id_fnum);
 
     *position = strtoul(starting_position, NULL, 0);
-    *target_id = strtoull(dna_sequence_id, NULL, 0);
+    *target_id = strtoull(seq_id, NULL, 0);
 
     PQclear(res);
 }
