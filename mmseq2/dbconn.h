@@ -1,7 +1,9 @@
 #ifndef BIOSEQDB_DBCONN_H
 #define BIOSEQDB_DBCONN_H
 
+extern "C" {
 #include <libpq-fe.h>
+}
 #include <string>
 #include <memory>
 

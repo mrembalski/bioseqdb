@@ -1,7 +1,10 @@
 #include <vector>
 #include <string>
+#include <exception>
+#include <signal.h>
 #include "../common/mmseq2lib.h"
 #include "rpc/client.h"
+#include "rpc/rpc_error.h"
 #include "config.h"
 
 extern "C"
@@ -227,6 +230,12 @@ namespace
         }
     }
 
+    void sigint_handler(int signo)
+    {
+        if (signo == SIGINT)
+            elog(ERROR, "%s", "Received SIGINT");
+    }
+
     void seq_search_mmseqs_main(std::optional<std::string> target_tblname,
                                 std::optional<std::string> target_colname,
                                 common::InputParams::Vec64Ptr qIds,
@@ -267,6 +276,11 @@ namespace
         elog(WARNING, "%s%d", "Gap open cost: ", gap_open_cost);
         elog(WARNING, "%s%d", "Gap penalty cost: ", gap_penalty_cost);
 
+        struct sigaction act;
+        act.sa_handler = sigint_handler;
+        if (sigaction(SIGINT, &act, NULL) == -1)
+            elog(ERROR, "%s", "Couldn't set SIGINT handler");
+
         // Input params
         common::InputParams input_params(qIds->size(), tIds->size(), qIds, tIds, queries,
                                          std::make_shared<std::string>(target_tblname.value()),
@@ -283,9 +297,19 @@ namespace
         // Client
         rpc::client c(MMSEQ_HOSTNAME, MMSEQ_PORT);
         common::VecRes mmseq_result;
-        c.call("mmseq2", input_params).get().convert(mmseq_result);
+        try {
+            c.call("mmseq2", input_params).get().convert(mmseq_result);
+        }
+        catch (rpc::rpc_error &e) {
+            std::string error_msg;
+            e.get_error().get().convert(error_msg);
+            elog(ERROR, "%s", error_msg.data());
+        }
+        catch (const std::exception &e) {
+            std::string error_msg = e.what();
+            elog(ERROR, "%s", error_msg.data());
+        }
         uint32_t n = mmseq_result.size();
-        elog(WARNING, "%s%d", "Returned rows: ", n);
 
         // Build the output table
         for (uint32_t i = 0; i < n; i++)
