@@ -345,7 +345,7 @@ ON
 EXECUTE FUNCTION 
 	test_event_trigger_for_drops();
 
-CREATE TYPE mmseq_result AS (
+CREATE TYPE nucl_mmseq_result AS (
 	query_id bigint,
 	target_id bigint,
 	raw_score double precision,
@@ -357,8 +357,8 @@ CREATE TYPE mmseq_result AS (
 	t_start integer,
 	t_end integer,
 	t_len integer,
-	q_aln text,
-	t_aln text,
+	q_aln nucl_seq,
+	t_aln nucl_seq,
 	cigar text,
 	aln_len integer,
 	mismatch integer,
@@ -366,149 +366,317 @@ CREATE TYPE mmseq_result AS (
 	pident double precision
 );
 
-CREATE OR REPLACE FUNCTION seq_search_mmseqs(
+CREATE TYPE aa_mmseq_result AS (
+	query_id bigint,
+	target_id bigint,
+	raw_score double precision,
+	bit_score double precision,
+	e_value double precision,
+	q_start integer,
+	q_end integer,
+	q_len integer,
+	t_start integer,
+	t_end integer,
+	t_len integer,
+	q_aln aa_seq,
+	t_aln aa_seq,
+	cigar text,
+	aln_len integer,
+	mismatch integer,
+	gap_open integer,
+	pident double precision
+);
+
+CREATE OR REPLACE FUNCTION nucl_search_one_to_one(
 		nucl_seq,
 		nucl_seq,
+		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		substitution_matrix_name text = 'blosum62',
 		kmer_gen_threshold integer = 2147483647,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
-		gap_open_cost integer = 11,
-		gap_penalty_cost integer = 1,
+		gap_open_cost integer = 5,
+		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF mmseq_result
+    RETURNS SETOF nucl_mmseq_result
     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_one' LANGUAGE C;
 
--- CREATE OR REPLACE FUNCTION seq_search_mmseqs(
--- 		nucl_seq[],
--- 		nucl_seq,
--- 		kmer_length integer = 7,
--- 		substitution_matrix_name text = 'blosum62',
--- 		kmer_gen_threshold integer = 2147483647,
--- 		ungapped_alignment_score integer = 15,
--- 		eval_threshold double precision = 0.001,
--- 		gap_open_cost integer = 11,
--- 		gap_penalty_cost integer = 1,
--- 		thread_number integer = 1
--- 	)
---     RETURNS SETOF mmseq_result
---     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_one' LANGUAGE C;
-
--- CREATE OR REPLACE FUNCTION seq_search_mmseqs(
--- 		text,
--- 		text,
--- 		nucl_seq,
--- 		query_ids bigint[] = NULL,
--- 		kmer_length integer = 7,
--- 		substitution_matrix_name text = 'blosum62',
--- 		kmer_gen_threshold integer = 2147483647,
--- 		ungapped_alignment_score integer = 15,
--- 		eval_threshold double precision = 0.001,
--- 		gap_open_cost integer = 11,
--- 		gap_penalty_cost integer = 1,
--- 		thread_number integer = 1
--- 	)
---     RETURNS SETOF mmseq_result
---     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_one' LANGUAGE C;
-
-CREATE OR REPLACE FUNCTION seq_search_mmseqs(
+CREATE OR REPLACE FUNCTION nucl_search_one_to_arr(
 		nucl_seq,
 		nucl_seq[],
+		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		substitution_matrix_name text = 'blosum62',
 		kmer_gen_threshold integer = 2147483647,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
-		gap_open_cost integer = 11,
-		gap_penalty_cost integer = 1,
+		gap_open_cost integer = 5,
+		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF mmseq_result
+    RETURNS SETOF nucl_mmseq_result
     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_arr' LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION seq_search_mmseqs(
-		nucl_seq[],
-		nucl_seq[],
-		kmer_length integer = 7,
-		substitution_matrix_name text = 'blosum62',
-		kmer_gen_threshold integer = 2147483647,
-		ungapped_alignment_score integer = 15,
-		eval_threshold double precision = 0.001,
-		gap_open_cost integer = 11,
-		gap_penalty_cost integer = 1,
-		thread_number integer = 1
-	)
-    RETURNS SETOF mmseq_result
-    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_arr' LANGUAGE C;
-
--- CREATE OR REPLACE FUNCTION seq_search_mmseqs(
--- 		text,
--- 		text,
--- 		nucl_seq[],
--- 		query_ids bigint[] = NULL,
--- 		kmer_length integer = 7,
--- 		substitution_matrix_name text = 'blosum62',
--- 		kmer_gen_threshold integer = 2147483647,
--- 		ungapped_alignment_score integer = 15,
--- 		eval_threshold double precision = 0.001,
--- 		gap_open_cost integer = 11,
--- 		gap_penalty_cost integer = 1,
--- 		thread_number integer = 1
--- 	)
---     RETURNS SETOF mmseq_result
---     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_arr' LANGUAGE C;
-
-CREATE OR REPLACE FUNCTION seq_search_mmseqs(
+CREATE OR REPLACE FUNCTION nucl_search_one_to_db(
 		nucl_seq,
 		text,
 		text,
 		target_ids bigint[] = NULL,
+		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		substitution_matrix_name text = 'blosum62',
 		kmer_gen_threshold integer = 2147483647,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
-		gap_open_cost integer = 11,
-		gap_penalty_cost integer = 1,
+		gap_open_cost integer = 5,
+		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF mmseq_result
+    RETURNS SETOF nucl_mmseq_result
     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_db' LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION seq_search_mmseqs(
+CREATE OR REPLACE FUNCTION nucl_search_arr_to_one(
+		nucl_seq[],
+		nucl_seq,
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 2147483647,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 5,
+		gap_penalty_cost integer = 2,
+		thread_number integer = 1
+	)
+    RETURNS SETOF nucl_mmseq_result
+    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_one' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION nucl_search_arr_to_arr(
+		nucl_seq[],
+		nucl_seq[],
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 2147483647,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 5,
+		gap_penalty_cost integer = 2,
+		thread_number integer = 1
+	)
+    RETURNS SETOF nucl_mmseq_result
+    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_arr' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION nucl_search_arr_to_db(
 		nucl_seq[],
 		text,
 		text,
 		target_ids bigint[] = NULL,
+		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		substitution_matrix_name text = 'blosum62',
 		kmer_gen_threshold integer = 2147483647,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
-		gap_open_cost integer = 11,
-		gap_penalty_cost integer = 1,
+		gap_open_cost integer = 5,
+		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF mmseq_result
+    RETURNS SETOF nucl_mmseq_result
     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_db' LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION seq_search_mmseqs(
+CREATE OR REPLACE FUNCTION nucl_search_db_to_one(
+		text,
+		text,
+		nucl_seq,
+		query_ids bigint[] = NULL,
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 2147483647,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 5,
+		gap_penalty_cost integer = 2,
+		thread_number integer = 1
+	)
+    RETURNS SETOF nucl_mmseq_result
+    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_one' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION nucl_search_db_to_arr(
+		text,
+		text,
+		nucl_seq[],
+		query_ids bigint[] = NULL,
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 2147483647,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 5,
+		gap_penalty_cost integer = 2,
+		thread_number integer = 1
+	)
+    RETURNS SETOF nucl_mmseq_result
+    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_arr' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION nucl_search_db_to_db(
 		text,
 		text,
 		text,
 		text,
 		query_ids bigint[] = NULL,
 		target_ids bigint[] = NULL,
+		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		substitution_matrix_name text = 'blosum62',
+		kmer_gen_threshold integer = 2147483647,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 5,
+		gap_penalty_cost integer = 2,
+		thread_number integer = 1
+	)
+    RETURNS SETOF nucl_mmseq_result
+    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_db' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION aa_search_one_to_one(
+		aa_seq,
+		aa_seq,
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
 		kmer_gen_threshold integer = 2147483647,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 11,
 		gap_penalty_cost integer = 1,
-		thread_number integer = 1 -- TODO: increase when we have multithreading
+		thread_number integer = 1
 	)
-    RETURNS SETOF mmseq_result
+    RETURNS SETOF aa_mmseq_result
+    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_one' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION aa_search_one_to_arr(
+		aa_seq,
+		aa_seq[],
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 2147483647,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
+		thread_number integer = 1
+	)
+    RETURNS SETOF aa_mmseq_result
+    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_arr' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION aa_search_one_to_db(
+		aa_seq,
+		text,
+		text,
+		target_ids bigint[] = NULL,
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 2147483647,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
+		thread_number integer = 1
+	)
+    RETURNS SETOF aa_mmseq_result
+    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_db' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION aa_search_arr_to_one(
+		aa_seq[],
+		aa_seq,
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 2147483647,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
+		thread_number integer = 1
+	)
+    RETURNS SETOF aa_mmseq_result
+    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_one' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION aa_search_arr_to_arr(
+		aa_seq[],
+		aa_seq[],
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 2147483647,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
+		thread_number integer = 1
+	)
+    RETURNS SETOF aa_mmseq_result
+    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_arr' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION aa_search_arr_to_db(
+		aa_seq[],
+		text,
+		text,
+		target_ids bigint[] = NULL,
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 2147483647,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
+		thread_number integer = 1
+	)
+    RETURNS SETOF aa_mmseq_result
+    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_db' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION aa_search_db_to_one(
+		text,
+		text,
+		aa_seq,
+		query_ids bigint[] = NULL,
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 2147483647,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
+		thread_number integer = 1
+	)
+    RETURNS SETOF aa_mmseq_result
+    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_one' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION aa_search_db_to_arr(
+		text,
+		text,
+		aa_seq[],
+		query_ids bigint[] = NULL,
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 2147483647,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
+		thread_number integer = 1
+	)
+    RETURNS SETOF aa_mmseq_result
+    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_arr' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION aa_search_db_to_db(
+		text,
+		text,
+		text,
+		text,
+		query_ids bigint[] = NULL,
+		target_ids bigint[] = NULL,
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 2147483647,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
+		thread_number integer = 1
+	)
+    RETURNS SETOF aa_mmseq_result
     AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_db' LANGUAGE C;
