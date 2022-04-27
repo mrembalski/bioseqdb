@@ -296,6 +296,7 @@ namespace
 
         // Client
         rpc::client c(MMSEQ_HOSTNAME, MMSEQ_PORT);
+        c.set_timeout(MMSEQ_TIMEOUT);
         common::VecRes mmseq_result;
         try {
             c.call("mmseq2", input_params).get().convert(mmseq_result);
