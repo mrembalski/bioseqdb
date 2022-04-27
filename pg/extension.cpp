@@ -303,9 +303,14 @@ namespace
             values[8] = std::to_string(t.getTStart()).data();
             values[9] = std::to_string(t.getTEnd()).data();
             values[10] = std::to_string(t.getTLen()).data();
-            values[11] = t.getQAln().data();
-            values[12] = t.getTAln().data();
-            values[13] = t.getCigar().data();
+
+            std::string qAln = t.getQAln();
+            std::string tAln = t.getTAln();
+            std::string cigar = t.getCigar();
+            values[11] = qAln.data();
+            values[12] = tAln.data();
+            values[13] = cigar.data();
+
             values[14] = std::to_string(t.getAlnLen()).data();
             values[15] = std::to_string(t.getMismatch()).data();
             values[16] = std::to_string(t.getGapOpen()).data();

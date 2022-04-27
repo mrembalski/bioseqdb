@@ -74,7 +74,7 @@ DB::DBconn::DBconn(const std::string &tableName, const std::string &columnName)
 void DB::DBconn::GetIthIndex(std::string kmer, uint32_t i, uint64_t *target_id, uint32_t *position)
 {
     std::string getIndexQuery =
-        "SELECT starting_position, dna_sequence_id FROM " +
+        "SELECT starting_position, seq_id FROM " +
         this->tableName + "_" + this->columnName + "__index" +
         " " + "WHERE kmer=\'" + kmer + "\'" +
         "OFFSET " + std::to_string(i) + "LIMIT 1;";
@@ -86,7 +86,7 @@ void DB::DBconn::GetIthIndex(std::string kmer, uint32_t i, uint64_t *target_id, 
     }
 
     int starting_position_fnum = PQfnumber(res, "starting_position");
-    int dna_sequence_id_fnum = PQfnumber(res, "dna_sequence_id");
+    int seq_id_fnum = PQfnumber(res, "seq_id");
 
     /* TODO: do something when no value is returned */
     if (PQntuples(res) != 1) {
@@ -94,10 +94,10 @@ void DB::DBconn::GetIthIndex(std::string kmer, uint32_t i, uint64_t *target_id, 
     }
 
     char *starting_position = PQgetvalue(res, 0, starting_position_fnum);
-    char *dna_sequence_id = PQgetvalue(res, 0, dna_sequence_id_fnum);
+    char *seq_id = PQgetvalue(res, 0, seq_id_fnum);
 
     *position = strtoul(starting_position, NULL, 0);
-    *target_id = strtoull(dna_sequence_id, NULL, 0);
+    *target_id = strtoull(seq_id, NULL, 0);
 
     PQclear(res);
 }
