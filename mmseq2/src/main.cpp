@@ -1,5 +1,7 @@
 #include "mmseq2.h"
 
+clock_t startTime, endTime;
+
 namespace {
     mmseq2::InputParams::InputParamsPtr prepareInput(
             std::string matrixName, uint32_t kMerLength,
@@ -44,48 +46,75 @@ namespace {
                 matrixName, kMerLength, kMerGenThreshold, ungappedAlignmentScore,
                 evalTreshold, gapOpenCost, gapPenaltyCost, threadNumber);
 
+        startTime = clock();
         auto res = mmseq2::MMSeq2(inputParams);
-        for (auto& el : res) {
-            std::cout << "qId: " << el.getQueryId() << ", ";
-            std::cout << "tId: " << el.getTargetId() << "\n";
-            std::cout << "rawScore: " << el.getRawScore() << ", ";
-            std::cout << "bitScore: " << el.getBitScore() << ", ";
-            std::cout << "eValue: " << el.getEValue() << "\n";
-            std::cout << "qStart: " << el.getQStart() << ", ";
-            std::cout << "qEnd: " << el.getQEnd() << ", ";
-            std::cout << "qLen: " << el.getQLen() << "\n";
-            std::cout << "tStart: " << el.getTStart() << ", ";
-            std::cout << "tEnd: " << el.getTEnd() << ", ";
-            std::cout << "tLen: " << el.getTLen() << "\n";
-            std::cout << "qAln: " << el.getQAln() << "\n";
-            std::cout << "tAln: " << el.getTAln() << "\n";
-            std::cout << "cigar: " << el.getCigar() << "\n";
-            std::cout << "alnLen: " << el.getAlnLen() << "\n";
-            std::cout << "mismatch: " << el.getMismatch() << "\n";
-            std::cout << "gapOpen: " << el.getGapOpen() << "\n";
-            std::cout << "pident: " << el.getPident() << "\n";
-            std::cout << "\n";
-        }
+        endTime = clock();
+
+//        for (auto& el : res) {
+//            std::cout << "qId: " << el.getQueryId() << ", ";
+//            std::cout << "tId: " << el.getTargetId() << "\n";
+//            std::cout << "rawScore: " << el.getRawScore() << ", ";
+//            std::cout << "bitScore: " << el.getBitScore() << ", ";
+//            std::cout << "eValue: " << el.getEValue() << "\n";
+//            std::cout << "qStart: " << el.getQStart() << ", ";
+//            std::cout << "qEnd: " << el.getQEnd() << ", ";
+//            std::cout << "qLen: " << el.getQLen() << "\n";
+//            std::cout << "tStart: " << el.getTStart() << ", ";
+//            std::cout << "tEnd: " << el.getTEnd() << ", ";
+//            std::cout << "tLen: " << el.getTLen() << "\n";
+//            std::cout << "qAln: " << el.getQAln() << "\n";
+//            std::cout << "tAln: " << el.getTAln() << "\n";
+//            std::cout << "cigar: " << el.getCigar() << "\n";
+//            std::cout << "alnLen: " << el.getAlnLen() << "\n";
+//            std::cout << "mismatch: " << el.getMismatch() << "\n";
+//            std::cout << "gapOpen: " << el.getGapOpen() << "\n";
+//            std::cout << "pident: " << el.getPident() << "\n";
+//            std::cout << "\n";
+//        }
+    }
+}
+
+void runMmseq(int i) {
+    switch (i) {
+        case 0:
+            runMMSeq2({"DDDDDDDAAGGGGGGG"},
+                      {"AADDDDDDDCCGGGGGGGAA"},
+                      "blosum62", 7, 20, 0, 1, 4, 1, 1);
+            break;
+        case 1:
+            runMMSeq2({"DDDDDDDDDCCGGGGGGGAA", "AAADDDDDDDCCGGGGGGGDD"},
+                      {"DDDDDDDAAGGGGGGG"},
+                      "blosum62", 7, 22, 0, 1, 4, 1, 2);
+            break;
+        case 2:
+            runMMSeq2({"AAADDDDDDDCCGGGGGGGDD"},
+                      {"DDDDDDDAAGGGGGGG", "DDDDDDDDDCCGGGGGGGAA"},
+                      "blosum62", 7, 22, 0, 1, 4, 1, 1);
+            break;
+        default:
+            runMMSeq2({"AACCTTGG", "ACTGACTGACTG", "TACTCAT"},
+                      {"TACGGTAGCTTACTGA", "CTAGCTTACGATGCAAG", "CTTACAGCATACAGCATCGAT"},
+                      "blosum62", 7, 15, 10, 1, 4, 1, 5);
+            break;
     }
 }
 
 int main() {
 
-    runMMSeq2({"DDDDDAAGGGGG"},
-            {"AADDDDDCCGGGGGAA"},
-            "blosum62", 5, 20, 0, 1, 4, 1, 1);
+    double times[4] = {0.0, 0.0, 0.0, 0.0};
 
-//    runMMSeq2({"DDDDDDDDDCCGGGGGGGAA", "AAADDDDDDDCCGGGGGGGDD"},
-//            {"DDDDDDDAAGGGGGGG"},
-//            "blosum62", 7, 22, 0, 1, 4, 1, 2);
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 4; j++) {
+            runMmseq(j);
+            double elapsed = (double) (endTime - startTime) / CLOCKS_PER_SEC;
+            times[j] += elapsed;
+        }
+    }
 
-//    runMMSeq2({"AAADDDDDDDCCGGGGGGGDD"},
-//            {"DDDDDDDAAGGGGGGG", "DDDDDDDDDCCGGGGGGGAA"},
-//            "blosum62", 7, 22, 0, 1, 4, 1, 1);
-
-//    runMMSeq2({"AACCTTGG", "ACTGACTGACTG", "TACTCAT"},
-//            {"TACGGTAGCTTACTGA", "CTAGCTTACGATGCAAG", "CTTACAGCATACAGCATCGAT"},
-//            "blosum62", 5, 10, 10, 1, 4, 1, 5);
+    for (double & time : times) {
+        time /= 10.0;
+        printf("Time: %.5f\n", time);
+    }
 
     return 0;
 }
