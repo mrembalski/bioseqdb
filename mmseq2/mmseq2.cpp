@@ -30,12 +30,13 @@ common::VecRes mmseq2::MMSeq2(common::InputParams inputParams) {
     uint32_t nextQuery = 0;
     common::VecResPtr resultPtr = std::make_shared<common::VecRes>();
 
+    uint32_t tLen = inputParamsPtr.get()->getTLen();
     mmseq2::GetterInterfacePtr getterInterfacePtr = std::make_shared<mmseq2::GetterInterface>();
     getterInterfacePtr.get()->setLocalTargets(inputParamsPtr.get()->getLocalTargets());
+    (*getterInterfacePtr).getTargetsPtr() = (*inputParamsPtr).getTargetsPtr();
 
     if (getterInterfacePtr.get()->getLocalTargets()) {
         uint32_t kMerLength = inputParamsPtr.get()->getKMerLength();
-        *getterInterfacePtr.get()->getTargetsPtr() = *inputParamsPtr.get()->getTargetsPtr();
 
         auto targetsPtr = inputParamsPtr.get()->getTargetsPtr();
         for (uint32_t i = 0; i < targetsPtr.get()->size(); i++) {
@@ -45,7 +46,7 @@ common::VecRes mmseq2::MMSeq2(common::InputParams inputParams) {
             }
             for (uint j = 0; j <= target.size() - kMerLength; j++) {
                 std::string kMer = target.substr(j, kMerLength);
-                getterInterfacePtr.get()->getIndexesMapPtr().get()->at(kMer).push_back({i, j});
+                (*getterInterfacePtr.get()->getIndexesMapPtr())[kMer].push_back({i, j});
             }
         }
     }

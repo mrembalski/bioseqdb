@@ -321,17 +321,23 @@ namespace mmseq2
         using IndexesMapPtr = std::shared_ptr<IndexesMap>;
         using DBconnPtr = std::shared_ptr<DB::DBconn>;
 
-        [[nodiscard]] const DBconnPtr &getDBconnPtr()
+        GetterInterface()
+        {
+            indexesMapPtr = std::make_shared<IndexesMap>();
+            dbconnPtr = nullptr;
+        }
+
+        [[nodiscard]] DBconnPtr &getDBconnPtr()
         {
             return dbconnPtr;
         }
 
-        [[nodiscard]] const IndexesMapPtr &getIndexesMapPtr()
+        [[nodiscard]] IndexesMapPtr &getIndexesMapPtr()
         {
             return indexesMapPtr;
         }
 
-        [[nodiscard]] const common::InputParams::VecStrPtr &getTargetsPtr()
+        [[nodiscard]] common::InputParams::VecStrPtr &getTargetsPtr()
         {
             return targetsPtr;
         }
@@ -383,10 +389,10 @@ namespace mmseq2
         }
 
     private:
-        bool localTargets;
-        DBconnPtr dbconnPtr = nullptr;
+        bool localTargets = false;
+        DBconnPtr dbconnPtr;
         IndexesMapPtr indexesMapPtr;
-        common::InputParams::VecStrPtr targetsPtr = nullptr;
+        common::InputParams::VecStrPtr targetsPtr;
     };
 }
 
