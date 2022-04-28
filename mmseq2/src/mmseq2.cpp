@@ -131,6 +131,7 @@ void mmseq2::Query::processSimilarKMers(uint32_t kMerPos, std::string &kMer, int
 }
 
 void mmseq2::Query::processSingleKmer(uint32_t kMerPos, std::string &kMer) {
+    mock::c = mock::c + 1;
     uint32_t n = mock::get_indexes(targetTableName.get()->c_str(), kMer.c_str(), getKMerLength());
 
     for (uint32_t i = 0; i < n; ++i) {

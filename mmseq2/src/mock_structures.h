@@ -7,6 +7,7 @@
 #include <map>
 
 namespace mock {
+    extern int c;
     extern std::vector<std::string> querySequences;
     extern std::vector<std::string> targetSequences;
     extern std::map<std::string, std::vector<std::pair<uint32_t, uint32_t>>> hits; // id, diag

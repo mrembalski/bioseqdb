@@ -2,6 +2,7 @@
 #include <iostream>
 #include <utility>
 
+int mock::c;
 std::vector<std::string> mock::querySequences;
 std::vector<std::string> mock::targetSequences;
 std::map<std::string, std::vector<std::pair<uint32_t, uint32_t>>> mock::hits; // id, diag
