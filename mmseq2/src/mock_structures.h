@@ -5,12 +5,16 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_map>
+#include <mutex>
+#include <algorithm>
+#include <memory>
 
 namespace mock {
     extern int c;
     extern std::vector<std::string> querySequences;
     extern std::vector<std::string> targetSequences;
-    extern std::map<std::string, std::vector<std::pair<uint32_t, uint32_t>>> hits; // id, diag
+    extern std::unordered_map<std::string, std::vector<std::pair<uint32_t, uint32_t>>> hits; // id, diag
 
     // Mock POSTRES structures
 
