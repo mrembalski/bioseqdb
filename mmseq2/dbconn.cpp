@@ -10,6 +10,9 @@ DB::DBconn::DBconn(const std::string &tableName, const std::string &columnName)
 {
     this->columnName = columnName;
     this->tableName = tableName;
+    this->getIthIndexPrefix =
+        std::string("SELECT starting_position, seq_id FROM ").append(this->tableName)
+        .append("_").append(this->columnName).append("__index WHERE kmer=\'");
 
 	/* A list of possible environment variables*/
 	const char *env_var[5] = {
@@ -70,13 +73,10 @@ DB::DBconn::DBconn(const std::string &tableName, const std::string &columnName)
     }
 }
 
-void DB::DBconn::GetIthIndex(std::string kmer, uint32_t i, uint64_t *target_id, uint32_t *position)
+bool DB::DBconn::GetIthIndex(std::string kmer, uint32_t i, uint64_t *target_id, uint32_t *position)
 {
-    std::string getIndexQuery =
-        "SELECT starting_position, seq_id FROM " +
-        this->tableName + "_" + this->columnName + "__index" +
-        " " + "WHERE kmer=\'" + kmer + "\'" +
-        "OFFSET " + std::to_string(i) + "LIMIT 1;";
+    std::string getIndexQuery = this->getIthIndexPrefix;
+    getIndexQuery.append(kmer).append("\' OFFSET ").append(std::to_string(i)).append(" LIMIT 1;");
 
     PGresult *res = PQexec(connection, getIndexQuery.c_str());
 
@@ -89,7 +89,7 @@ void DB::DBconn::GetIthIndex(std::string kmer, uint32_t i, uint64_t *target_id, 
 
     /* TODO: do something when no value is returned */
     if (PQntuples(res) != 1) {
-        throw std::invalid_argument("No ith index exists");
+        return false;
     }
 
     char *starting_position = PQgetvalue(res, 0, starting_position_fnum);
@@ -99,6 +99,7 @@ void DB::DBconn::GetIthIndex(std::string kmer, uint32_t i, uint64_t *target_id, 
     *target_id = strtoull(seq_id, NULL, 0);
 
     PQclear(res);
+    return true;
 }
 
 

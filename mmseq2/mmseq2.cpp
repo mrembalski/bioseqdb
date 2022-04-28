@@ -137,27 +137,23 @@ void mmseq2::Query::processSingleKmer(DB::DBconn& dbconn, uint32_t kMerPos, std:
     // for (uint32_t i = 0; i < n; ++i) {
     uint32_t i = 0; 
     while (true) {
-        try {
-            uint64_t target_id;
-            uint32_t position;
+        uint64_t target_id;
+        uint32_t position;
 
-            // added kmer for new interface
-            dbconn.GetIthIndex(kMer.c_str(), (int32_t)i, &target_id, &position);
-            
-            // mock::get_ith_index((int32_t)i, &target_id, &position, kMer.c_str(), getKMerLength());
-            int32_t diagonal = (int32_t)position - (int32_t)kMerPos;
-
-            if (diagonalPreVVisited[target_id] && diagonalPrev[target_id] == diagonal) {
-                addMatch(target_id, diagonal);
-            }
-
-            diagonalPrev[target_id] = diagonal;
-            diagonalPreVVisited[target_id] = true;
-        }
-        catch (const std::exception& e) {
-            // std::cout << "processSingleKmer: got exception at " << i << std::endl;
+        // added kmer for new interface
+        bool b = dbconn.GetIthIndex(kMer.c_str(), (int32_t)i, &target_id, &position);
+        if (!b)
             break;
+
+        // mock::get_ith_index((int32_t)i, &target_id, &position, kMer.c_str(), getKMerLength());
+        int32_t diagonal = (int32_t)position - (int32_t)kMerPos;
+
+        if (diagonalPreVVisited[target_id] && diagonalPrev[target_id] == diagonal) {
+            addMatch(target_id, diagonal);
         }
+
+        diagonalPrev[target_id] = diagonal;
+        diagonalPreVVisited[target_id] = true;
         i++;
     }
 }
