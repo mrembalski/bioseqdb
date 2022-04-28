@@ -8,7 +8,7 @@ namespace {
     // from hsp to bit score, using K, lambda
     double evalBitScore(double rawScore) {
         static double K = 3.0, lambda = 0.5;
-        return (lambda * rawScore - std::log(K)) / std::log(2);
+        return (lambda * rawScore - std::log(3.0)) / std::log(2);
     }
 
     // number of expected hits of similar score
