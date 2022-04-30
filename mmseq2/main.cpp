@@ -11,12 +11,12 @@ namespace {
         uint32_t tLen = targetSequences.size();
 
         common::InputParams::Vec64Ptr qIds = std::make_shared<std::vector<uint64_t>>(qLen, 0);
-        for (uint32_t i = 0; i < qLen; i++) {
-            (*qIds)[i] = (uint64_t)i;
+        for (uint32_t i = 5; i < 5 + qLen; i++) {
+            (*qIds)[i - 5] = (uint64_t)i;
         }
         common::InputParams::Vec64Ptr tIds = std::make_shared<std::vector<uint64_t>>(tLen, 0);
-        for (uint32_t i = 0; i < tLen; i++) {
-            (*tIds)[i] = (uint64_t)i;
+        for (uint32_t i = 10; i < 10 + tLen; i++) {
+            (*tIds)[i - 10] = (uint64_t)i;
         }
         common::InputParams::VecStrPtr queries = std::make_shared<std::vector<common::InputParams::StrPtr>>(qLen, nullptr);
         for (uint32_t i = 0; i < qLen; i++) {
@@ -31,9 +31,10 @@ namespace {
         common::InputParams::StrPtr targetColumnName = std::make_shared<std::string>("WHAT YOU INSERT");
         common::InputParams::StrPtr substitutionMatrixName = std::make_shared<std::string>(matrixName);
 
-        bool localTargets = true; // local getters
+        bool allTargets = false; // sth for psql backend to know if there is sth query filtering
+        bool localTargets = true; // local getters will be used
 
-        common::InputParams inputParams(qLen, tLen, qIds, tIds, queries, localTargets, targets,
+        common::InputParams inputParams(qLen, tLen, qIds, tIds, queries, allTargets, localTargets, targets,
                                         targetTableName, targetColumnName, substitutionMatrixName, kMerLength,
                                         kMerGenThreshold, ungappedAlignmentScore, evalTreshold,
                                         gapOpenCost, gapPenaltyCost, threadNumber);

@@ -31,11 +31,11 @@ common::VecRes mmseq2::MMSeq2(common::InputParams inputParams) {
     common::VecResPtr resultPtr = std::make_shared<common::VecRes>();
 
     uint32_t tLen = inputParamsPtr.get()->getTLen();
-    mmseq2::GetterInterfacePtr getterInterfacePtr = std::make_shared<mmseq2::GetterInterface>();
-    getterInterfacePtr.get()->setLocalTargets(inputParamsPtr.get()->getLocalTargets());
+    bool allTargets = inputParamsPtr.get()->getAllTargets(), localTargets = inputParamsPtr.get()->getLocalTargets();
+    mmseq2::GetterInterfacePtr getterInterfacePtr = std::make_shared<mmseq2::GetterInterface>(allTargets, localTargets);
     (*getterInterfacePtr).getTargetsPtr() = (*inputParamsPtr).getTargetsPtr();
 
-    if (getterInterfacePtr.get()->getLocalTargets()) {
+    if (localTargets) {
         uint32_t kMerLength = inputParamsPtr.get()->getKMerLength();
 
         auto targetsPtr = inputParamsPtr.get()->getTargetsPtr();
@@ -60,10 +60,17 @@ common::VecRes mmseq2::MMSeq2(common::InputParams inputParams) {
         worker.join();
     }
 
+    // we need to update targets id in result when it was run locally
+    if (localTargets) {
+        for (uint32_t i = 0; i < resultPtr.get()->size(); i++) {
+            uint64_t localTargetId = (*resultPtr)[i].getTargetId();
+            (*resultPtr)[i].setTargetId(inputParamsPtr.get()->getTIds().get()->at(localTargetId));
+        }
+    }
     return *resultPtr;
 }
 
-// Returns the smalles id of query that was not processed yet
+// Returns the smallest id of query that was not processed yet
 uint32_t getNextQuery(uint32_t q_len, std::mutex *mtx, uint32_t *nextQuery) {
     uint32_t res = -1;
 
@@ -84,7 +91,7 @@ void processQueries(const common::InputParams::InputParamsPtr &inputParams, cons
                     std::mutex *mtx, uint32_t *nextQuery, std::mutex *resMtx, const common::VecResPtr &resultPtr) {
 
     if (!getterInterfacePtr.get()->getLocalTargets()) {
-        *getterInterfacePtr.get()->getDBconnPtr().get() = DB::DBconn(*inputParams->getTargetTableName(), *inputParams->getTargetColumnName());
+        (*getterInterfacePtr).getDBconnPtr() = std::make_shared<DB::DBconn>(*inputParams->getTargetTableName(), *inputParams->getTargetColumnName());
     }
 
     uint32_t tmpNextQuery;

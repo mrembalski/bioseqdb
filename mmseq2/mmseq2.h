@@ -321,10 +321,12 @@ namespace mmseq2
         using IndexesMapPtr = std::shared_ptr<IndexesMap>;
         using DBconnPtr = std::shared_ptr<DB::DBconn>;
 
-        GetterInterface()
+        GetterInterface(bool allTs, bool localTs)
         {
             indexesMapPtr = std::make_shared<IndexesMap>();
             dbconnPtr = nullptr;
+            allTargets = allTs;
+            localTargets = localTs;
         }
 
         [[nodiscard]] DBconnPtr &getDBconnPtr()
@@ -347,9 +349,9 @@ namespace mmseq2
             return localTargets;
         }
 
-        void setLocalTargets(bool isLocal)
+        [[nodiscard]] bool getAllTargets() const
         {
-            localTargets = isLocal;
+            return allTargets;
         }
 
         void getIthIndex(std::string kMer, uint32_t i, uint64_t *target_id, uint32_t *position)
@@ -390,6 +392,7 @@ namespace mmseq2
 
     private:
         bool localTargets = false;
+        bool allTargets = false;
         DBconnPtr dbconnPtr;
         IndexesMapPtr indexesMapPtr;
         common::InputParams::VecStrPtr targetsPtr;
