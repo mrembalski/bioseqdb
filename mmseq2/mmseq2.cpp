@@ -7,7 +7,7 @@
 namespace {
     // from hsp to bit score, using K, lambda
     double evalBitScore(double rawScore) {
-        static double K = 3.0, lambda = 0.5;
+        static double K = 0.041, lambda = 0.267;
         return (lambda * rawScore - std::log(K)) / std::log(2);
     }
 
@@ -17,7 +17,7 @@ namespace {
     }
 }
 
-void processQueries(const common::InputParams::InputParamsPtr &inputParams, const mmseq2::GetterInterfacePtr &getterInterfacePtr,
+void processQueries(const common::InputParams::InputParamsPtr &inputParams, mmseq2::GetterInterface getterInterface,
                     std::mutex *mtx, uint32_t *nextQuery, std::mutex *resMtx, const common::VecResPtr &resultPtr);
 
 void processSingleQuery(const mmseq2::GetterInterfacePtr &getterInterfacePtr, uint64_t qId, common::InputParams::StrPtr queryStr,
@@ -32,8 +32,8 @@ common::VecRes mmseq2::MMSeq2(common::InputParams inputParams) {
 
     uint32_t tLen = inputParamsPtr.get()->getTLen();
     bool allTargets = inputParamsPtr.get()->getAllTargets(), localTargets = inputParamsPtr.get()->getLocalTargets();
-    mmseq2::GetterInterfacePtr getterInterfacePtr = std::make_shared<mmseq2::GetterInterface>(allTargets, localTargets);
-    (*getterInterfacePtr).getTargetsPtr() = (*inputParamsPtr).getTargetsPtr();
+    mmseq2::GetterInterface getterInterface(allTargets, localTargets);
+    getterInterface.getTargetsPtr() = (*inputParamsPtr).getTargetsPtr();
 
     if (localTargets) {
         uint32_t kMerLength = inputParamsPtr.get()->getKMerLength();
@@ -46,14 +46,14 @@ common::VecRes mmseq2::MMSeq2(common::InputParams inputParams) {
             }
             for (uint j = 0; j <= target.size() - kMerLength; j++) {
                 std::string kMer = target.substr(j, kMerLength);
-                (*getterInterfacePtr.get()->getIndexesMapPtr())[kMer].push_back({i, j});
+                (*getterInterface.getIndexesMapPtr())[kMer].push_back({i, j});
             }
         }
     }
 
     for (uint32_t i = 0; i < inputParamsPtr.get()->getThreadNumber(); ++i) {
         workers.emplace_back(std::thread(
-            processQueries, inputParamsPtr, getterInterfacePtr, &mtx, &nextQuery, &resMtx, resultPtr));
+            processQueries, inputParamsPtr, getterInterface, &mtx, &nextQuery, &resMtx, resultPtr));
     }
 
     for (std::thread &worker : workers) {
@@ -87,8 +87,10 @@ uint32_t getNextQuery(uint32_t q_len, std::mutex *mtx, uint32_t *nextQuery) {
     return res;
 }
 
-void processQueries(const common::InputParams::InputParamsPtr &inputParams, const mmseq2::GetterInterfacePtr &getterInterfacePtr,
+void processQueries(const common::InputParams::InputParamsPtr &inputParams, mmseq2::GetterInterface getterInterface,
                     std::mutex *mtx, uint32_t *nextQuery, std::mutex *resMtx, const common::VecResPtr &resultPtr) {
+
+    mmseq2::GetterInterfacePtr getterInterfacePtr = std::make_shared<mmseq2::GetterInterface>(getterInterface);
 
     if (!getterInterfacePtr.get()->getLocalTargets()) {
         (*getterInterfacePtr).getDBconnPtr() = std::make_shared<DB::DBconn>(*inputParams->getTargetTableName(), *inputParams->getTargetColumnName());
