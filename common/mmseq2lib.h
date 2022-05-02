@@ -22,12 +22,14 @@ namespace common
 
         InputParams(uint32_t qLen, uint32_t tLen, common::InputParams::Vec64Ptr qIds,
                     common::InputParams::Vec64Ptr tIds, common::InputParams::VecStrPtr queries,
+                    bool allTargets, bool localTargets, common::InputParams::VecStrPtr targets,
                     common::InputParams::StrPtr targetTableName,
                     common::InputParams::StrPtr targetColumnName,
                     const common::InputParams::StrPtr &substitutionMatrixName, uint32_t kMerLength,
                     int32_t kMerGenThreshold, int32_t ungappedAlignmentScore, double evalTreshold,
                     int32_t gapOpenCost, int32_t gapPenaltyCost, uint32_t threadNumber) : qLen{qLen}, tLen{tLen}, qIds{std::move(qIds)}, tIds{std::move(tIds)},
-                                                                                          queries{std::move(queries)}, targetTableName{std::move(targetTableName)},
+                                                                                          queries{std::move(queries)}, allTargets{allTargets}, localTargets{localTargets}, targets{std::move(targets)},
+                                                                                          targetTableName{std::move(targetTableName)},
                                                                                           targetColumnName{std::move(targetColumnName)},
                                                                                           substitutionMatrixName{substitutionMatrixName}, kMerLength{kMerLength},
                                                                                           kMerGenThreshold{kMerGenThreshold}, ungappedAlignmentScore{ungappedAlignmentScore},
@@ -90,6 +92,21 @@ namespace common
             return queries;
         }
 
+        [[nodiscard]] bool getAllTargets() const
+        {
+            return allTargets;
+        }
+
+        [[nodiscard]] bool getLocalTargets() const
+        {
+            return localTargets;
+        }
+
+        [[nodiscard]] VecStrPtr getTargetsPtr() const
+        {
+            return targets;
+        }
+
         [[nodiscard]] StrPtr getTargetTableName() const
         {
             return targetTableName;
@@ -141,7 +158,7 @@ namespace common
         }
 
         MSGPACK_DEFINE_MAP(qLen, tLen, qIds, tIds,
-                           queries, targetTableName, targetColumnName, substitutionMatrixName,
+                           queries, allTargets, localTargets, targets, targetTableName, targetColumnName, substitutionMatrixName,
                            kMerLength, kMerGenThreshold, ungappedAlignmentScore, evalTreshold, gapOpenCost,
                            gapPenaltyCost, threadNumber, substitutionMatrixId);
 
@@ -152,6 +169,10 @@ namespace common
         Vec64Ptr tIds;
 
         VecStrPtr queries;
+        bool allTargets;
+        bool localTargets;
+        VecStrPtr targets;
+
         StrPtr targetTableName;
         StrPtr targetColumnName;
         StrPtr substitutionMatrixName;
@@ -268,6 +289,10 @@ namespace common
         double getPident() const
         {
             return pident;
+        }
+
+        void setTargetId(uint64_t targetId) {
+            MmseqResult::targetId = targetId;
         }
 
         void setQLen(uint32_t qLen)

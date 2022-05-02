@@ -7,7 +7,7 @@
 namespace {
     // from hsp to bit score, using K, lambda
     double evalBitScore(double rawScore) {
-        static double K = 3.0, lambda = 0.5;
+        static double K = 0.041, lambda = 0.267;
         return (lambda * rawScore - std::log(K)) / std::log(2);
     }
 
@@ -17,9 +17,11 @@ namespace {
     }
 }
 
-void processQueries(const common::InputParams::InputParamsPtr &inputParams, std::mutex *mtx, uint32_t *nextQuery, std::mutex *resMtx, const common::VecResPtr &resultPtr);
+void processQueries(const common::InputParams::InputParamsPtr &inputParams, mmseq2::GetterInterface getterInterface,
+                    std::mutex *mtx, uint32_t *nextQuery, std::mutex *resMtx, const common::VecResPtr &resultPtr);
 
-void processSingleQuery(DB::DBconn& dbconn, uint64_t qId, common::InputParams::StrPtr queryStr, common::InputParams::InputParamsPtr inputParams, std::mutex *resMtx, const common::VecResPtr &resultPtr);
+void processSingleQuery(const mmseq2::GetterInterfacePtr &getterInterfacePtr, uint64_t qId, common::InputParams::StrPtr queryStr,
+                        common::InputParams::InputParamsPtr inputParams, std::mutex *resMtx, const common::VecResPtr &resultPtr);
 
 common::VecRes mmseq2::MMSeq2(common::InputParams inputParams) {
     common::InputParams::InputParamsPtr inputParamsPtr = std::make_shared<common::InputParams>(inputParams);
@@ -28,19 +30,47 @@ common::VecRes mmseq2::MMSeq2(common::InputParams inputParams) {
     uint32_t nextQuery = 0;
     common::VecResPtr resultPtr = std::make_shared<common::VecRes>();
 
+    uint32_t tLen = inputParamsPtr.get()->getTLen();
+    bool allTargets = inputParamsPtr.get()->getAllTargets(), localTargets = inputParamsPtr.get()->getLocalTargets();
+    mmseq2::GetterInterface getterInterface(allTargets, localTargets);
+    getterInterface.getTargetsPtr() = (*inputParamsPtr).getTargetsPtr();
+
+    if (localTargets) {
+        uint32_t kMerLength = inputParamsPtr.get()->getKMerLength();
+
+        auto targetsPtr = inputParamsPtr.get()->getTargetsPtr();
+        for (uint32_t i = 0; i < targetsPtr.get()->size(); i++) {
+            std::string target = *targetsPtr.get()->at(i);
+            if (target.size() < kMerLength) {
+                continue;
+            }
+            for (uint j = 0; j <= target.size() - kMerLength; j++) {
+                std::string kMer = target.substr(j, kMerLength);
+                (*getterInterface.getIndexesMapPtr())[kMer].push_back({i, j});
+            }
+        }
+    }
+
     for (uint32_t i = 0; i < inputParamsPtr.get()->getThreadNumber(); ++i) {
         workers.emplace_back(std::thread(
-            processQueries, inputParamsPtr, &mtx, &nextQuery, &resMtx, resultPtr));
+            processQueries, inputParamsPtr, getterInterface, &mtx, &nextQuery, &resMtx, resultPtr));
     }
 
     for (std::thread &worker : workers) {
         worker.join();
     }
 
+    // we need to update targets id in result when it was run locally
+    if (localTargets) {
+        for (uint32_t i = 0; i < resultPtr.get()->size(); i++) {
+            uint64_t localTargetId = (*resultPtr)[i].getTargetId();
+            (*resultPtr)[i].setTargetId(inputParamsPtr.get()->getTIds().get()->at(localTargetId));
+        }
+    }
     return *resultPtr;
 }
 
-// Returns the smalles id of query that was not processed yet
+// Returns the smallest id of query that was not processed yet
 uint32_t getNextQuery(uint32_t q_len, std::mutex *mtx, uint32_t *nextQuery) {
     uint32_t res = -1;
 
@@ -57,28 +87,42 @@ uint32_t getNextQuery(uint32_t q_len, std::mutex *mtx, uint32_t *nextQuery) {
     return res;
 }
 
-void processQueries(const common::InputParams::InputParamsPtr &inputParams, std::mutex *mtx, uint32_t *nextQuery, std::mutex *resMtx, const common::VecResPtr &resultPtr) {
-    DB::DBconn dbconn(*inputParams->getTargetTableName(), *inputParams->getTargetColumnName());
+void processQueries(const common::InputParams::InputParamsPtr &inputParams, mmseq2::GetterInterface getterInterface,
+                    std::mutex *mtx, uint32_t *nextQuery, std::mutex *resMtx, const common::VecResPtr &resultPtr) {
+
+    mmseq2::GetterInterfacePtr getterInterfacePtr = std::make_shared<mmseq2::GetterInterface>(getterInterface);
+
+    if (!getterInterfacePtr.get()->getLocalTargets()) {
+        (*getterInterfacePtr).getDBconnPtr() = std::make_shared<DB::DBconn>(*inputParams->getTargetTableName(), *inputParams->getTargetColumnName());
+    }
 
     uint32_t tmpNextQuery;
 
     while ((tmpNextQuery = getNextQuery(inputParams.get()->getQLen(), mtx, nextQuery)) != -1) {
-        processSingleQuery(dbconn, inputParams.get()->getQIds()->at(tmpNextQuery), inputParams.get()->getQueries()->at(tmpNextQuery), inputParams, resMtx, resultPtr);
+        processSingleQuery(getterInterfacePtr, inputParams.get()->getQIds()->at(tmpNextQuery), inputParams.get()->getQueries()->at(tmpNextQuery), inputParams, resMtx, resultPtr);
     }
 
-    dbconn.CloseConnection();
+    if (!getterInterfacePtr.get()->getLocalTargets()) {
+        getterInterfacePtr.get()->getDBconnPtr().get()->CloseConnection();
+    }
 }
 
-void processSingleQuery(DB::DBconn& dbconn, uint64_t qId, common::InputParams::StrPtr queryStr, common::InputParams::InputParamsPtr inputParams, std::mutex *resMtx, const common::VecResPtr &resultPtr) {
+void processSingleQuery(const mmseq2::GetterInterfacePtr &getterInterfacePtr, uint64_t qId, common::InputParams::StrPtr queryStr,
+                        common::InputParams::InputParamsPtr inputParams, std::mutex *resMtx, const common::VecResPtr &resultPtr) {
 
     mmseq2::Query query{qId, std::move(queryStr), std::move(inputParams)};
 
-    query.findPrefilterKmerStageResults(dbconn);
+    query.findPrefilterKmerStageResults(getterInterfacePtr);
 
-    query.executeAlignment(dbconn, resMtx, resultPtr);
+    query.executeAlignment(getterInterfacePtr, resMtx, resultPtr);
 }
 
-void mmseq2::Query::findPrefilterKmerStageResults(DB::DBconn& dbconn) {
+void mmseq2::Query::findPrefilterKmerStageResults(const mmseq2::GetterInterfacePtr &getterInterfacePtr) {
+
+    if (this->sequence.get()->size() < this->kMerLength) {
+        return;
+    }
+
     int32_t SMaxSuf = 0;
 
     for (uint32_t i = 0; i < this->kMerLength - 1; ++i) {
@@ -90,16 +134,16 @@ void mmseq2::Query::findPrefilterKmerStageResults(DB::DBconn& dbconn) {
 
         std::string kMer = this->sequence.get()->substr(kMerPos, this->kMerLength);
 
-        this->processSimilarKMers(dbconn, kMerPos, kMer, SMaxSuf);
+        this->processSimilarKMers(getterInterfacePtr, kMerPos, kMer, SMaxSuf);
 
         SMaxSuf -= AminoAcid::getPenalty(this->substitutionMatrixId, this->sequence.get()->at(kMerPos), this->sequence.get()->at(kMerPos));
     }
 }
 
-void mmseq2::Query::processSimilarKMers(DB::DBconn& dbconn, uint32_t kMerPos, std::string &kMer, int32_t SMaxSuf,
+void mmseq2::Query::processSimilarKMers(const mmseq2::GetterInterfacePtr &getterInterfacePtr, uint32_t kMerPos, std::string &kMer, int32_t SMaxSuf,
                                         int32_t Spref, uint32_t indx) {
     if (indx == 0 && evalBitScore(Spref + SMaxSuf) >= this->kMerGenThreshold) {
-        processSingleKmer(dbconn, kMerPos, kMer);
+        processSingleKmer(getterInterfacePtr, kMerPos, kMer);
     }
 
     if (indx >= kMer.size()) {
@@ -119,10 +163,10 @@ void mmseq2::Query::processSimilarKMers(DB::DBconn& dbconn, uint32_t kMerPos, st
             kMer[indx] = AminoAcid::idToChar(aaId);
 
             if (currentAAId != aaId) {
-                processSingleKmer(dbconn, kMerPos, kMer);
+                processSingleKmer(getterInterfacePtr, kMerPos, kMer);
             }
 
-            processSimilarKMers(dbconn, kMerPos, kMer, SMaxSuf, Spref, indx + 1);
+            processSimilarKMers(getterInterfacePtr, kMerPos, kMer, SMaxSuf, Spref, indx + 1);
         }
 
         Spref -= AminoAcid::getPenalty(this->substitutionMatrixId, currentAAId, aaId);
@@ -131,18 +175,17 @@ void mmseq2::Query::processSimilarKMers(DB::DBconn& dbconn, uint32_t kMerPos, st
     kMer[indx] = currentAA;
 }
 
-void mmseq2::Query::processSingleKmer(DB::DBconn& dbconn, uint32_t kMerPos, std::string &kMer) {
-    // uint32_t n = mock::get_indexes(targetTableName.get()->c_str(), kMer.c_str(), getKMerLength());
+void mmseq2::Query::processSingleKmer(const mmseq2::GetterInterfacePtr &getterInterfacePtr, uint32_t kMerPos, std::string &kMer) {
 
     // for (uint32_t i = 0; i < n; ++i) {
-    uint32_t i = 0; 
+    uint32_t i = 0;
     while (true) {
         try {
             uint64_t target_id;
             uint32_t position;
 
             // added kmer for new interface
-            dbconn.GetIthIndex(kMer.c_str(), (int32_t)i, &target_id, &position);
+            getterInterfacePtr.get()->getIthIndex(kMer, (int32_t)i, &target_id, &position);
             
             // mock::get_ith_index((int32_t)i, &target_id, &position, kMer.c_str(), getKMerLength());
             int32_t diagonal = (int32_t)position - (int32_t)kMerPos;
@@ -300,7 +343,7 @@ void mmseq2::Query::gappedAlignment(const StrPtr &querySequence, const StrPtr &t
     result.setCigar(cigar);
 }
 
-void mmseq2::Query::executeAlignment(DB::DBconn& dbconn, std::mutex *resMtx, const common::VecResPtr &mmseqResult) {
+void mmseq2::Query::executeAlignment(const mmseq2::GetterInterfacePtr &getterInterfacePtr, std::mutex *resMtx, const common::VecResPtr &mmseqResult) {
     const PrefilterKmerStageResults &kmerStageResults = mmseq2::Query::getPrefilterKmerStageResults();
     for (uint32_t i = 0; i < kmerStageResults.getTargetsNumber(); i++) {
         const int32_t diagonal = kmerStageResults.getDiagonal((int)i);
@@ -309,7 +352,7 @@ void mmseq2::Query::executeAlignment(DB::DBconn& dbconn, std::mutex *resMtx, con
         StrPtr querySequence = this->sequence;
         // const std::string &targetSequence = "DDDDDAAGGGGG";
         // StrPtr targetSequence = mock::get_sequence(this->targetColumnName.get()->c_str(), targetId);
-        StrPtr targetSequence = dbconn.GetTargetById(targetId);
+        StrPtr targetSequence = getterInterfacePtr.get()->getTargetById(targetId);
         
         if (ungappedAlignment(querySequence, targetSequence, diagonal) >= this->ungappedAlignmentScore && filteredTargetIds.find(targetId) == filteredTargetIds.end()) {
             filteredTargetIds.insert(targetId);

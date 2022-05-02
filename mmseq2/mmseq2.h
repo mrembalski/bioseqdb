@@ -233,6 +233,9 @@ namespace mmseq2
 
     common::VecRes MMSeq2(common::InputParams inputParams);
 
+    class GetterInterface;
+    using GetterInterfacePtr = std::shared_ptr<GetterInterface>;
+
     class Query
     {
     public:
@@ -265,9 +268,9 @@ namespace mmseq2
             prefilterKmerStageResults.addDiagonal(targetId, diagonal);
         }
 
-        void findPrefilterKmerStageResults(DB::DBconn& dbconn);
+        void findPrefilterKmerStageResults(const mmseq2::GetterInterfacePtr &getterInterfacePtr);
 
-        void executeAlignment(DB::DBconn& dbconn, std::mutex *resMtx, const common::VecResPtr &mmseqResult);
+        void executeAlignment(const mmseq2::GetterInterfacePtr &getterInterfacePtr, std::mutex *resMtx, const common::VecResPtr &mmseqResult);
 
         [[nodiscard]] uint32_t getSubstitutionMatrixId() const
         {
@@ -301,14 +304,98 @@ namespace mmseq2
 
         std::set<uint32_t> filteredTargetIds;
 
-        void processSimilarKMers(DB::DBconn& dbconn, uint32_t diagonalNumber, std::string &kMer, int32_t SMaxSuf,
+        void processSimilarKMers(const mmseq2::GetterInterfacePtr &getterInterfacePtr, uint32_t diagonalNumber, std::string &kMer, int32_t SMaxSuf,
                                  int32_t Spref = 0, uint32_t indx = 0);
 
-        void processSingleKmer(DB::DBconn& dbconn, uint32_t diagonal, std::string &kMer);
+        void processSingleKmer(const mmseq2::GetterInterfacePtr &getterInterfacePtr, uint32_t diagonal, std::string &kMer);
 
         [[nodiscard]] double ungappedAlignment(const StrPtr &querySequence, const StrPtr &targetSequence, int32_t diagonal) const;
 
         void gappedAlignment(const StrPtr &querySequence, const StrPtr &targetSequence, common::MmseqResult &mmseqResult) const;
+    };
+
+    class GetterInterface
+    {
+    public:
+        using IndexesMap = std::map<std::string, std::vector<std::pair<uint32_t, uint32_t>>>;
+        using IndexesMapPtr = std::shared_ptr<IndexesMap>;
+        using DBconnPtr = std::shared_ptr<DB::DBconn>;
+
+        GetterInterface(bool allTs, bool localTs)
+        {
+            indexesMapPtr = std::make_shared<IndexesMap>();
+            dbconnPtr = nullptr;
+            allTargets = allTs;
+            localTargets = localTs;
+        }
+
+        [[nodiscard]] DBconnPtr &getDBconnPtr()
+        {
+            return dbconnPtr;
+        }
+
+        [[nodiscard]] IndexesMapPtr &getIndexesMapPtr()
+        {
+            return indexesMapPtr;
+        }
+
+        [[nodiscard]] common::InputParams::VecStrPtr &getTargetsPtr()
+        {
+            return targetsPtr;
+        }
+
+        [[nodiscard]] bool getLocalTargets() const
+        {
+            return localTargets;
+        }
+
+        [[nodiscard]] bool getAllTargets() const
+        {
+            return allTargets;
+        }
+
+        void getIthIndex(std::string kMer, uint32_t i, uint64_t *target_id, uint32_t *position)
+        {
+            if (localTargets)
+            {
+                auto it = indexesMapPtr.get()->find(kMer);
+                if (it == indexesMapPtr.get()->end())
+                {
+                    throw std::invalid_argument("kmer not exists in indexesMap");
+                }
+                else
+                {
+                    if (it->second.size() <= i)
+                    {
+                        throw std::invalid_argument("out of range in hitList");
+                    }
+                    *target_id = it->second[i].first;
+                    *position = it->second[i].second;
+                }
+            }
+            else
+            {
+                dbconnPtr.get()->GetIthIndex(kMer, (int32_t)i, target_id, position);
+            }
+        }
+
+        Query::StrPtr getTargetById(uint64_t id) {
+            if (localTargets)
+            {
+                if (targetsPtr.get()->size() <= id) {
+                    throw std::invalid_argument("out of range in targetsSequences");
+                }
+                return targetsPtr.get()->at(id);
+            }
+            return dbconnPtr.get()->GetTargetById(id);
+        }
+
+    private:
+        bool localTargets = false;
+        bool allTargets = false;
+        DBconnPtr dbconnPtr;
+        IndexesMapPtr indexesMapPtr;
+        common::InputParams::VecStrPtr targetsPtr;
     };
 }
 
