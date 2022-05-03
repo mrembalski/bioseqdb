@@ -384,6 +384,11 @@ namespace common
 
     using VecRes = std::vector<common::MmseqResult>;
     using VecResPtr = std::shared_ptr<common::VecRes>;
+
+    using KMersForQuery = std::vector<std::pair<uint32_t, std::string>>; // {idQ, kmer}
+    using KMersForQueryPtr = std::shared_ptr<KMersForQuery>;
+    using KMerHits = std::vector<std::pair<uint32_t, std::pair<uint64_t, uint32_t>>>; // {idQ, {tId, pos}}
+    using KMerHitsPtr = std::shared_ptr<KMerHits>;
 }
 
 #endif // MMSEQ2_LIB_H

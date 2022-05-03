@@ -307,7 +307,7 @@ namespace mmseq2
         void processSimilarKMers(const mmseq2::GetterInterfacePtr &getterInterfacePtr, uint32_t diagonalNumber, std::string &kMer, int32_t SMaxSuf,
                                  int32_t Spref = 0, uint32_t indx = 0);
 
-        void processSingleKmer(const mmseq2::GetterInterfacePtr &getterInterfacePtr, uint32_t diagonal, std::string &kMer);
+        void AddHitsFromSimilarKmers(const mmseq2::GetterInterfacePtr &getterInterfacePtr);
 
         [[nodiscard]] double ungappedAlignment(const StrPtr &querySequence, const StrPtr &targetSequence, int32_t diagonal) const;
 
@@ -320,6 +320,7 @@ namespace mmseq2
         using IndexesMap = std::map<std::string, std::vector<std::pair<uint32_t, uint32_t>>>;
         using IndexesMapPtr = std::shared_ptr<IndexesMap>;
         using DBconnPtr = std::shared_ptr<DB::DBconn>;
+        using Vec32Ptr = std::shared_ptr<std::vector<uint32_t>>;
 
         GetterInterface(bool allTs, bool localTs)
         {
@@ -354,28 +355,47 @@ namespace mmseq2
             return allTargets;
         }
 
-        void getIthIndex(std::string kMer, uint32_t i, uint64_t *target_id, uint32_t *position)
+        [[nodiscard]] Vec32Ptr &getSimilarKMerPosPtr()
+        {
+            return similarKMerPosPtr;
+        }
+
+        void addSimilarKmerPos(uint32_t kMerPos)
+        {
+            (*similarKMerPosPtr).push_back(kMerPos);
+        }
+
+        [[nodiscard]] common::KMersForQueryPtr &getKMersForQueryPtr()
+        {
+            return kMersForQueryPtr;
+        }
+
+        void addKMerForQuery(const std::string &kMer)
+        {
+            uint32_t size = kMersForQueryPtr.get()->size();
+            (*kMersForQueryPtr).emplace_back(size, kMer);
+        }
+
+        void getKMersHits(common::KMerHitsPtr &kMerHitsPtr)
         {
             if (localTargets)
             {
-                auto it = indexesMapPtr.get()->find(kMer);
-                if (it == indexesMapPtr.get()->end())
+                for (const auto &kMerQuery : *kMersForQueryPtr)
                 {
-                    throw std::invalid_argument("kmer not exists in indexesMap");
-                }
-                else
-                {
-                    if (it->second.size() <= i)
+                    auto it = indexesMapPtr.get()->find(kMerQuery.second);
+                    if (it != indexesMapPtr.get()->end())
                     {
-                        throw std::invalid_argument("out of range in hitList");
+                        for (const auto hit : it->second)
+                        {
+                            (*kMerHitsPtr).emplace_back(kMerQuery.first, hit);
+                        }
                     }
-                    *target_id = it->second[i].first;
-                    *position = it->second[i].second;
                 }
             }
             else
             {
-                dbconnPtr.get()->GetIthIndex(kMer, (int32_t)i, target_id, position);
+//                TODO : create method
+//                dbconnPtr.get()->GetKMersHits(kMersForQueryPtr, kMerHitsPtr);
             }
         }
 
@@ -396,6 +416,8 @@ namespace mmseq2
         DBconnPtr dbconnPtr;
         IndexesMapPtr indexesMapPtr;
         common::InputParams::VecStrPtr targetsPtr;
+        Vec32Ptr similarKMerPosPtr; // similar kmers positions in query
+        common::KMersForQueryPtr kMersForQueryPtr;
     };
 }
 

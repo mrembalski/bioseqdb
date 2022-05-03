@@ -30,7 +30,6 @@ common::VecRes mmseq2::MMSeq2(common::InputParams inputParams) {
     uint32_t nextQuery = 0;
     common::VecResPtr resultPtr = std::make_shared<common::VecRes>();
 
-    uint32_t tLen = inputParamsPtr.get()->getTLen();
     bool allTargets = inputParamsPtr.get()->getAllTargets(), localTargets = inputParamsPtr.get()->getLocalTargets();
     mmseq2::GetterInterface getterInterface(allTargets, localTargets);
     getterInterface.getTargetsPtr() = (*inputParamsPtr).getTargetsPtr();
@@ -134,7 +133,13 @@ void mmseq2::Query::findPrefilterKmerStageResults(const mmseq2::GetterInterfaceP
 
         std::string kMer = this->sequence.get()->substr(kMerPos, this->kMerLength);
 
+        // prepare environment
+        (*getterInterfacePtr).getKMersForQueryPtr() = std::make_shared<common::KMersForQuery>();
+        (*getterInterfacePtr).getSimilarKMerPosPtr() = std::make_shared<std::vector<uint32_t>>();
         this->processSimilarKMers(getterInterfacePtr, kMerPos, kMer, SMaxSuf);
+
+        // get hits from db
+        AddHitsFromSimilarKmers(getterInterfacePtr);
 
         SMaxSuf -= AminoAcid::getPenalty(this->substitutionMatrixId, this->sequence.get()->at(kMerPos), this->sequence.get()->at(kMerPos));
     }
@@ -143,7 +148,8 @@ void mmseq2::Query::findPrefilterKmerStageResults(const mmseq2::GetterInterfaceP
 void mmseq2::Query::processSimilarKMers(const mmseq2::GetterInterfacePtr &getterInterfacePtr, uint32_t kMerPos, std::string &kMer, int32_t SMaxSuf,
                                         int32_t Spref, uint32_t indx) {
     if (indx == 0 && evalBitScore(Spref + SMaxSuf) >= this->kMerGenThreshold) {
-        processSingleKmer(getterInterfacePtr, kMerPos, kMer);
+        (*getterInterfacePtr).addSimilarKmerPos(kMerPos);
+        (*getterInterfacePtr).addKMerForQuery(kMer);
     }
 
     if (indx >= kMer.size()) {
@@ -163,7 +169,8 @@ void mmseq2::Query::processSimilarKMers(const mmseq2::GetterInterfacePtr &getter
             kMer[indx] = AminoAcid::idToChar(aaId);
 
             if (currentAAId != aaId) {
-                processSingleKmer(getterInterfacePtr, kMerPos, kMer);
+                (*getterInterfacePtr).addSimilarKmerPos(kMerPos);
+                (*getterInterfacePtr).addKMerForQuery(kMer);
             }
 
             processSimilarKMers(getterInterfacePtr, kMerPos, kMer, SMaxSuf, Spref, indx + 1);
@@ -175,33 +182,55 @@ void mmseq2::Query::processSimilarKMers(const mmseq2::GetterInterfacePtr &getter
     kMer[indx] = currentAA;
 }
 
-void mmseq2::Query::processSingleKmer(const mmseq2::GetterInterfacePtr &getterInterfacePtr, uint32_t kMerPos, std::string &kMer) {
+void mmseq2::Query::AddHitsFromSimilarKmers(const mmseq2::GetterInterfacePtr &getterInterfacePtr) {
 
-    // for (uint32_t i = 0; i < n; ++i) {
-    uint32_t i = 0;
-    while (true) {
-        try {
-            uint64_t target_id;
-            uint32_t position;
+    common::KMerHitsPtr kMerHitsPtr = std::make_shared<common::KMerHits>();
+    getterInterfacePtr.get()->getKMersHits(kMerHitsPtr);
+    uint32_t hitsNumber = kMerHitsPtr.get()->size();
+    if (hitsNumber == 0) {
+        return;
+    }
 
-            // added kmer for new interface
-            getterInterfacePtr.get()->getIthIndex(kMer, (int32_t)i, &target_id, &position);
-            
-            // mock::get_ith_index((int32_t)i, &target_id, &position, kMer.c_str(), getKMerLength());
-            int32_t diagonal = (int32_t)position - (int32_t)kMerPos;
+    // sort by QId, tId, pos
+    // look: when we have <QId, tId, _> meas we have one of similar kmer and all of
+    // his existence in one of targets, so all diagonals are different, and
+    // we need to react on first and last existance bcs they have impact
+    // on others kmers in the same tId
+    std::sort((*kMerHitsPtr).begin(), (*kMerHitsPtr).end());
 
-            if (diagonalPreVVisited[target_id] && diagonalPrev[target_id] == diagonal) {
-                addMatch(target_id, diagonal);
+    uint32_t minPos, maxPos;
+    uint32_t lastQId = kMerHitsPtr.get()->at(0).first;
+    uint64_t lastTId = kMerHitsPtr.get()->at(0).second.first;
+    minPos = maxPos = kMerHitsPtr.get()->at(0).second.second;
+
+    for (uint32_t i = 0; i < hitsNumber; i++) {
+        minPos = std::min(minPos, kMerHitsPtr.get()->at(i).second.second);
+        maxPos = std::max(maxPos, kMerHitsPtr.get()->at(i).second.second);
+
+        if (i + 1 == hitsNumber || lastQId != kMerHitsPtr.get()->at(i + 1).first || lastTId != kMerHitsPtr.get()->at(i + 1).second.first) {
+
+            uint32_t kMerPos = (*getterInterfacePtr.get()->getSimilarKMerPosPtr())[lastQId];
+            int32_t diagonal = (int32_t)minPos - (int32_t)kMerPos;
+
+            if (diagonalPreVVisited[lastTId] && diagonalPrev[lastTId] == diagonal) {
+                addMatch(lastTId, diagonal);
             }
 
-            diagonalPrev[target_id] = diagonal;
-            diagonalPreVVisited[target_id] = true;
+            diagonalPrev[lastTId] = diagonal;
+            diagonalPreVVisited[lastTId] = true;
+
+            // exists second hit, but different diagonal
+            if (minPos != maxPos) {
+                diagonal = (int32_t)maxPos - (int32_t)kMerPos;
+                diagonalPrev[lastTId] = diagonal;
+            }
+
+            if (i + 1 != hitsNumber) {
+                lastQId = kMerHitsPtr.get()->at(i + 1).first;
+                lastTId = kMerHitsPtr.get()->at(i + 1).second.first;
+                minPos = maxPos = kMerHitsPtr.get()->at(i + 1).second.second;
+            }
         }
-        catch (const std::exception& e) {
-            // std::cout << "processSingleKmer: got exception at " << i << std::endl;
-            break;
-        }
-        i++;
     }
 }
 
