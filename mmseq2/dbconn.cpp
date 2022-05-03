@@ -134,9 +134,9 @@ std::shared_ptr<std::string> DB::DBconn::GetTargetById(uint64_t id)
 }
 
 
-common::KMerHitsPtr DB::DBconn::GetKMersHits(common::SimKMers &simKMers, common::KMerHitsPtr &simKMersHits)
+void DB::DBconn::GetSimKMersHits(common::SimKMersPtr &simKMersPtr, common::SimKMersHitsPtr &simKMersHitsPtr)
 {
-    if (simKMers.get()->size() == 0) {
+    if (simKMersPtr.get()->empty()) {
         return;
     }
 
@@ -152,7 +152,7 @@ common::KMerHitsPtr DB::DBconn::GetKMersHits(common::SimKMers &simKMers, common:
         .append(" WHERE kmer IN (");
 
     /** kMer values */
-    for (const auto &simKmer : *simKMers)
+    for (const auto &simKmer : *simKMersPtr)
     {
         query.append("\'");
         query.append(simKmer);
@@ -174,16 +174,16 @@ common::KMerHitsPtr DB::DBconn::GetKMersHits(common::SimKMers &simKMers, common:
 
     auto respSize = PQntuples(res);
 
-    common::SimKMersHits hits();
+    common::SimKMersHits simKMersHits;
 
     for (int i = 0; i < respSize; i++) {
         char *kmer = PQgetvalue(res, i, kmer_fnum);
         char *starting_position = PQgetvalue(res, i, starting_position_fnum);
         char *seq_id = PQgetvalue(res, i, seq_id_fnum);
 
-        hits.push_back({std::to_string(kmer), {strtoull(seq_id, NULL, 0), strtoul(starting_position, NULL, 0)}})
+        simKMersHits.push_back({(std::string)kmer, {strtoull(seq_id, NULL, 0), strtoul(starting_position, NULL, 0)}});
         std::cout << kmer << " " << starting_position << " " << seq_id << std::endl;
     }
 
-    *simKMersHits = hits;
+    *simKMersHitsPtr = simKMersHits;
 }

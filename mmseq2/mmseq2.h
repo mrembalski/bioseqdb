@@ -317,7 +317,7 @@ namespace mmseq2
     class GetterInterface
     {
     public:
-        using IndexesMap = std::map<std::string, std::vector<std::pair<uint32_t, uint32_t>>>;
+        using IndexesMap = std::unordered_map<std::string, std::vector<std::pair<uint64_t, uint32_t>>>;
         using IndexesMapPtr = std::shared_ptr<IndexesMap>;
         using DBconnPtr = std::shared_ptr<DB::DBconn>;
         using Vec32Ptr = std::shared_ptr<std::vector<uint32_t>>;
@@ -355,46 +355,46 @@ namespace mmseq2
             return allTargets;
         }
 
-        [[nodiscard]] Vec32Ptr &getSimilarKMerPosPtr()
+        [[nodiscard]] Vec32Ptr &getSimKMersPosPtr()
         {
-            return similarKMerPosPtr;
+            return simKMersPosPtr;
         }
 
-        void addSimilarKmerPos(uint32_t kMerPos)
+        void addSimKmerPos(uint32_t kMerPos)
         {
-            (*similarKMerPosPtr).push_back(kMerPos);
+            (*simKMersPosPtr).push_back(kMerPos);
         }
 
-        [[nodiscard]] common::KMersForQueryPtr &getKMersForQueryPtr()
+        [[nodiscard]] common::SimKMersPtr &getSimKMersPtr()
         {
-            return kMersForQueryPtr;
+            return simKMersPtr;
         }
 
-        void addKMerForQuery(const std::string &kMer)
+        void addSimKMer(const std::string &kMer)
         {
-            uint32_t size = kMersForQueryPtr.get()->size();
-            (*kMersForQueryPtr).emplace_back(size, kMer);
+            (*simKMersPtr).push_back(kMer);
         }
 
-        void getKMersHits(common::KMerHitsPtr &kMerHitsPtr)
+        void getSimKMersHits(common::SimKMersHitsPtr &simKMersHitsPtr)
         {
             if (localTargets)
             {
-                for (const auto &kMerQuery : *kMersForQueryPtr)
+                for (const auto &kMer : *simKMersPtr)
                 {
-                    auto it = indexesMapPtr.get()->find(kMerQuery.second);
+                    auto it = indexesMapPtr.get()->find(kMer);
                     if (it != indexesMapPtr.get()->end())
                     {
                         for (const auto hit : it->second)
                         {
-                            (*kMerHitsPtr).emplace_back(kMerQuery.first, hit);
+                            (*simKMersHitsPtr).emplace_back(kMer, hit);
                         }
                     }
                 }
             }
             else
             {
-               dbconnPtr.get()->GetKMersHits(kMersForQueryPtr, kMerHitsPtr);
+//                TODO: check method
+                dbconnPtr.get()->GetSimKMersHits(simKMersPtr, simKMersHitsPtr);
             }
         }
 
@@ -415,8 +415,8 @@ namespace mmseq2
         DBconnPtr dbconnPtr;
         IndexesMapPtr indexesMapPtr;
         common::InputParams::VecStrPtr targetsPtr;
-        Vec32Ptr similarKMerPosPtr; // similar kmers positions in query
-        common::KMersForQueryPtr kMersForQueryPtr;
+        Vec32Ptr simKMersPosPtr;
+        common::SimKMersPtr simKMersPtr;
     };
 }
 

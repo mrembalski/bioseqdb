@@ -134,8 +134,8 @@ void mmseq2::Query::findPrefilterKmerStageResults(const mmseq2::GetterInterfaceP
         std::string kMer = this->sequence.get()->substr(kMerPos, this->kMerLength);
 
         // prepare environment
-        (*getterInterfacePtr).getKMersForQueryPtr() = std::make_shared<common::KMersForQuery>();
-        (*getterInterfacePtr).getSimilarKMerPosPtr() = std::make_shared<std::vector<uint32_t>>();
+        (*getterInterfacePtr).getSimKMersPtr() = std::make_shared<common::SimKMers>();
+        (*getterInterfacePtr).getSimKMersPosPtr() = std::make_shared<std::vector<uint32_t>>();
         this->processSimilarKMers(getterInterfacePtr, kMerPos, kMer, SMaxSuf);
 
         // get hits from db
@@ -148,8 +148,8 @@ void mmseq2::Query::findPrefilterKmerStageResults(const mmseq2::GetterInterfaceP
 void mmseq2::Query::processSimilarKMers(const mmseq2::GetterInterfacePtr &getterInterfacePtr, uint32_t kMerPos, std::string &kMer, int32_t SMaxSuf,
                                         int32_t Spref, uint32_t indx) {
     if (indx == 0 && evalBitScore(Spref + SMaxSuf) >= this->kMerGenThreshold) {
-        (*getterInterfacePtr).addSimilarKmerPos(kMerPos);
-        (*getterInterfacePtr).addKMerForQuery(kMer);
+        (*getterInterfacePtr).addSimKmerPos(kMerPos);
+        (*getterInterfacePtr).addSimKMer(kMer);
     }
 
     if (indx >= kMer.size()) {
@@ -169,8 +169,8 @@ void mmseq2::Query::processSimilarKMers(const mmseq2::GetterInterfacePtr &getter
             kMer[indx] = AminoAcid::idToChar(aaId);
 
             if (currentAAId != aaId) {
-                (*getterInterfacePtr).addSimilarKmerPos(kMerPos);
-                (*getterInterfacePtr).addKMerForQuery(kMer);
+                (*getterInterfacePtr).addSimKmerPos(kMerPos);
+                (*getterInterfacePtr).addSimKMer(kMer);
             }
 
             processSimilarKMers(getterInterfacePtr, kMerPos, kMer, SMaxSuf, Spref, indx + 1);
@@ -184,51 +184,64 @@ void mmseq2::Query::processSimilarKMers(const mmseq2::GetterInterfacePtr &getter
 
 void mmseq2::Query::AddHitsFromSimilarKmers(const mmseq2::GetterInterfacePtr &getterInterfacePtr) {
 
-    common::KMerHitsPtr kMerHitsPtr = std::make_shared<common::KMerHits>();
-    getterInterfacePtr.get()->getKMersHits(kMerHitsPtr);
-    uint32_t hitsNumber = kMerHitsPtr.get()->size();
-    if (hitsNumber == 0) {
+    // similar kMers in simKMers from getterInterface are in right order
+    // and hits from simKMersHits <kmer, <tId, pos>> should be also checked in the same kMer order
+
+    common::SimKMersHitsPtr simKMersHitsPtr = std::make_shared<common::SimKMersHits>();
+    getterInterfacePtr.get()->getSimKMersHits(simKMersHitsPtr);
+
+    uint32_t simHitsSize = simKMersHitsPtr.get()->size();
+    if (simHitsSize == 0) {
         return;
     }
 
-    // sort by QId, tId, pos
-    // look: when we have <QId, tId, _> meas we have one of similar kmer and all of
-    // his existence in one of targets, so all diagonals are different, and
-    // we need to react on first and last existance bcs they have impact
-    // on others kmers in the same tId
-    std::sort((*kMerHitsPtr).begin(), (*kMerHitsPtr).end());
+    // map : <kmer, vector<tId, pos>> helpful for check hits in right order
+    std::unordered_map<std::string, std::vector<std::pair<uint64_t, uint32_t>>> hitsMap;
+    for (const auto &hit : *simKMersHitsPtr) {
+        hitsMap[hit.first].push_back(hit.second);
+    }
 
-    uint32_t minPos, maxPos;
-    uint32_t lastQId = kMerHitsPtr.get()->at(0).first;
-    uint64_t lastTId = kMerHitsPtr.get()->at(0).second.first;
-    minPos = maxPos = kMerHitsPtr.get()->at(0).second.second;
+    for (uint32_t i = 0; i < getterInterfacePtr.get()->getSimKMersPtr().get()->size(); i++) {
+        const auto &kMer = getterInterfacePtr.get()->getSimKMersPtr().get()->at(i);
+        auto it = hitsMap.find(kMer);
 
-    for (uint32_t i = 0; i < hitsNumber; i++) {
-        minPos = std::min(minPos, kMerHitsPtr.get()->at(i).second.second);
-        maxPos = std::max(maxPos, kMerHitsPtr.get()->at(i).second.second);
+        if (it != hitsMap.end()) {
+            auto hits = it->second;
+            uint32_t kMerPos = getterInterfacePtr.get()->getSimKMersPosPtr().get()->at(i);
+            std::sort(hits.begin(), hits.end());
 
-        if (i + 1 == hitsNumber || lastQId != kMerHitsPtr.get()->at(i + 1).first || lastTId != kMerHitsPtr.get()->at(i + 1).second.first) {
+            // see fact: when we have all hits for <kmer, tId>
+            // then we can only check first and last existence in it kmer, bcs
+            // those in the middle don't generate double hit (different diagonals)
 
-            uint32_t kMerPos = (*getterInterfacePtr.get()->getSimilarKMerPosPtr())[lastQId];
-            int32_t diagonal = (int32_t)minPos - (int32_t)kMerPos;
+            uint32_t minPos, maxPos;
+            uint64_t tId = hits[0].first;
+            minPos = maxPos = hits[0].second;
+            uint32_t kMerHitsNumber = hits.size();
 
-            if (diagonalPreVVisited[lastTId] && diagonalPrev[lastTId] == diagonal) {
-                addMatch(lastTId, diagonal);
-            }
+            for (uint32_t j = 0; j < kMerHitsNumber; j++) {
 
-            diagonalPrev[lastTId] = diagonal;
-            diagonalPreVVisited[lastTId] = true;
+                minPos = std::min(minPos, hits[j].second);
+                maxPos = std::max(maxPos, hits[j].second);
 
-            // exists second hit, but different diagonal
-            if (minPos != maxPos) {
-                diagonal = (int32_t)maxPos - (int32_t)kMerPos;
-                diagonalPrev[lastTId] = diagonal;
-            }
+                if (j + 1 == kMerHitsNumber || tId != hits[j + 1].first) {
 
-            if (i + 1 != hitsNumber) {
-                lastQId = kMerHitsPtr.get()->at(i + 1).first;
-                lastTId = kMerHitsPtr.get()->at(i + 1).second.first;
-                minPos = maxPos = kMerHitsPtr.get()->at(i + 1).second.second;
+                    int32_t diagonal = (int32_t)minPos - (int32_t)kMerPos;
+                    if (diagonalPreVVisited[tId] && diagonalPrev[tId] == diagonal) {
+                        addMatch(tId, diagonal);
+                    }
+
+                    // after all, diagonal is from last hit - sometimes also first
+
+                    diagonal = (int32_t)maxPos - (int32_t)kMerPos;
+                    diagonalPrev[tId] = diagonal;
+                    diagonalPreVVisited[tId] = true;
+
+                    if (j + 1 != kMerHitsNumber) {
+                        tId = hits[j + 1].first;
+                        minPos = maxPos = hits[j + 1].second;
+                    }
+                }
             }
         }
     }

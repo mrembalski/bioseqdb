@@ -389,10 +389,6 @@ namespace common
     using SimKMersPtr = std::shared_ptr<SimKMers>;
     using SimKMersHits = std::vector<std::pair<std::string, std::pair<uint64_t, uint32_t>>>; // {<kmer1, <tId1, pos1>>, ...}
     using SimKMersHitsPtr = std::shared_ptr<SimKMersHits>;
-    using KMersForQuery = std::vector<std::pair<uint32_t, std::string>>; // {idQ, kmer}
-    using KMersForQueryPtr = std::shared_ptr<KMersForQuery>;
-    using KMerHits = std::vector<std::pair<uint32_t, std::pair<uint64_t, uint32_t>>>; // {idQ, {tId, pos}}
-    using KMerHitsPtr = std::shared_ptr<KMerHits>;
 }
 
 #endif // MMSEQ2_LIB_H
