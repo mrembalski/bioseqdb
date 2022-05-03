@@ -66,17 +66,17 @@ namespace {
 
 int main()
 {
-//   common::InputParams b;
-//
-//   uint32_t port;
-//   std::cin >> port;
-//
-//   rpc::server srv(port);
-//
-//   srv.bind("mmseq2", [](common::InputParams inputParams)
-//            { return mmseq2::MMSeq2(inputParams); });
-//
-//   srv.run();
+   common::InputParams b;
+
+   uint32_t port;
+   std::cin >> port;
+
+   rpc::server srv(port);
+
+   srv.bind("mmseq2", [](common::InputParams inputParams)
+            { return mmseq2::MMSeq2(inputParams); });
+
+   srv.run();
 
 //   runMMSeq2({"DDDDDDDDDCCGGGGGGGAA", "AAADDDDDDDCCGGGGGGGDD"},
 //             {"DDDDDDDAAGGGGGGG"},
