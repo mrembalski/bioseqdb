@@ -394,8 +394,7 @@ namespace mmseq2
             }
             else
             {
-//                TODO : create method
-//                dbconnPtr.get()->GetKMersHits(kMersForQueryPtr, kMerHitsPtr);
+               dbconnPtr.get()->GetKMersHits(kMersForQueryPtr, kMerHitsPtr);
             }
         }
 

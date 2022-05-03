@@ -6,6 +6,7 @@ extern "C" {
 }
 #include <string>
 #include <memory>
+#include "../common/mmseq2lib.h"
 
 namespace DB
 {
@@ -14,8 +15,10 @@ namespace DB
     public:
         DBconn(const std::string&, const std::string&);
         void GetIthIndex(std::string, uint32_t, uint64_t *, uint32_t *);
+        void GetKMersHits(common::SimKMersPtr&, common::KMerHitsPtr&);
         void CloseConnection();
         std::shared_ptr<std::string> GetTargetById(uint64_t);
+
 
     private:
         PGconn *connection;
