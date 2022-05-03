@@ -30,7 +30,8 @@ common::InputParams::Vec64Ptr tIds(new std::vector<uint64_t>{}); \
 common::InputParams::VecStrPtr queries(new std::vector<common::InputParams::StrPtr>{}); \
 common::InputParams::VecStrPtr targets(new std::vector<common::InputParams::StrPtr>{}); \
 std::optional<std::string> target_tblname = std::nullopt; \
-std::optional<std::string> target_colname = std::nullopt
+std::optional<std::string> target_colname = std::nullopt; \
+bool all_targets = false
 
 #define GET_OPTIONAL_PARAMS(n) \
 std::string subst_matrix_name = text_to_cstring(PG_GETARG_TEXT_PP(n)); \
@@ -62,7 +63,10 @@ else \
 target_tblname = text_to_cstring(PG_GETARG_TEXT_PP(a)); \
 target_colname = text_to_cstring(PG_GETARG_TEXT_PP(b)); \
 if (PG_ARGISNULL(n)) \
+{ \
+    all_targets = true; \
     add_targets_all(target_tblname.value(), target_colname.value(), tIds); \
+} \
 else \
     add_targets_with_ids(target_tblname.value(), target_colname.value(), tIds, PG_GETARG_ARRAYTYPE_P(n))
 
@@ -80,6 +84,7 @@ seq_search_mmseqs_main(target_tblname, target_colname, \
                        gap_open_cost, \
                        gap_penalty_cost, \
                        thread_number, \
+                       all_targets, \
                        tupstore, \
                        attinmeta); \
 return (Datum)0
@@ -250,6 +255,7 @@ namespace
                                 const uint32_t gap_open_cost,
                                 const uint32_t gap_penalty_cost,
                                 const uint32_t thread_number,
+                                const bool all_targets,
                                 Tuplestorestate *tupstore,
                                 AttInMetadata *attinmeta)
     {
@@ -276,13 +282,23 @@ namespace
         elog(WARNING, "%s%d", "Gap open cost: ", gap_open_cost);
         elog(WARNING, "%s%d", "Gap penalty cost: ", gap_penalty_cost);
 
+        // Add a sigint handler
         struct sigaction act;
         act.sa_handler = sigint_handler;
         if (sigaction(SIGINT, &act, NULL) == -1)
             elog(ERROR, "%s", "Couldn't set SIGINT handler");
 
+        // Ad-hoc/local targets
+        const bool local_targets = target_tblname == std::nullopt;
+        if (local_targets)
+        {
+            target_tblname = "";
+            target_colname = "";
+        }
+
         // Input params
         common::InputParams input_params(qIds->size(), tIds->size(), qIds, tIds, queries,
+                                         all_targets, local_targets, targets,
                                          std::make_shared<std::string>(target_tblname.value()),
                                          std::make_shared<std::string>(target_colname.value()),
                                          std::make_shared<std::string>(subst_matrix_name),
