@@ -12,11 +12,11 @@ namespace {
 
         common::InputParams::Vec64Ptr qIds = std::make_shared<std::vector<uint64_t>>(qLen, 0);
         for (uint32_t i = 0; i < qLen; i++) {
-            (*qIds)[i] = (uint64_t)i;
+            (*qIds)[i] = (uint64_t)i + 1;
         }
         common::InputParams::Vec64Ptr tIds = std::make_shared<std::vector<uint64_t>>(tLen, 0);
         for (uint32_t i = 0; i < tLen; i++) {
-            (*tIds)[i] = (uint64_t)i;
+            (*tIds)[i] = (uint64_t)i + 11;
         }
         common::InputParams::VecStrPtr queries = std::make_shared<std::vector<common::InputParams::StrPtr>>(qLen, nullptr);
         for (uint32_t i = 0; i < qLen; i++) {

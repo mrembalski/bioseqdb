@@ -205,7 +205,10 @@ namespace mmseq2
 
     public:
         explicit PrefilterKmerStageResults(uint64_t queryId) : queryId{queryId}, targetIds{std::vector<uint32_t>{}},
-                                                               diagonals{std::vector<int32_t>{}} {}
+                                                               diagonals{std::vector<int32_t>{}} {
+            diagonals.push_back(42);
+            diagonals.pop_back();
+        }
 
         PrefilterKmerStageResults() = delete;
 
