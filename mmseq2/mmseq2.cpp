@@ -208,40 +208,22 @@ void mmseq2::Query::AddHitsFromSimilarKmers(const mmseq2::GetterInterfacePtr &ge
         if (it != hitsMap.end()) {
             auto hits = it->second;
             uint32_t kMerPos = getterInterfacePtr.get()->getSimKMersPosPtr().get()->at(i);
-            std::sort(hits.begin(), hits.end());
 
-            // see fact: when we have all hits for <kmer, tId>
-            // then we can only check first and last existence in it kmer, bcs
-            // those in the middle don't generate double hit (different diagonals)
+            // sort by pos
+            std::sort(hits.begin(), hits.end(), [](auto &left, auto &right){
+                return left.second < right.second;
+            });
 
-            uint32_t minPos, maxPos;
-            uint64_t tId = hits[0].first;
-            minPos = maxPos = hits[0].second;
-            uint32_t kMerHitsNumber = hits.size();
+            for (auto &hit : hits) {
+                uint64_t tId = hit.first;
+                uint32_t pos = hit.second;
+                int32_t diagonal = (int32_t)pos - (int32_t)kMerPos;
 
-            for (uint32_t j = 0; j < kMerHitsNumber; j++) {
-
-                minPos = std::min(minPos, hits[j].second);
-                maxPos = std::max(maxPos, hits[j].second);
-
-                if (j + 1 == kMerHitsNumber || tId != hits[j + 1].first) {
-
-                    int32_t diagonal = (int32_t)minPos - (int32_t)kMerPos;
-                    if (diagonalPreVVisited[tId] && diagonalPrev[tId] == diagonal) {
-                        addMatch(tId, diagonal);
-                    }
-
-                    // after all, diagonal is from last hit - sometimes also first
-
-                    diagonal = (int32_t)maxPos - (int32_t)kMerPos;
-                    diagonalPrev[tId] = diagonal;
-                    diagonalPreVVisited[tId] = true;
-
-                    if (j + 1 != kMerHitsNumber) {
-                        tId = hits[j + 1].first;
-                        minPos = maxPos = hits[j + 1].second;
-                    }
+                if (diagonalPreVVisited[tId] && diagonalPrev[tId] == diagonal) {
+                    addMatch(tId, diagonal);
                 }
+                diagonalPrev[tId] = diagonal;
+                diagonalPreVVisited[tId] = true;
             }
         }
     }
