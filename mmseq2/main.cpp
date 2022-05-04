@@ -37,7 +37,7 @@ namespace {
         common::InputParams inputParams(qLen, tLen, qIds, tIds, queries, allTargets, localTargets, targets,
                                         targetTableName, targetColumnName, substitutionMatrixName, kMerLength,
                                         kMerGenThreshold, ungappedAlignmentScore, evalTreshold,
-                                        gapOpenCost, gapPenaltyCost, threadNumber);
+                                        gapOpenCost, gapPenaltyCost, threadNumber, 'a', true);
 
         auto res = mmseq2::MMSeq2(inputParams);
         for (auto& el : res) {

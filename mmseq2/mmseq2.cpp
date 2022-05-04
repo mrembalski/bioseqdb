@@ -118,7 +118,6 @@ void processSingleQuery(const mmseq2::GetterInterfacePtr &getterInterfacePtr, ui
 }
 
 void mmseq2::Query::findPrefilterKmerStageResults(const mmseq2::GetterInterfacePtr &getterInterfacePtr) {
-
     if (this->sequence.get()->size() < this->kMerLength) {
         return;
     }
@@ -126,17 +125,17 @@ void mmseq2::Query::findPrefilterKmerStageResults(const mmseq2::GetterInterfaceP
     int32_t SMaxSuf = 0;
 
     for (uint32_t i = 0; i < this->kMerLength - 1; ++i) {
-        SMaxSuf += AminoAcid::getPenalty(this->substitutionMatrixId, this->sequence.get()->at(i), this->sequence.get()->at(i));
+        SMaxSuf += bioSequence->getPenalty(this->substitutionMatrixId, this->sequence.get()->at(i), this->sequence.get()->at(i));
     }
 
     for (uint32_t kMerPos = 0; kMerPos + this->kMerLength <= this->sequence.get()->length(); ++kMerPos) {
-        SMaxSuf += AminoAcid::getPenalty(this->substitutionMatrixId, this->sequence.get()->at(kMerPos + this->kMerLength - 1), this->sequence.get()->at(kMerPos + this->kMerLength - 1));
+        SMaxSuf += bioSequence->getPenalty(this->substitutionMatrixId, this->sequence.get()->at(kMerPos + this->kMerLength - 1), this->sequence.get()->at(kMerPos + this->kMerLength - 1));
 
         std::string kMer = this->sequence.get()->substr(kMerPos, this->kMerLength);
 
         this->processSimilarKMers(getterInterfacePtr, kMerPos, kMer, SMaxSuf);
 
-        SMaxSuf -= AminoAcid::getPenalty(this->substitutionMatrixId, this->sequence.get()->at(kMerPos), this->sequence.get()->at(kMerPos));
+        SMaxSuf -= bioSequence->getPenalty(this->substitutionMatrixId, this->sequence.get()->at(kMerPos), this->sequence.get()->at(kMerPos));
     }
 }
 
@@ -152,15 +151,15 @@ void mmseq2::Query::processSimilarKMers(const mmseq2::GetterInterfacePtr &getter
 
     const char currentAA = kMer[indx];
 
-    const uint32_t currentAAId = AminoAcid::charToId(currentAA);
+    const uint32_t currentAAId = bioSequence->charToId(currentAA);
 
-    SMaxSuf -= AminoAcid::getPenalty(this->substitutionMatrixId, currentAAId, currentAAId);
+    SMaxSuf -= bioSequence->getPenalty(this->substitutionMatrixId, currentAAId, currentAAId);
 
-    for (uint32_t aaId = 0; aaId < AminoAcid::getAlphabetSize(); ++aaId) {
-        Spref += AminoAcid::getPenalty(this->substitutionMatrixId, currentAAId, aaId);
+    for (uint32_t aaId = 0; aaId < bioSequence->getAlphabetSize(); ++aaId) {
+        Spref += bioSequence->getPenalty(this->substitutionMatrixId, currentAAId, aaId);
 
         if (evalBitScore(Spref + SMaxSuf) >= this->kMerGenThreshold) {
-            kMer[indx] = AminoAcid::idToChar(aaId);
+            kMer[indx] = bioSequence->idToChar(aaId);
 
             if (currentAAId != aaId) {
                 processSingleKmer(getterInterfacePtr, kMerPos, kMer);
@@ -169,7 +168,7 @@ void mmseq2::Query::processSimilarKMers(const mmseq2::GetterInterfacePtr &getter
             processSimilarKMers(getterInterfacePtr, kMerPos, kMer, SMaxSuf, Spref, indx + 1);
         }
 
-        Spref -= AminoAcid::getPenalty(this->substitutionMatrixId, currentAAId, aaId);
+        Spref -= bioSequence->getPenalty(this->substitutionMatrixId, currentAAId, aaId);
     }
 
     kMer[indx] = currentAA;
@@ -221,7 +220,7 @@ double mmseq2::Query::ungappedAlignment(const StrPtr &querySequence, const StrPt
     int32_t score = 0, maxScore = 0;
 
     while (queryPosition <= queryLastPosition) {
-        score += AminoAcid::getPenalty(getSubstitutionMatrixId(), querySequence.get()->at(queryPosition), targetSequence.get()->at(targetPosition));
+        score += bioSequence->getPenalty(getSubstitutionMatrixId(), querySequence.get()->at(queryPosition), targetSequence.get()->at(targetPosition));
         score = std::max(score, 0);
         maxScore = std::max(maxScore, score);
 
@@ -256,7 +255,7 @@ void mmseq2::Query::gappedAlignment(const StrPtr &querySequence, const StrPtr &t
                 H[qInd][tInd] = std::max(H[qInd][tInd], F[qInd][tInd]);
             }
 
-            int32_t match = AminoAcid::getPenalty(this->substitutionMatrixId, querySequence.get()->at(qInd), targetSequence.get()->at(tInd));
+            int32_t match = bioSequence->getPenalty(this->substitutionMatrixId, querySequence.get()->at(qInd), targetSequence.get()->at(tInd));
             H[qInd][tInd] = std::max(H[qInd][tInd], match);
             if (qInd > 0 && tInd > 0) {
                 H[qInd][tInd] = std::max(H[qInd][tInd], H[qInd - 1][tInd - 1] + match);
@@ -278,7 +277,7 @@ void mmseq2::Query::gappedAlignment(const StrPtr &querySequence, const StrPtr &t
 
     // backtrace
     while (qInd >= 0 && tInd >= 0 && H[qInd][tInd] > 0) {
-        int32_t match = AminoAcid::getPenalty(this->substitutionMatrixId,
+        int32_t match = bioSequence->getPenalty(this->substitutionMatrixId,
                                               querySequence.get()->at(qInd), targetSequence.get()->at(tInd));
         if ((qInd > 0 && tInd > 0 && H[qInd][tInd] == H[qInd - 1][tInd - 1] + match) || (H[qInd][tInd] == match)) {
             if (querySequence.get()->at(qInd) != targetSequence.get()->at(tInd)) {

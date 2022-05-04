@@ -27,14 +27,15 @@ namespace common
                     common::InputParams::StrPtr targetColumnName,
                     const common::InputParams::StrPtr &substitutionMatrixName, uint32_t kMerLength,
                     int32_t kMerGenThreshold, int32_t ungappedAlignmentScore, double evalTreshold,
-                    int32_t gapOpenCost, int32_t gapPenaltyCost, uint32_t threadNumber) : qLen{qLen}, tLen{tLen}, qIds{std::move(qIds)}, tIds{std::move(tIds)},
+                    int32_t gapOpenCost, int32_t gapPenaltyCost, uint32_t threadNumber,
+                    char sequenceType, bool enableAmbiguity) : qLen{qLen}, tLen{tLen}, qIds{std::move(qIds)}, tIds{std::move(tIds)},
                                                                                           queries{std::move(queries)}, allTargets{allTargets}, localTargets{localTargets}, targets{std::move(targets)},
                                                                                           targetTableName{std::move(targetTableName)},
                                                                                           targetColumnName{std::move(targetColumnName)},
                                                                                           substitutionMatrixName{substitutionMatrixName}, kMerLength{kMerLength},
                                                                                           kMerGenThreshold{kMerGenThreshold}, ungappedAlignmentScore{ungappedAlignmentScore},
                                                                                           evalTreshold{evalTreshold}, gapOpenCost{gapOpenCost}, gapPenaltyCost{gapPenaltyCost},
-                                                                                          threadNumber{threadNumber}
+                                                                                          threadNumber{threadNumber}, sequenceType{sequenceType}, enableAmbiguity{enableAmbiguity}
         {
             if (substitutionMatrixName.get()->length() != 8 || substitutionMatrixName.get()->compare(0, 6, "blosum") != 0)
             {
@@ -65,6 +66,16 @@ namespace common
                 std::cout << "Wrong blosum number" << std::endl;
                 exit(1);
             }
+        }
+
+        [[nodiscard]] char getSequenceType() const
+        {
+            return sequenceType;
+        }
+
+        [[nodiscard]] bool getEnableAmbiguity() const
+        {
+            return enableAmbiguity;
         }
 
         [[nodiscard]] uint32_t getQLen() const
@@ -160,7 +171,7 @@ namespace common
         MSGPACK_DEFINE_MAP(qLen, tLen, qIds, tIds,
                            queries, allTargets, localTargets, targets, targetTableName, targetColumnName, substitutionMatrixName,
                            kMerLength, kMerGenThreshold, ungappedAlignmentScore, evalTreshold, gapOpenCost,
-                           gapPenaltyCost, threadNumber, substitutionMatrixId);
+                           gapPenaltyCost, threadNumber, substitutionMatrixId, sequenceType, enableAmbiguity);
 
     private:
         uint32_t qLen;
@@ -185,6 +196,9 @@ namespace common
         int32_t gapPenaltyCost;
         uint32_t threadNumber;
         uint32_t substitutionMatrixId;
+
+        char sequenceType;
+        bool enableAmbiguity;
     };
 
     class MmseqResult
