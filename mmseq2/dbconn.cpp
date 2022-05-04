@@ -152,11 +152,16 @@ void DB::DBconn::GetSimKMersHits(common::SimKMersPtr &simKMersPtr, common::SimKM
         .append(" WHERE kmer IN (");
 
     /** kMer values */
-    for (const auto &simKmer : *simKMersPtr)
+    for (uint32_t i = 0; i < simKMersPtr.get()->size(); i++)
     {
         query.append("\'");
-        query.append(simKmer);
+        query.append(simKMersPtr.get()->at(i));
         query.append("\'");
+
+        if (i < simKMersPtr.get()->size() - 1)
+        {
+            query.append(", ");
+        }
     }
 
     query.append(");");
@@ -182,7 +187,6 @@ void DB::DBconn::GetSimKMersHits(common::SimKMersPtr &simKMersPtr, common::SimKM
         char *seq_id = PQgetvalue(res, i, seq_id_fnum);
 
         simKMersHits.push_back({(std::string)kmer, {strtoull(seq_id, NULL, 0), strtoul(starting_position, NULL, 0)}});
-        std::cout << kmer << " " << starting_position << " " << seq_id << std::endl;
     }
 
     *simKMersHitsPtr = simKMersHits;
