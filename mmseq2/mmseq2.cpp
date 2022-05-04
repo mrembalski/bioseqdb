@@ -347,7 +347,7 @@ void mmseq2::Query::executeAlignment(const mmseq2::GetterInterfacePtr &getterInt
     const PrefilterKmerStageResults &kmerStageResults = mmseq2::Query::getPrefilterKmerStageResults();
     for (uint32_t i = 0; i < kmerStageResults.getTargetsNumber(); i++) {
         const int32_t diagonal = kmerStageResults.getDiagonal((int)i);
-        const uint32_t targetId = kmerStageResults.getTargetId((int)i);
+        const uint64_t targetId = kmerStageResults.getTargetId((int)i);
 
         StrPtr querySequence = this->sequence;
         // const std::string &targetSequence = "DDDDDAAGGGGG";
