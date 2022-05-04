@@ -7,8 +7,8 @@ namespace {
                    int32_t kMerGenThreshold, int32_t ungappedAlignmentScore, double evalTreshold,
                    int32_t gapOpenCost, int32_t gapPenaltyCost, uint32_t threadNumber) {
 
-        uint32_t qLen = querySequences.size();
-        uint32_t tLen = targetSequences.size();
+        uint32_t qLen = 1;
+        uint32_t tLen = 3;
 
         common::InputParams::Vec64Ptr qIds = std::make_shared<std::vector<uint64_t>>(qLen, 0);
         for (uint32_t i = 0; i < qLen; i++) {
@@ -22,10 +22,10 @@ namespace {
         for (uint32_t i = 0; i < qLen; i++) {
             (*queries)[i] = std::make_shared<std::string>(querySequences[i]);
         }
-        common::InputParams::VecStrPtr targets = std::make_shared<std::vector<common::InputParams::StrPtr>>(tLen, nullptr);
-        for (uint32_t i = 0; i < tLen; i++) {
-            (*targets)[i] = std::make_shared<std::string>(targetSequences[i]);
-        }
+        common::InputParams::VecStrPtr targets = std::make_shared<std::vector<common::InputParams::StrPtr>>();
+//        for (uint32_t i = 0; i < tLen; i++) {
+//            (*targets)[i] = std::make_shared<std::string>(targetSequences[i]);
+//        }
 
         common::InputParams::StrPtr targetTableName = std::make_shared<std::string>("target");
         common::InputParams::StrPtr targetColumnName = std::make_shared<std::string>("seq");
@@ -84,7 +84,7 @@ int main()
 
    runMMSeq2({"MKFKLKTTSGTARRGEMTFSRPQGEFTVQTPAFMPVGTYGTVKGMTPEEVRATGAEILLGNTFHLWLRPGQEVMRKHGDLHDFMQWHRPILTDSGGFQVFSLGKLRKITEEGVKFQNPINGERIFLSPEKSMEIQYDLGSDIVMIFDECTPYPATFDYAKKSMEMSLRWAQRSRDRFDELGNKNALFGIVQGGTFEELRKVSAEGLVDIGFDGYAVGGLAVGEPKEEMHRILEFTTPLLPADKPRYLMGVGKPEDLVEGVRRGIDMFDCVMPTRNARNGHLFVTDGIVKIRNAKYRDDTSALDPHCDCYTCRHYTKSYLYHLDKCGEILGARLNTIHNLRYYQRLMEEIRQAIEEDRFDDFVVEFYTRMGKEVPPLQKP"},
              {},
-              "blosum62", 7, 15, 15, 0.001, 11, 1, 2);
+              "blosum62", 7, 18, 15, 0.001, 11, 1, 2);
 
 //    runMMSeq2({"AAADDDDDDDCCGGGGGGGDD"},
 //            {"DDDDDDDAAGGGGGGG", "DDDDDDDDDCCGGGGGGGAA"},
