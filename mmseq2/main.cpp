@@ -7,8 +7,8 @@
 //                   int32_t kMerGenThreshold, int32_t ungappedAlignmentScore, double evalTreshold,
 //                   int32_t gapOpenCost, int32_t gapPenaltyCost, uint32_t threadNumber) {
 //
-//        uint32_t qLen = 1;
-//        uint32_t tLen = 3;
+//        uint32_t qLen = querySequences.size();
+//        uint32_t tLen = targetSequences.size();
 //
 //        common::InputParams::Vec64Ptr qIds = std::make_shared<std::vector<uint64_t>>(qLen, 0);
 //        for (uint32_t i = 0; i < qLen; i++) {
