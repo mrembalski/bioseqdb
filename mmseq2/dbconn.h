@@ -24,6 +24,7 @@ namespace DB
         PGconn *connection;
         std::string tableName;
         std::string columnName;
+        std::string kmerHitsQueryPrefix;
     };
 }
 

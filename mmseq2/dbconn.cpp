@@ -10,6 +10,13 @@ DB::DBconn::DBconn(const std::string &tableName, const std::string &columnName)
 {
     this->columnName = columnName;
     this->tableName = tableName;
+    this->kmerHitsQueryPrefix = "SELECT kmer, starting_position, seq_id FROM ";
+    this->kmerHitsQueryPrefix
+        .append(this->tableName)
+        .append("_")
+        .append(this->columnName)
+        .append("__index")
+        .append(" WHERE kmer IN (");
 
 	/* A list of possible environment variables*/
 	const char *env_var[5] = {
@@ -144,15 +151,8 @@ void DB::DBconn::GetSimKMersHits(common::SimKMersPtr &simKMersPtr, common::SimKM
     }
 
     std::string query;
-
-    /** Query base */
-    query
-        .append("SELECT kmer, starting_position, seq_id FROM ")
-        .append(this->tableName)
-        .append("_")
-        .append(this->columnName)
-        .append("__index")
-        .append(" WHERE kmer IN (");
+    query.reserve(this->kmerHitsQueryPrefix.size() + 10 * simKMersPtr.get()->size() + 1);
+    query.append(this->kmerHitsQueryPrefix);
 
     /** kMer values */
     for (uint32_t i = 0; i < simKMersPtr.get()->size(); i++)
@@ -163,7 +163,7 @@ void DB::DBconn::GetSimKMersHits(common::SimKMersPtr &simKMersPtr, common::SimKM
 
         if (i < simKMersPtr.get()->size() - 1)
         {
-            query.append(", ");
+            query.append(",");
         }
     }
 
