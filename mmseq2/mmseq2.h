@@ -401,7 +401,6 @@ namespace mmseq2
             }
             else
             {
-//                TODO: check method
                 dbconnPtr.get()->GetSimKMersHits(simKMersPtr, simKMersHitsPtr);
             }
         }
@@ -409,7 +408,8 @@ namespace mmseq2
         Query::StrPtr getTargetById(uint64_t id) {
             if (localTargets)
             {
-                if (targetsPtr.get()->size() <= id) {
+                if (targetsPtr.get()->size() <= id)
+                {
                     throw std::invalid_argument("out of range in targetsSequences");
                 }
                 return targetsPtr.get()->at(id);

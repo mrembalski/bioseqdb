@@ -374,8 +374,6 @@ void mmseq2::Query::executeAlignment(const mmseq2::GetterInterfacePtr &getterInt
         const uint64_t targetId = kmerStageResults.getTargetId((int)i);
 
         StrPtr querySequence = this->sequence;
-        // const std::string &targetSequence = "DDDDDAAGGGGG";
-        // StrPtr targetSequence = mock::get_sequence(this->targetColumnName.get()->c_str(), targetId);
         StrPtr targetSequence = getterInterfacePtr.get()->getTargetById(targetId);
         
         if (ungappedAlignment(querySequence, targetSequence, diagonal) >= this->ungappedAlignmentScore && filteredTargetIds.find(targetId) == filteredTargetIds.end()) {
