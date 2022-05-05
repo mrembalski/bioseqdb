@@ -392,7 +392,7 @@ CREATE OR REPLACE FUNCTION nucl_search_one_to_one(
 		nucl_seq,
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19
+		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 5,
@@ -407,7 +407,7 @@ CREATE OR REPLACE FUNCTION nucl_search_one_to_arr(
 		nucl_seq[],
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19
+		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 5,
@@ -424,7 +424,7 @@ CREATE OR REPLACE FUNCTION nucl_search_one_to_db(
 		target_ids bigint[] = NULL,
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19
+		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 5,
@@ -439,7 +439,7 @@ CREATE OR REPLACE FUNCTION nucl_search_arr_to_one(
 		nucl_seq,
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19
+		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 5,
@@ -454,7 +454,7 @@ CREATE OR REPLACE FUNCTION nucl_search_arr_to_arr(
 		nucl_seq[],
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19
+		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 5,
@@ -471,7 +471,7 @@ CREATE OR REPLACE FUNCTION nucl_search_arr_to_db(
 		target_ids bigint[] = NULL,
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19
+		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 5,
@@ -488,7 +488,7 @@ CREATE OR REPLACE FUNCTION nucl_search_db_to_one(
 		query_ids bigint[] = NULL,
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19
+		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 5,
@@ -505,7 +505,7 @@ CREATE OR REPLACE FUNCTION nucl_search_db_to_arr(
 		query_ids bigint[] = NULL,
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19
+		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 5,
@@ -524,7 +524,7 @@ CREATE OR REPLACE FUNCTION nucl_search_db_to_db(
 		target_ids bigint[] = NULL,
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19
+		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 5,
@@ -539,7 +539,7 @@ CREATE OR REPLACE FUNCTION aa_search_one_to_one(
 		aa_seq,
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19
+		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 11,
@@ -554,7 +554,7 @@ CREATE OR REPLACE FUNCTION aa_search_one_to_arr(
 		aa_seq[],
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19
+		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 11,
@@ -571,7 +571,7 @@ CREATE OR REPLACE FUNCTION aa_search_one_to_db(
 		target_ids bigint[] = NULL,
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19
+		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 11,
@@ -586,7 +586,7 @@ CREATE OR REPLACE FUNCTION aa_search_arr_to_one(
 		aa_seq,
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19
+		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 11,
@@ -601,7 +601,7 @@ CREATE OR REPLACE FUNCTION aa_search_arr_to_arr(
 		aa_seq[],
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19
+		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 11,
@@ -618,7 +618,7 @@ CREATE OR REPLACE FUNCTION aa_search_arr_to_db(
 		target_ids bigint[] = NULL,
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19
+		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 11,
@@ -635,7 +635,7 @@ CREATE OR REPLACE FUNCTION aa_search_db_to_one(
 		query_ids bigint[] = NULL,
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19
+		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 11,
@@ -652,7 +652,7 @@ CREATE OR REPLACE FUNCTION aa_search_db_to_arr(
 		query_ids bigint[] = NULL,
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19
+		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 11,
@@ -671,7 +671,7 @@ CREATE OR REPLACE FUNCTION aa_search_db_to_db(
 		target_ids bigint[] = NULL,
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19
+		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 11,
