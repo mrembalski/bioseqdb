@@ -206,6 +206,11 @@ namespace mmseq2
     public:
         explicit PrefilterKmerStageResults(uint64_t queryId) : queryId{queryId}, targetIds{std::vector<uint64_t>{}},
                                                                diagonals{std::vector<int32_t>{}} {
+            /** IMPORTANT TODO: 
+             * When possible, try to remove these lines. Seems like an issue depending on OS. 
+             * If these lines are not here, diagonals.push_back fails.
+             * Works on macOS though.
+             * */                                                       
             diagonals.push_back(42);
             diagonals.pop_back();
         }
