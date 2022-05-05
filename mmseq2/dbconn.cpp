@@ -122,8 +122,11 @@ std::shared_ptr<std::string> DB::DBconn::GetTargetById(uint64_t id)
     int target_seq_fnum = PQfnumber(res, this->columnName.c_str());
 
     /* TODO: do something when no value is returned */
-    if (PQntuples(res) != 1) {        
+    if (PQntuples(res) == 0) {
         throw std::invalid_argument("No ith target exists");
+    }
+    else if (PQntuples(res) > 1) {
+        throw std::invalid_argument("Target id isn't unique");
     }
 
     char *target_seq = PQgetvalue(res, 0, target_seq_fnum);

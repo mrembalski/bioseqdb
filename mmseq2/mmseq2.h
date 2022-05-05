@@ -200,16 +200,24 @@ namespace mmseq2
     {
     private:
         uint64_t queryId;
-        std::vector<uint32_t> targetIds;
+        std::vector<uint64_t> targetIds;
         std::vector<int32_t> diagonals;
 
     public:
-        explicit PrefilterKmerStageResults(uint64_t queryId) : queryId{queryId}, targetIds{std::vector<uint32_t>{}},
-                                                               diagonals{std::vector<int32_t>{}} {}
+        explicit PrefilterKmerStageResults(uint64_t queryId) : queryId{queryId}, targetIds{std::vector<uint64_t>{}},
+                                                               diagonals{std::vector<int32_t>{}} {
+            /** IMPORTANT TODO: 
+             * When possible, try to remove these lines. Seems like an issue depending on OS. 
+             * If these lines are not here, diagonals.push_back fails.
+             * Works on macOS though.
+             * */                                                       
+            diagonals.push_back(42);
+            diagonals.pop_back();
+        }
 
         PrefilterKmerStageResults() = delete;
 
-        void addDiagonal(uint32_t targetId, int32_t diagonal)
+        void addDiagonal(uint64_t targetId, int32_t diagonal)
         {
             targetIds.push_back(targetId);
             diagonals.push_back(diagonal);
@@ -220,7 +228,7 @@ namespace mmseq2
             return diagonals[index];
         }
 
-        [[nodiscard]] uint32_t getTargetId(int index) const
+        [[nodiscard]] uint64_t getTargetId(int index) const
         {
             return targetIds[index];
         }
@@ -263,7 +271,7 @@ namespace mmseq2
             return prefilterKmerStageResults;
         }
 
-        void addMatch(uint32_t targetId, int32_t diagonal)
+        void addMatch(uint64_t targetId, int32_t diagonal)
         {
             prefilterKmerStageResults.addDiagonal(targetId, diagonal);
         }
@@ -302,7 +310,7 @@ namespace mmseq2
 
         std::vector<bool> diagonalPreVVisited;
 
-        std::set<uint32_t> filteredTargetIds;
+        std::set<uint64_t> filteredTargetIds;
 
         void processSimilarKMers(const mmseq2::GetterInterfacePtr &getterInterfacePtr, uint32_t diagonalNumber, std::string &kMer, int32_t SMaxSuf,
                                  int32_t Spref = 0, uint32_t indx = 0);
