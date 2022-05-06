@@ -211,8 +211,8 @@ namespace mmseq2
              * If these lines are not here, diagonals.push_back fails.
              * Works on macOS though.
              * */                                                       
-            diagonals.push_back(42);
-            diagonals.pop_back();
+            // diagonals.push_back(42);
+            // diagonals.pop_back();
         }
 
         PrefilterKmerStageResults() = delete;
@@ -315,7 +315,7 @@ namespace mmseq2
         void processSimilarKMers(const mmseq2::GetterInterfacePtr &getterInterfacePtr, uint32_t diagonalNumber, std::string &kMer, int32_t SMaxSuf,
                                  int32_t Spref = 0, uint32_t indx = 0);
 
-        void processSingleKmer(const mmseq2::GetterInterfacePtr &getterInterfacePtr, uint32_t diagonal, std::string &kMer);
+        void AddHitsFromSimilarKmers(const mmseq2::GetterInterfacePtr &getterInterfacePtr);
 
         [[nodiscard]] double ungappedAlignment(const StrPtr &querySequence, const StrPtr &targetSequence, int32_t diagonal) const;
 
@@ -325,9 +325,10 @@ namespace mmseq2
     class GetterInterface
     {
     public:
-        using IndexesMap = std::map<std::string, std::vector<std::pair<uint32_t, uint32_t>>>;
+        using IndexesMap = std::unordered_map<std::string, std::vector<std::pair<uint64_t, uint32_t>>>;
         using IndexesMapPtr = std::shared_ptr<IndexesMap>;
         using DBconnPtr = std::shared_ptr<DB::DBconn>;
+        using Vec32Ptr = std::shared_ptr<std::vector<uint32_t>>;
 
         GetterInterface(bool allTs, bool localTs)
         {
@@ -362,35 +363,53 @@ namespace mmseq2
             return allTargets;
         }
 
-        void getIthIndex(std::string kMer, uint32_t i, uint64_t *target_id, uint32_t *position)
+        [[nodiscard]] Vec32Ptr &getSimKMersPosPtr()
+        {
+            return simKMersPosPtr;
+        }
+
+        void addSimKmerPos(uint32_t kMerPos)
+        {
+            (*simKMersPosPtr).push_back(kMerPos);
+        }
+
+        [[nodiscard]] common::SimKMersPtr &getSimKMersPtr()
+        {
+            return simKMersPtr;
+        }
+
+        void addSimKMer(const std::string &kMer)
+        {
+            (*simKMersPtr).push_back(kMer);
+        }
+
+        void getSimKMersHits(common::SimKMersHitsPtr &simKMersHitsPtr)
         {
             if (localTargets)
             {
-                auto it = indexesMapPtr.get()->find(kMer);
-                if (it == indexesMapPtr.get()->end())
+                for (const auto &kMer : *simKMersPtr)
                 {
-                    throw std::invalid_argument("kmer not exists in indexesMap");
-                }
-                else
-                {
-                    if (it->second.size() <= i)
+                    auto it = indexesMapPtr.get()->find(kMer);
+                    if (it != indexesMapPtr.get()->end())
                     {
-                        throw std::invalid_argument("out of range in hitList");
+                        for (const auto hit : it->second)
+                        {
+                            (*simKMersHitsPtr).emplace_back(kMer, hit);
+                        }
                     }
-                    *target_id = it->second[i].first;
-                    *position = it->second[i].second;
                 }
             }
             else
             {
-                dbconnPtr.get()->GetIthIndex(kMer, (int32_t)i, target_id, position);
+                dbconnPtr.get()->GetSimKMersHits(simKMersPtr, simKMersHitsPtr);
             }
         }
 
         Query::StrPtr getTargetById(uint64_t id) {
             if (localTargets)
             {
-                if (targetsPtr.get()->size() <= id) {
+                if (targetsPtr.get()->size() <= id)
+                {
                     throw std::invalid_argument("out of range in targetsSequences");
                 }
                 return targetsPtr.get()->at(id);
@@ -404,6 +423,8 @@ namespace mmseq2
         DBconnPtr dbconnPtr;
         IndexesMapPtr indexesMapPtr;
         common::InputParams::VecStrPtr targetsPtr;
+        Vec32Ptr simKMersPosPtr;
+        common::SimKMersPtr simKMersPtr;
     };
 }
 

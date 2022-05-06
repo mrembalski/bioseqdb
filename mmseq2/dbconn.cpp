@@ -10,6 +10,13 @@ DB::DBconn::DBconn(const std::string &tableName, const std::string &columnName)
 {
     this->columnName = columnName;
     this->tableName = tableName;
+    this->kmerHitsQueryPrefix = "SELECT kmer, starting_position, seq_id FROM ";
+    this->kmerHitsQueryPrefix
+        .append(this->tableName)
+        .append("_")
+        .append(this->columnName)
+        .append("__index")
+        .append(" WHERE kmer IN (");
 
 	/* A list of possible environment variables*/
 	const char *env_var[5] = {
@@ -81,7 +88,7 @@ void DB::DBconn::GetIthIndex(std::string kmer, uint32_t i, uint64_t *target_id, 
     PGresult *res = PQexec(connection, getIndexQuery.c_str());
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-        throw std::invalid_argument("not PGRES_TUPLES_OK");
+        throw std::invalid_argument(PQerrorMessage(connection));
     }
 
     int starting_position_fnum = PQfnumber(res, "starting_position");
@@ -116,7 +123,7 @@ std::shared_ptr<std::string> DB::DBconn::GetTargetById(uint64_t id)
     PGresult *res = PQexec(connection, getTargetQuery.c_str());
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-        throw std::invalid_argument("not PGRES_TUPLES_OK");
+        throw std::invalid_argument(PQerrorMessage(connection));
     }
 
     int target_seq_fnum = PQfnumber(res, this->columnName.c_str());
@@ -134,4 +141,58 @@ std::shared_ptr<std::string> DB::DBconn::GetTargetById(uint64_t id)
     PQclear(res);
 
     return std::make_shared<std::string>(target_seq);
+}
+
+
+void DB::DBconn::GetSimKMersHits(common::SimKMersPtr &simKMersPtr, common::SimKMersHitsPtr &simKMersHitsPtr)
+{
+    if (simKMersPtr.get()->empty()) {
+        return;
+    }
+
+    std::string query;
+    query.reserve(this->kmerHitsQueryPrefix.size() + 10 * simKMersPtr.get()->size() + 1);
+    query.append(this->kmerHitsQueryPrefix);
+
+    /** kMer values */
+    for (uint32_t i = 0; i < simKMersPtr.get()->size(); i++)
+    {
+        query.append("\'");
+        query.append(simKMersPtr.get()->at(i));
+        query.append("\'");
+
+        if (i < simKMersPtr.get()->size() - 1)
+        {
+            query.append(",");
+        }
+    }
+
+    query.append(");");
+
+    PGresult *res = PQexec(connection, query.c_str());
+
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        throw std::invalid_argument(PQerrorMessage(connection));
+    }
+
+
+    int kmer_fnum = PQfnumber(res, "kmer");
+    int starting_position_fnum = PQfnumber(res, "starting_position");
+    int seq_id_fnum = PQfnumber(res, "seq_id");
+
+    auto respSize = PQntuples(res);
+
+    common::SimKMersHits simKMersHits;
+
+    for (int i = 0; i < respSize; i++) {
+        char *kmer = PQgetvalue(res, i, kmer_fnum);
+        char *starting_position = PQgetvalue(res, i, starting_position_fnum);
+        char *seq_id = PQgetvalue(res, i, seq_id_fnum);
+
+        simKMersHits.push_back({(std::string)kmer, {strtoull(seq_id, NULL, 0), strtoul(starting_position, NULL, 0)}});
+    }
+
+    *simKMersHitsPtr = simKMersHits;
+
+    PQclear(res);
 }

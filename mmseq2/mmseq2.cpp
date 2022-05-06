@@ -7,8 +7,8 @@
 namespace {
     // from hsp to bit score, using K, lambda
     double evalBitScore(double rawScore) {
-        static double K = 0.041, lambda = 0.267;
-        return (lambda * rawScore - std::log(K)) / std::log(2);
+        static double K = 0.041, lambda = 0.267, logK = std::log(0.041), log2 = std::log(2);
+        return (lambda * rawScore - logK) / log2;
     }
 
     // number of expected hits of similar score
@@ -30,7 +30,6 @@ common::VecRes mmseq2::MMSeq2(common::InputParams inputParams) {
     uint32_t nextQuery = 0;
     common::VecResPtr resultPtr = std::make_shared<common::VecRes>();
 
-    uint32_t tLen = inputParamsPtr.get()->getTLen();
     bool allTargets = inputParamsPtr.get()->getAllTargets(), localTargets = inputParamsPtr.get()->getLocalTargets();
     mmseq2::GetterInterface getterInterface(allTargets, localTargets);
     getterInterface.getTargetsPtr() = (*inputParamsPtr).getTargetsPtr();
@@ -134,7 +133,13 @@ void mmseq2::Query::findPrefilterKmerStageResults(const mmseq2::GetterInterfaceP
 
         std::string kMer = this->sequence.get()->substr(kMerPos, this->kMerLength);
 
+        // prepare environment
+        (*getterInterfacePtr).getSimKMersPtr() = std::make_shared<common::SimKMers>();
+        (*getterInterfacePtr).getSimKMersPosPtr() = std::make_shared<std::vector<uint32_t>>();
         this->processSimilarKMers(getterInterfacePtr, kMerPos, kMer, SMaxSuf);
+
+        // get hits from db
+        AddHitsFromSimilarKmers(getterInterfacePtr);
 
         SMaxSuf -= AminoAcid::getPenalty(this->substitutionMatrixId, this->sequence.get()->at(kMerPos), this->sequence.get()->at(kMerPos));
     }
@@ -143,7 +148,8 @@ void mmseq2::Query::findPrefilterKmerStageResults(const mmseq2::GetterInterfaceP
 void mmseq2::Query::processSimilarKMers(const mmseq2::GetterInterfacePtr &getterInterfacePtr, uint32_t kMerPos, std::string &kMer, int32_t SMaxSuf,
                                         int32_t Spref, uint32_t indx) {
     if (indx == 0 && evalBitScore(Spref + SMaxSuf) >= this->kMerGenThreshold) {
-        processSingleKmer(getterInterfacePtr, kMerPos, kMer);
+        (*getterInterfacePtr).addSimKmerPos(kMerPos);
+        (*getterInterfacePtr).addSimKMer(kMer);
     }
 
     if (indx >= kMer.size()) {
@@ -163,7 +169,8 @@ void mmseq2::Query::processSimilarKMers(const mmseq2::GetterInterfacePtr &getter
             kMer[indx] = AminoAcid::idToChar(aaId);
 
             if (currentAAId != aaId) {
-                processSingleKmer(getterInterfacePtr, kMerPos, kMer);
+                (*getterInterfacePtr).addSimKmerPos(kMerPos);
+                (*getterInterfacePtr).addSimKMer(kMer);
             }
 
             processSimilarKMers(getterInterfacePtr, kMerPos, kMer, SMaxSuf, Spref, indx + 1);
@@ -175,33 +182,50 @@ void mmseq2::Query::processSimilarKMers(const mmseq2::GetterInterfacePtr &getter
     kMer[indx] = currentAA;
 }
 
-void mmseq2::Query::processSingleKmer(const mmseq2::GetterInterfacePtr &getterInterfacePtr, uint32_t kMerPos, std::string &kMer) {
+void mmseq2::Query::AddHitsFromSimilarKmers(const mmseq2::GetterInterfacePtr &getterInterfacePtr) {
 
-    // for (uint32_t i = 0; i < n; ++i) {
-    uint32_t i = 0;
-    while (true) {
-        try {
-            uint64_t target_id;
-            uint32_t position;
+    // similar kMers in simKMers from getterInterface are in right order
+    // and hits from simKMersHits <kmer, <tId, pos>> should be also checked in the same kMer order
 
-            // added kmer for new interface
-            getterInterfacePtr.get()->getIthIndex(kMer, (int32_t)i, &target_id, &position);
-            
-            // mock::get_ith_index((int32_t)i, &target_id, &position, kMer.c_str(), getKMerLength());
-            int32_t diagonal = (int32_t)position - (int32_t)kMerPos;
+    common::SimKMersHitsPtr simKMersHitsPtr = std::make_shared<common::SimKMersHits>();
+    getterInterfacePtr.get()->getSimKMersHits(simKMersHitsPtr);
 
-            if (diagonalPreVVisited[target_id] && diagonalPrev[target_id] == diagonal) {
-                addMatch(target_id, diagonal);
+    uint32_t simHitsSize = simKMersHitsPtr.get()->size();
+    if (simHitsSize == 0) {
+        return;
+    }
+
+    // map : <kmer, vector<tId, pos>> helpful for check hits in right order
+    std::unordered_map<std::string, std::vector<std::pair<uint64_t, uint32_t>>> hitsMap;
+    for (const auto &hit : *simKMersHitsPtr) {
+        hitsMap[hit.first].push_back(hit.second);
+    }
+
+    for (uint32_t i = 0; i < getterInterfacePtr.get()->getSimKMersPtr().get()->size(); i++) {
+        const auto &kMer = getterInterfacePtr.get()->getSimKMersPtr().get()->at(i);
+        auto it = hitsMap.find(kMer);
+
+        if (it != hitsMap.end()) {
+            auto hits = it->second;
+            uint32_t kMerPos = getterInterfacePtr.get()->getSimKMersPosPtr().get()->at(i);
+
+            // sort by pos
+            std::sort(hits.begin(), hits.end(), [](auto &left, auto &right){
+                return left.second < right.second;
+            });
+
+            for (auto &hit : hits) {
+                uint64_t tId = hit.first;
+                uint32_t pos = hit.second;
+                int32_t diagonal = (int32_t)pos - (int32_t)kMerPos;
+
+                if (diagonalPreVVisited[tId] && diagonalPrev[tId] == diagonal) {
+                    addMatch(tId, diagonal);
+                }
+                diagonalPrev[tId] = diagonal;
+                diagonalPreVVisited[tId] = true;
             }
-
-            diagonalPrev[target_id] = diagonal;
-            diagonalPreVVisited[target_id] = true;
         }
-        catch (const std::exception& e) {
-            // std::cout << "processSingleKmer: got exception at " << i << std::endl;
-            break;
-        }
-        i++;
     }
 }
 
@@ -350,8 +374,6 @@ void mmseq2::Query::executeAlignment(const mmseq2::GetterInterfacePtr &getterInt
         const uint64_t targetId = kmerStageResults.getTargetId((int)i);
 
         StrPtr querySequence = this->sequence;
-        // const std::string &targetSequence = "DDDDDAAGGGGG";
-        // StrPtr targetSequence = mock::get_sequence(this->targetColumnName.get()->c_str(), targetId);
         StrPtr targetSequence = getterInterfacePtr.get()->getTargetById(targetId);
         
         if (ungappedAlignment(querySequence, targetSequence, diagonal) >= this->ungappedAlignmentScore && filteredTargetIds.find(targetId) == filteredTargetIds.end()) {

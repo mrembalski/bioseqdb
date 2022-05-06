@@ -30,3 +30,5 @@ RUN set -x \
 # .sh or .sql files from docker-entrypoint-initdb.d
 # are run right after db is created
 COPY ./ops/docker/entrypoint.sql /docker-entrypoint-initdb.d/
+COPY ./examples/DB.sql /docker-entrypoint-initdb.d/y_DB.sql
+COPY ./examples/QUERY.sql /docker-entrypoint-initdb.d/y_QUERY.sql
