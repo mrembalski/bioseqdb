@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <memory>
 #include <exception>
+#include <map>
 #include <utility>
 #include <vector>
 #include <string>
@@ -12,6 +13,7 @@
 #include <mutex>
 #include "../common/mmseq2lib.h"
 #include "dbconn.h"
+#include "rpc/this_handler.h"
 
 namespace mmseq2
 {
@@ -20,8 +22,19 @@ namespace mmseq2
     protected:
         uint32_t alphabetSize;
     public:
-        class CharNotInAlphabet: public std::exception { } charNotInAlphabet;
-        class BioSequenceNotAssigned : public std::exception {} bioSequenceNotAssigned;
+        class CharNotInAlphabet: public std::exception {
+            virtual const char* what() const throw()
+            {
+                return "Invalid char: char does not belong to the chosen alphabet";
+            }
+        } charNotInAlphabet;
+
+        class BioSequenceNotAssigned : public std::exception {
+            virtual const char* what() const throw()
+            {
+                return "Invalid usage of BioSequence class";
+            }
+        } bioSequenceNotAssigned;
 
         virtual uint32_t charToId(char aa_id) const {
             throw bioSequenceNotAssigned;
@@ -114,14 +127,13 @@ namespace mmseq2
 
         uint32_t charToId(char aa_id) const
         {
-            for (uint32_t id = 0; id < alphabetSize; id++)
-            {
-                if (charId[id] == aa_id)
-                {
-                    return id;
-                }
+            auto it = mapOfCharIds.find(aa_id);
+
+            if (it == mapOfCharIds.end() || it->second >= alphabetSize) {
+                throw charNotInAlphabet;
             }
-            throw charNotInAlphabet;
+
+            return it->second;
         }
 
         char idToChar(uint32_t aa_char) const
@@ -146,14 +158,35 @@ namespace mmseq2
     private:
         static constexpr char charId[25] = {'A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V', 'B', 'J', 'Z', 'X', '*'};
 
-        static constexpr int32_t substitutionMatrix[5][25][25] = {
-                {{5, -2, -1, -2, -1, -1, -1, 0, -2, -1, -1, -1, -1, -2, -1, 1, 0, -2, -2, 0, -1, -1, -1, -1, -5},
-                 {-2, 7, 0, -1, -3, 1, 0, -2, 0, -3, -2, 3, -1, -2, -2, -1, -1, -2, -1, -2, -1, -3, 1, -1, -5},
-                 {-1, 0, 6, 2, -2, 0, 0, 0, 1, -2, -3, 0, -2, -2, -2, 1, 0, -4, -2, -3, 5, -3, 0, -1, -5},
+        std::map<char, int> mapOfCharIds = {
+                {'A', 0},
+                {'R', 1},
+                {'N', 2},
+                {'D', 3},
+                {'C', 4},
+                {'Q', 5},
+                {'E', 6},
+                {'G', 7},
+                {'H', 8},
+                {'I', 9},
+                {'L', 10},
+                {'K', 11},
+                {'M', 12},
+                {'F', 13},
+                {'P', 14},
+                {'S', 15},
+                {'T', 16},
+                {'W', 17},
+                {'Y', 18},
+                {'V', 19},
+                {'B', 20},
+                {'J', 21},
+                {'Z', 22},
+                {'X', 23},
+                {'*', 24}
+        };
 
-                }};
-
-        static constexpr int32_t blosum[5][25][25] =
+        static constexpr int32_t substitutionMatrix[5][25][25] =
         {
             {{5, -2, -1, -2, -1, -1, -1, 0, -2, -1, -1, -1, -1, -2, -1, 1, 0, -2, -2, 0, -1, -1, -1, -1, -5},
              {-2, 7, 0, -1, -3, 1, 0, -2, 0, -3, -2, 3, -1, -2, -2, -1, -1, -2, -1, -2, -1, -3, 1, -1, -5},
@@ -301,15 +334,7 @@ namespace mmseq2
 
     public:
         explicit PrefilterKmerStageResults(uint64_t queryId) : queryId{queryId}, targetIds{std::vector<uint64_t>{}},
-                                                               diagonals{std::vector<int32_t>{}} {
-            /** IMPORTANT TODO: 
-             * When possible, try to remove these lines. Seems like an issue depending on OS. 
-             * If these lines are not here, diagonals.push_back fails.
-             * Works on macOS though.
-             * */                                                       
-            // diagonals.push_back(42);
-            // diagonals.pop_back();
-        }
+                                                               diagonals{std::vector<int32_t>{}} { }
 
         PrefilterKmerStageResults() = delete;
 
@@ -343,8 +368,6 @@ namespace mmseq2
     class Query
     {
     public:
-        class InvalidSequenceType: public std::exception { } invalidSequenceType;
-
         using StrPtr = common::InputParams::StrPtr;
         using VecStrPtr = common::InputParams::VecStrPtr;
 
@@ -370,7 +393,7 @@ namespace mmseq2
                 bioSequence = std::make_shared<AminoAcid>(AminoAcid(inputParams->getEnableAmbiguity()));
             }
             else {
-                throw invalidSequenceType;
+                throw std::invalid_argument("Invalid Sequence type. Sequence has to be either 'a' (Aminoacid) or 'n' (Nucleotide)");
             }
         }
 

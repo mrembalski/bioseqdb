@@ -78,6 +78,10 @@ int main()
 
    srv.run();
 
+//   runMMSeq2({"TTTTTTTCCGGGGGGGAA", "AAATTTTTTTCCGGGGGGGTT"},
+//              {"TTTTTTTAAGGGGGGG"},
+//              "change a into n", 7, 10, 0, 1, 4, 1, 2);
+//
 //   runMMSeq2({"DDDDDDDDDCCGGGGGGGAA", "AAADDDDDDDCCGGGGGGGDD"},
 //             {"DDDDDDDAAGGGGGGG"},
 //             "blosum62", 7, 18, 0, 1, 4, 1, 2);
