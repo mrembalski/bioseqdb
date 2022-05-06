@@ -24,49 +24,57 @@ void processSingleQuery(const mmseq2::GetterInterfacePtr &getterInterfacePtr, ui
                         common::InputParams::InputParamsPtr inputParams, std::mutex *resMtx, const common::VecResPtr &resultPtr);
 
 common::VecRes mmseq2::MMSeq2(common::InputParams inputParams) {
-    common::InputParams::InputParamsPtr inputParamsPtr = std::make_shared<common::InputParams>(inputParams);
-    std::vector<std::thread> workers{};
-    std::mutex mtx, resMtx;
-    uint32_t nextQuery = 0;
-    common::VecResPtr resultPtr = std::make_shared<common::VecRes>();
+    try {
+        common::InputParams::InputParamsPtr inputParamsPtr = std::make_shared<common::InputParams>(inputParams);
+        std::vector<std::thread> workers{};
+        std::mutex mtx, resMtx;
+        uint32_t nextQuery = 0;
+        common::VecResPtr resultPtr = std::make_shared<common::VecRes>();
 
-    bool allTargets = inputParamsPtr.get()->getAllTargets(), localTargets = inputParamsPtr.get()->getLocalTargets();
-    mmseq2::GetterInterface getterInterface(allTargets, localTargets);
-    getterInterface.getTargetsPtr() = (*inputParamsPtr).getTargetsPtr();
+        bool allTargets = inputParamsPtr.get()->getAllTargets(), localTargets = inputParamsPtr.get()->getLocalTargets();
+        mmseq2::GetterInterface getterInterface(allTargets, localTargets);
+        getterInterface.getTargetsPtr() = (*inputParamsPtr).getTargetsPtr();
 
-    if (localTargets) {
-        uint32_t kMerLength = inputParamsPtr.get()->getKMerLength();
+        if (localTargets) {
+            uint32_t kMerLength = inputParamsPtr.get()->getKMerLength();
 
-        auto targetsPtr = inputParamsPtr.get()->getTargetsPtr();
-        for (uint32_t i = 0; i < targetsPtr.get()->size(); i++) {
-            std::string target = *targetsPtr.get()->at(i);
-            if (target.size() < kMerLength) {
-                continue;
-            }
-            for (uint j = 0; j <= target.size() - kMerLength; j++) {
-                std::string kMer = target.substr(j, kMerLength);
-                (*getterInterface.getIndexesMapPtr())[kMer].push_back({i, j});
+            auto targetsPtr = inputParamsPtr.get()->getTargetsPtr();
+            for (uint32_t i = 0; i < targetsPtr.get()->size(); i++) {
+                std::string target = *targetsPtr.get()->at(i);
+                if (target.size() < kMerLength) {
+                    continue;
+                }
+                for (uint j = 0; j <= target.size() - kMerLength; j++) {
+                    std::string kMer = target.substr(j, kMerLength);
+                    (*getterInterface.getIndexesMapPtr())[kMer].push_back({i, j});
+                }
             }
         }
-    }
 
-    for (uint32_t i = 0; i < inputParamsPtr.get()->getThreadNumber(); ++i) {
-        workers.emplace_back(std::thread(
-            processQueries, inputParamsPtr, getterInterface, &mtx, &nextQuery, &resMtx, resultPtr));
-    }
-
-    for (std::thread &worker : workers) {
-        worker.join();
-    }
-
-    // we need to update targets id in result when it was run locally
-    if (localTargets) {
-        for (uint32_t i = 0; i < resultPtr.get()->size(); i++) {
-            uint64_t localTargetId = (*resultPtr)[i].getTargetId();
-            (*resultPtr)[i].setTargetId(inputParamsPtr.get()->getTIds().get()->at(localTargetId));
+        for (uint32_t i = 0; i < inputParamsPtr.get()->getThreadNumber(); ++i) {
+            workers.emplace_back(std::thread(
+                    processQueries, inputParamsPtr, getterInterface, &mtx, &nextQuery, &resMtx, resultPtr));
         }
+
+        for (std::thread &worker : workers) {
+            worker.join();
+        }
+
+        // we need to update targets id in result when it was run locally
+        if (localTargets) {
+            for (uint32_t i = 0; i < resultPtr.get()->size(); i++) {
+                uint64_t localTargetId = (*resultPtr)[i].getTargetId();
+                (*resultPtr)[i].setTargetId(inputParamsPtr.get()->getTIds().get()->at(localTargetId));
+            }
+        }
+        return *resultPtr;
     }
-    return *resultPtr;
+
+    catch(std::exception& e) {
+        rpc::this_handler().respond_error(e.what());
+    }
+
+    return common::VecRes{};
 }
 
 // Returns the smallest id of query that was not processed yet

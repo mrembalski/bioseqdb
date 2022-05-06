@@ -37,10 +37,14 @@ namespace common
                                                                                           evalTreshold{evalTreshold}, gapOpenCost{gapOpenCost}, gapPenaltyCost{gapPenaltyCost},
                                                                                           threadNumber{threadNumber}, sequenceType{sequenceType}, enableAmbiguity{enableAmbiguity}
         {
+            if (sequenceType == 'n') {
+                substitutionMatrixId = 0;
+                return;
+            }
+
             if (substitutionMatrixName.get()->length() != 8 || substitutionMatrixName.get()->compare(0, 6, "blosum") != 0)
             {
-                std::cout << "Wrong substitution matrix name" << std::endl;
-                exit(1);
+                throw std::invalid_argument("Wrong substitution matrix name");
             }
 
             uint32_t blosumId = 10 * (substitutionMatrixName.get()->at(6) - '0') + (substitutionMatrixName.get()->at(7) - '0');
@@ -63,8 +67,7 @@ namespace common
                 substitutionMatrixId = 4;
                 break;
             default:
-                std::cout << "Wrong blosum number" << std::endl;
-                exit(1);
+                throw std::invalid_argument("Wrong blosum number");
             }
         }
 
