@@ -400,7 +400,7 @@ CREATE OR REPLACE FUNCTION nucl_search_one_to_one(
 		thread_number integer = 1
 	)
     RETURNS SETOF nucl_mmseq_result
-    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_one' LANGUAGE C;
+    AS 'MODULE_PATHNAME', 'nucl_search_one_to_one' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION nucl_search_one_to_arr(
 		nucl_seq,
@@ -415,7 +415,7 @@ CREATE OR REPLACE FUNCTION nucl_search_one_to_arr(
 		thread_number integer = 1
 	)
     RETURNS SETOF nucl_mmseq_result
-    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_arr' LANGUAGE C;
+    AS 'MODULE_PATHNAME', 'nucl_search_one_to_arr' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION nucl_search_one_to_db(
 		nucl_seq,
@@ -432,7 +432,7 @@ CREATE OR REPLACE FUNCTION nucl_search_one_to_db(
 		thread_number integer = 1
 	)
     RETURNS SETOF nucl_mmseq_result
-    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_db' LANGUAGE C;
+    AS 'MODULE_PATHNAME', 'nucl_search_one_to_db' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION nucl_search_arr_to_one(
 		nucl_seq[],
@@ -447,7 +447,7 @@ CREATE OR REPLACE FUNCTION nucl_search_arr_to_one(
 		thread_number integer = 1
 	)
     RETURNS SETOF nucl_mmseq_result
-    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_one' LANGUAGE C;
+    AS 'MODULE_PATHNAME', 'nucl_search_arr_to_one' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION nucl_search_arr_to_arr(
 		nucl_seq[],
@@ -462,7 +462,7 @@ CREATE OR REPLACE FUNCTION nucl_search_arr_to_arr(
 		thread_number integer = 1
 	)
     RETURNS SETOF nucl_mmseq_result
-    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_arr' LANGUAGE C;
+    AS 'MODULE_PATHNAME', 'nucl_search_arr_to_arr' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION nucl_search_arr_to_db(
 		nucl_seq[],
@@ -479,7 +479,7 @@ CREATE OR REPLACE FUNCTION nucl_search_arr_to_db(
 		thread_number integer = 1
 	)
     RETURNS SETOF nucl_mmseq_result
-    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_db' LANGUAGE C;
+    AS 'MODULE_PATHNAME', 'nucl_search_arr_to_db' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION nucl_search_db_to_one(
 		text,
@@ -496,7 +496,7 @@ CREATE OR REPLACE FUNCTION nucl_search_db_to_one(
 		thread_number integer = 1
 	)
     RETURNS SETOF nucl_mmseq_result
-    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_one' LANGUAGE C;
+    AS 'MODULE_PATHNAME', 'nucl_search_db_to_one' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION nucl_search_db_to_arr(
 		text,
@@ -513,7 +513,7 @@ CREATE OR REPLACE FUNCTION nucl_search_db_to_arr(
 		thread_number integer = 1
 	)
     RETURNS SETOF nucl_mmseq_result
-    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_arr' LANGUAGE C;
+    AS 'MODULE_PATHNAME', 'nucl_search_db_to_arr' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION nucl_search_db_to_db(
 		text,
@@ -532,7 +532,7 @@ CREATE OR REPLACE FUNCTION nucl_search_db_to_db(
 		thread_number integer = 1
 	)
     RETURNS SETOF nucl_mmseq_result
-    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_db' LANGUAGE C;
+    AS 'MODULE_PATHNAME', 'nucl_search_db_to_db' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION aa_search_one_to_one(
 		aa_seq,
@@ -547,7 +547,7 @@ CREATE OR REPLACE FUNCTION aa_search_one_to_one(
 		thread_number integer = 1
 	)
     RETURNS SETOF aa_mmseq_result
-    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_one' LANGUAGE C;
+    AS 'MODULE_PATHNAME', 'aa_search_one_to_one' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION aa_search_one_to_arr(
 		aa_seq,
@@ -562,7 +562,7 @@ CREATE OR REPLACE FUNCTION aa_search_one_to_arr(
 		thread_number integer = 1
 	)
     RETURNS SETOF aa_mmseq_result
-    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_arr' LANGUAGE C;
+    AS 'MODULE_PATHNAME', 'aa_search_one_to_arr' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION aa_search_one_to_db(
 		aa_seq,
@@ -579,7 +579,7 @@ CREATE OR REPLACE FUNCTION aa_search_one_to_db(
 		thread_number integer = 1
 	)
     RETURNS SETOF aa_mmseq_result
-    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_one_to_db' LANGUAGE C;
+    AS 'MODULE_PATHNAME', 'aa_search_one_to_db' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION aa_search_arr_to_one(
 		aa_seq[],
@@ -594,7 +594,7 @@ CREATE OR REPLACE FUNCTION aa_search_arr_to_one(
 		thread_number integer = 1
 	)
     RETURNS SETOF aa_mmseq_result
-    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_one' LANGUAGE C;
+    AS 'MODULE_PATHNAME', 'aa_search_arr_to_one' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION aa_search_arr_to_arr(
 		aa_seq[],
@@ -609,7 +609,7 @@ CREATE OR REPLACE FUNCTION aa_search_arr_to_arr(
 		thread_number integer = 1
 	)
     RETURNS SETOF aa_mmseq_result
-    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_arr' LANGUAGE C;
+    AS 'MODULE_PATHNAME', 'aa_search_arr_to_arr' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION aa_search_arr_to_db(
 		aa_seq[],
@@ -626,7 +626,7 @@ CREATE OR REPLACE FUNCTION aa_search_arr_to_db(
 		thread_number integer = 1
 	)
     RETURNS SETOF aa_mmseq_result
-    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_arr_to_db' LANGUAGE C;
+    AS 'MODULE_PATHNAME', 'aa_search_arr_to_db' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION aa_search_db_to_one(
 		text,
@@ -643,7 +643,7 @@ CREATE OR REPLACE FUNCTION aa_search_db_to_one(
 		thread_number integer = 1
 	)
     RETURNS SETOF aa_mmseq_result
-    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_one' LANGUAGE C;
+    AS 'MODULE_PATHNAME', 'aa_search_db_to_one' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION aa_search_db_to_arr(
 		text,
@@ -660,7 +660,7 @@ CREATE OR REPLACE FUNCTION aa_search_db_to_arr(
 		thread_number integer = 1
 	)
     RETURNS SETOF aa_mmseq_result
-    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_arr' LANGUAGE C;
+    AS 'MODULE_PATHNAME', 'aa_search_db_to_arr' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION aa_search_db_to_db(
 		text,
@@ -679,4 +679,151 @@ CREATE OR REPLACE FUNCTION aa_search_db_to_db(
 		thread_number integer = 1
 	)
     RETURNS SETOF aa_mmseq_result
-    AS 'MODULE_PATHNAME', 'seq_search_mmseqs_db_to_db' LANGUAGE C;
+    AS 'MODULE_PATHNAME', 'aa_search_db_to_db' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION aaa_search_one_to_one(
+		aa_seq,
+		aa_seq,
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 19,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 5,
+		gap_penalty_cost integer = 2,
+		thread_number integer = 1
+	)
+    RETURNS SETOF aa_mmseq_result
+    AS 'MODULE_PATHNAME', 'aaa_search_one_to_one' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION aaa_search_one_to_arr(
+		aa_seq,
+		aa_seq[],
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 19,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 5,
+		gap_penalty_cost integer = 2,
+		thread_number integer = 1
+	)
+    RETURNS SETOF aa_mmseq_result
+    AS 'MODULE_PATHNAME', 'aaa_search_one_to_arr' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION aaa_search_one_to_db(
+		aa_seq,
+		text,
+		text,
+		target_ids bigint[] = NULL,
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 19,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 5,
+		gap_penalty_cost integer = 2,
+		thread_number integer = 1
+	)
+    RETURNS SETOF aa_mmseq_result
+    AS 'MODULE_PATHNAME', 'aaa_search_one_to_db' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION aaa_search_arr_to_one(
+		aa_seq[],
+		aa_seq,
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 19,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 5,
+		gap_penalty_cost integer = 2,
+		thread_number integer = 1
+	)
+    RETURNS SETOF aa_mmseq_result
+    AS 'MODULE_PATHNAME', 'aaa_search_arr_to_one' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION aaa_search_arr_to_arr(
+		aa_seq[],
+		aa_seq[],
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 19,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 5,
+		gap_penalty_cost integer = 2,
+		thread_number integer = 1
+	)
+    RETURNS SETOF aa_mmseq_result
+    AS 'MODULE_PATHNAME', 'aaa_search_arr_to_arr' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION aaa_search_arr_to_db(
+		aa_seq[],
+		text,
+		text,
+		target_ids bigint[] = NULL,
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 19,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 5,
+		gap_penalty_cost integer = 2,
+		thread_number integer = 1
+	)
+    RETURNS SETOF aa_mmseq_result
+    AS 'MODULE_PATHNAME', 'aaa_search_arr_to_db' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION aaa_search_db_to_one(
+		text,
+		text,
+		aa_seq,
+		query_ids bigint[] = NULL,
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 19,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 5,
+		gap_penalty_cost integer = 2,
+		thread_number integer = 1
+	)
+    RETURNS SETOF aa_mmseq_result
+    AS 'MODULE_PATHNAME', 'aaa_search_db_to_one' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION aaa_search_db_to_arr(
+		text,
+		text,
+		aa_seq[],
+		query_ids bigint[] = NULL,
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 19,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 5,
+		gap_penalty_cost integer = 2,
+		thread_number integer = 1
+	)
+    RETURNS SETOF aa_mmseq_result
+    AS 'MODULE_PATHNAME', 'aaa_search_db_to_arr' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION aaa_search_db_to_db(
+		text,
+		text,
+		text,
+		text,
+		query_ids bigint[] = NULL,
+		target_ids bigint[] = NULL,
+		subst_matrix_name text = 'blosum62',
+		kmer_length integer = 7,
+		kmer_gen_threshold integer = 19,
+		ungapped_alignment_score integer = 15,
+		eval_threshold double precision = 0.001,
+		gap_open_cost integer = 5,
+		gap_penalty_cost integer = 2,
+		thread_number integer = 1
+	)
+    RETURNS SETOF aa_mmseq_result
+    AS 'MODULE_PATHNAME', 'aaa_search_db_to_db' LANGUAGE C;
