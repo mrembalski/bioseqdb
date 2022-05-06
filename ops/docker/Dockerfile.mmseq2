@@ -2,9 +2,6 @@ FROM postgres:14.2
 
 ARG PG_DEV_VERSION=14
 
-ARG POSTGRES_DB 
-ARG POSTGRES_PASSWORD
-
 COPY . .
  
 RUN set -x \
@@ -21,14 +18,11 @@ RUN set -x \
         libssl-dev \
         libpq-dev \
         postgresql-server-dev-$PG_DEV_VERSION \
-    && mkdir /pg/build \
-    && cd /pg/build \
+    && mkdir /mmseq2/build \
+    && cd /mmseq2/build \
     && cmake -D PostgreSQL_TYPE_INCLUDE_DIR=/usr/include/postgresql/$PG_DEV_VERSION/server/ .. \
-    && make \
-    && make install 
+    && make 
 
 # .sh or .sql files from docker-entrypoint-initdb.d
 # are run right after db is created
-COPY ./ops/docker/entrypoint.sql /docker-entrypoint-initdb.d/
-COPY ./examples/DB.sql /docker-entrypoint-initdb.d/y_DB.sql
-COPY ./examples/QUERY.sql /docker-entrypoint-initdb.d/y_QUERY.sql
+ENTRYPOINT ["/mmseq2/mmseq2", "8080"]
