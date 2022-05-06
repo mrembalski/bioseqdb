@@ -15,10 +15,104 @@
 
 namespace mmseq2
 {
-    class AminoAcid
+    class BioSequence
+    {
+    protected:
+        uint32_t alphabetSize;
+    public:
+        class CharNotInAlphabet: public std::exception { } charNotInAlphabet;
+        class BioSequenceNotAssigned : public std::exception {} bioSequenceNotAssigned;
+
+        virtual uint32_t charToId(char aa_id) const {
+            throw bioSequenceNotAssigned;
+        }
+
+        virtual char idToChar(uint32_t aa_char) const {
+            throw bioSequenceNotAssigned;
+        }
+
+        virtual int32_t getPenalty(uint32_t matrixId, uint32_t currentId, uint32_t replacementId) const {
+            throw bioSequenceNotAssigned;
+        }
+
+        virtual int32_t getPenalty(uint32_t matrixId, char currentId, char replacementId) const {
+            throw bioSequenceNotAssigned;
+        }
+
+        uint32_t getAlphabetSize() {
+            return alphabetSize;
+        }
+    };
+
+    class Nucleotide : public BioSequence
     {
     public:
-        static uint32_t charToId(char aa_id)
+        Nucleotide(bool isAmbiguityEnabled) {
+            if (isAmbiguityEnabled) {
+                alphabetSize = 5;
+            }
+            else {
+                alphabetSize = 4;
+            }
+        }
+
+        uint32_t charToId(char aa_id) const {
+            for (uint32_t id = 0; id < alphabetSize; id++)
+            {
+                if (charId[id] == aa_id)
+                {
+                    return id;
+                }
+            }
+            throw charNotInAlphabet;
+        }
+
+        char idToChar(uint32_t aa_char) const {
+            if (aa_char >= alphabetSize)
+            {
+                throw charNotInAlphabet;
+            }
+
+            return charId[aa_char];
+        }
+
+        int32_t getPenalty(uint32_t matrixId, uint32_t currentId, uint32_t replacementId) const {
+            return substitutionMatrix[matrixId][currentId][replacementId];
+        }
+
+        int32_t getPenalty(uint32_t matrixId, char currentId, char replacementId) const {
+            return substitutionMatrix[matrixId][charToId(currentId)][charToId(replacementId)];
+        }
+    private:
+        static constexpr char charId[5] = {'A', 'C', 'T', 'G', 'X'};
+
+        static constexpr int32_t substitutionMatrix[1][5][5] = {
+                {
+                        {2, -3, -3, -3, -3},
+                        {-3, 2, -3, -3, -3},
+                        {-3, -3, 2, -3, -3},
+                        {-3, -3, -3, 2, -3},
+                        {-3, -3, -3, -3, -3}
+                }
+        };
+    };
+
+    class AminoAcid : public BioSequence
+    {
+    public:
+        AminoAcid() = delete;
+
+        AminoAcid(bool isAmbiguityEnabled)
+        {
+            if (isAmbiguityEnabled) {
+                this->alphabetSize = 25;
+            }
+            else {
+                this->alphabetSize = 20;
+            }
+        }
+
+        uint32_t charToId(char aa_id) const
         {
             for (uint32_t id = 0; id < alphabetSize; id++)
             {
@@ -27,39 +121,40 @@ namespace mmseq2
                     return id;
                 }
             }
-            return alphabetSize - 1;
+            throw charNotInAlphabet;
         }
 
-        static char idToChar(uint32_t aa_char)
+        char idToChar(uint32_t aa_char) const
         {
             if (aa_char >= alphabetSize)
             {
-                return '*';
+                throw charNotInAlphabet;
             }
             return charId[aa_char];
         }
 
-        static int32_t getPenalty(uint32_t matrixId, uint32_t currentId, uint32_t replacementId)
+        int32_t getPenalty(uint32_t matrixId, uint32_t currentId, uint32_t replacementId) const
         {
-            return blosum[matrixId][currentId][replacementId];
+            return substitutionMatrix[matrixId][currentId][replacementId];
         }
 
-        static int32_t getPenalty(uint32_t matrixId, char currentId, char replacementId)
+        int32_t getPenalty(uint32_t matrixId, char currentId, char replacementId) const
         {
-            return blosum[matrixId][charToId(currentId)][charToId(replacementId)];
-        }
-
-        static uint32_t getAlphabetSize()
-        {
-            return alphabetSize;
+            return substitutionMatrix[matrixId][charToId(currentId)][charToId(replacementId)];
         }
 
     private:
-        static constexpr uint32_t alphabetSize = 25;
-
         static constexpr char charId[25] = {'A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V', 'B', 'J', 'Z', 'X', '*'};
 
-        static constexpr int32_t blosum[5][25][25] = {
+        static constexpr int32_t substitutionMatrix[5][25][25] = {
+                {{5, -2, -1, -2, -1, -1, -1, 0, -2, -1, -1, -1, -1, -2, -1, 1, 0, -2, -2, 0, -1, -1, -1, -1, -5},
+                 {-2, 7, 0, -1, -3, 1, 0, -2, 0, -3, -2, 3, -1, -2, -2, -1, -1, -2, -1, -2, -1, -3, 1, -1, -5},
+                 {-1, 0, 6, 2, -2, 0, 0, 0, 1, -2, -3, 0, -2, -2, -2, 1, 0, -4, -2, -3, 5, -3, 0, -1, -5},
+
+                }};
+
+        static constexpr int32_t blosum[5][25][25] =
+        {
             {{5, -2, -1, -2, -1, -1, -1, 0, -2, -1, -1, -1, -1, -2, -1, 1, 0, -2, -2, 0, -1, -1, -1, -1, -5},
              {-2, 7, 0, -1, -3, 1, 0, -2, 0, -3, -2, 3, -1, -2, -2, -1, -1, -2, -1, -2, -1, -3, 1, -1, -5},
              {-1, 0, 6, 2, -2, 0, 0, 0, 1, -2, -3, 0, -2, -2, -2, 1, 0, -4, -2, -3, 5, -3, 0, -1, -5},
@@ -193,7 +288,8 @@ namespace mmseq2
              {-2, -3, -4, -5, -2, -3, -4, -5, -4, 3, 4, -3, 2, 0, -4, -3, -2, -3, -2, 1, -5, 4, -4, -1, -6},
              {-1, 0, -1, 1, -5, 5, 5, -3, 0, -4, -4, 1, -2, -4, -2, -1, -1, -4, -3, -3, 0, -4, 5, -1, -6},
              {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -6},
-             {-6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, 1}}};
+             {-6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, 1}}
+        };
     };
 
     class PrefilterKmerStageResults
@@ -247,6 +343,8 @@ namespace mmseq2
     class Query
     {
     public:
+        class InvalidSequenceType: public std::exception { } invalidSequenceType;
+
         using StrPtr = common::InputParams::StrPtr;
         using VecStrPtr = common::InputParams::VecStrPtr;
 
@@ -264,7 +362,17 @@ namespace mmseq2
                                                                                                  targetTableName{inputParams.get()->getTargetTableName()},
                                                                                                  prefilterKmerStageResults{queryId},
                                                                                                  diagonalPreVVisited{std::vector<bool>(inputParams.get()->getTLen(), false)},
-                                                                                                 diagonalPrev{std::vector<int32_t>(inputParams.get()->getTLen(), 0)} {}
+                                                                                                 diagonalPrev{std::vector<int32_t>(inputParams.get()->getTLen(), 0)} {
+            if (inputParams->getSequenceType() == 'n') {
+                bioSequence = std::make_shared<Nucleotide>(Nucleotide(inputParams->getEnableAmbiguity()));
+            }
+            else if (inputParams->getSequenceType() == 'a') {
+                bioSequence = std::make_shared<AminoAcid>(AminoAcid(inputParams->getEnableAmbiguity()));
+            }
+            else {
+                throw invalidSequenceType;
+            }
+        }
 
         [[nodiscard]] const PrefilterKmerStageResults &getPrefilterKmerStageResults() const
         {
@@ -291,6 +399,8 @@ namespace mmseq2
         }
 
     private:
+        std::shared_ptr<BioSequence> bioSequence;
+
         uint64_t queryId;
         StrPtr sequence;
         StrPtr targetTableName;
