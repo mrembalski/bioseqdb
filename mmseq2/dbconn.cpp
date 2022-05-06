@@ -193,4 +193,6 @@ void DB::DBconn::GetSimKMersHits(common::SimKMersPtr &simKMersPtr, common::SimKM
     }
 
     *simKMersHitsPtr = simKMersHits;
+
+    PQclear(res);
 }

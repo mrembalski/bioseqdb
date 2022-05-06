@@ -211,8 +211,8 @@ namespace mmseq2
              * If these lines are not here, diagonals.push_back fails.
              * Works on macOS though.
              * */                                                       
-            diagonals.push_back(42);
-            diagonals.pop_back();
+            // diagonals.push_back(42);
+            // diagonals.pop_back();
         }
 
         PrefilterKmerStageResults() = delete;
