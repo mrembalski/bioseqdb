@@ -386,10 +386,10 @@ CREATE TYPE mmseq_result AS (
 CREATE OR REPLACE FUNCTION nucl_search_one_to_one(
 		nucl_seq,
 		nucl_seq,
-		subst_matrix_name text = 'blosum62',
+		subst_matrix_name text = 'nucleotide',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19,
-		ungapped_alignment_score integer = 15,
+		kmer_gen_threshold integer = 9,
+		ungapped_alignment_score integer = 6,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 5,
 		gap_penalty_cost integer = 2,
@@ -401,10 +401,10 @@ CREATE OR REPLACE FUNCTION nucl_search_one_to_one(
 CREATE OR REPLACE FUNCTION nucl_search_one_to_arr(
 		nucl_seq,
 		nucl_seq[],
-		subst_matrix_name text = 'blosum62',
+		subst_matrix_name text = 'nucleotide',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19,
-		ungapped_alignment_score integer = 15,
+		kmer_gen_threshold integer = 9,
+		ungapped_alignment_score integer = 6,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 5,
 		gap_penalty_cost integer = 2,
@@ -418,10 +418,10 @@ CREATE OR REPLACE FUNCTION nucl_search_one_to_db(
 		text,
 		text,
 		target_ids bigint[] = NULL,
-		subst_matrix_name text = 'blosum62',
+		subst_matrix_name text = 'nucleotide',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19,
-		ungapped_alignment_score integer = 15,
+		kmer_gen_threshold integer = 9,
+		ungapped_alignment_score integer = 6,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 5,
 		gap_penalty_cost integer = 2,
@@ -433,10 +433,10 @@ CREATE OR REPLACE FUNCTION nucl_search_one_to_db(
 CREATE OR REPLACE FUNCTION nucl_search_arr_to_one(
 		nucl_seq[],
 		nucl_seq,
-		subst_matrix_name text = 'blosum62',
+		subst_matrix_name text = 'nucleotide',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19,
-		ungapped_alignment_score integer = 15,
+		kmer_gen_threshold integer = 9,
+		ungapped_alignment_score integer = 6,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 5,
 		gap_penalty_cost integer = 2,
@@ -448,10 +448,10 @@ CREATE OR REPLACE FUNCTION nucl_search_arr_to_one(
 CREATE OR REPLACE FUNCTION nucl_search_arr_to_arr(
 		nucl_seq[],
 		nucl_seq[],
-		subst_matrix_name text = 'blosum62',
+		subst_matrix_name text = 'nucleotide',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19,
-		ungapped_alignment_score integer = 15,
+		kmer_gen_threshold integer = 9,
+		ungapped_alignment_score integer = 6,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 5,
 		gap_penalty_cost integer = 2,
@@ -465,10 +465,10 @@ CREATE OR REPLACE FUNCTION nucl_search_arr_to_db(
 		text,
 		text,
 		target_ids bigint[] = NULL,
-		subst_matrix_name text = 'blosum62',
+		subst_matrix_name text = 'nucleotide',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19,
-		ungapped_alignment_score integer = 15,
+		kmer_gen_threshold integer = 9,
+		ungapped_alignment_score integer = 6,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 5,
 		gap_penalty_cost integer = 2,
@@ -482,10 +482,10 @@ CREATE OR REPLACE FUNCTION nucl_search_db_to_one(
 		text,
 		nucl_seq,
 		query_ids bigint[] = NULL,
-		subst_matrix_name text = 'blosum62',
+		subst_matrix_name text = 'nucleotide',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19,
-		ungapped_alignment_score integer = 15,
+		kmer_gen_threshold integer = 9,
+		ungapped_alignment_score integer = 6,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 5,
 		gap_penalty_cost integer = 2,
@@ -499,10 +499,10 @@ CREATE OR REPLACE FUNCTION nucl_search_db_to_arr(
 		text,
 		nucl_seq[],
 		query_ids bigint[] = NULL,
-		subst_matrix_name text = 'blosum62',
+		subst_matrix_name text = 'nucleotide',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19,
-		ungapped_alignment_score integer = 15,
+		kmer_gen_threshold integer = 9,
+		ungapped_alignment_score integer = 6,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 5,
 		gap_penalty_cost integer = 2,
@@ -518,10 +518,10 @@ CREATE OR REPLACE FUNCTION nucl_search_db_to_db(
 		text,
 		query_ids bigint[] = NULL,
 		target_ids bigint[] = NULL,
-		subst_matrix_name text = 'blosum62',
+		subst_matrix_name text = 'nucleotide',
 		kmer_length integer = 7,
-		kmer_gen_threshold integer = 19,
-		ungapped_alignment_score integer = 15,
+		kmer_gen_threshold integer = 9,
+		ungapped_alignment_score integer = 6,
 		eval_threshold double precision = 0.001,
 		gap_open_cost integer = 5,
 		gap_penalty_cost integer = 2,
@@ -685,8 +685,8 @@ CREATE OR REPLACE FUNCTION amb_aa_search_one_to_one(
 		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
-		gap_open_cost integer = 5,
-		gap_penalty_cost integer = 2,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
     RETURNS SETOF mmseq_result
@@ -700,8 +700,8 @@ CREATE OR REPLACE FUNCTION amb_aa_search_one_to_arr(
 		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
-		gap_open_cost integer = 5,
-		gap_penalty_cost integer = 2,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
     RETURNS SETOF mmseq_result
@@ -717,8 +717,8 @@ CREATE OR REPLACE FUNCTION amb_aa_search_one_to_db(
 		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
-		gap_open_cost integer = 5,
-		gap_penalty_cost integer = 2,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
     RETURNS SETOF mmseq_result
@@ -732,8 +732,8 @@ CREATE OR REPLACE FUNCTION amb_aa_search_arr_to_one(
 		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
-		gap_open_cost integer = 5,
-		gap_penalty_cost integer = 2,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
     RETURNS SETOF mmseq_result
@@ -747,8 +747,8 @@ CREATE OR REPLACE FUNCTION amb_aa_search_arr_to_arr(
 		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
-		gap_open_cost integer = 5,
-		gap_penalty_cost integer = 2,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
     RETURNS SETOF mmseq_result
@@ -764,8 +764,8 @@ CREATE OR REPLACE FUNCTION amb_aa_search_arr_to_db(
 		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
-		gap_open_cost integer = 5,
-		gap_penalty_cost integer = 2,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
     RETURNS SETOF mmseq_result
@@ -781,8 +781,8 @@ CREATE OR REPLACE FUNCTION amb_aa_search_db_to_one(
 		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
-		gap_open_cost integer = 5,
-		gap_penalty_cost integer = 2,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
     RETURNS SETOF mmseq_result
@@ -798,8 +798,8 @@ CREATE OR REPLACE FUNCTION amb_aa_search_db_to_arr(
 		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
-		gap_open_cost integer = 5,
-		gap_penalty_cost integer = 2,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
     RETURNS SETOF mmseq_result
@@ -817,8 +817,8 @@ CREATE OR REPLACE FUNCTION amb_aa_search_db_to_db(
 		kmer_gen_threshold integer = 19,
 		ungapped_alignment_score integer = 15,
 		eval_threshold double precision = 0.001,
-		gap_open_cost integer = 5,
-		gap_penalty_cost integer = 2,
+		gap_open_cost integer = 11,
+		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
     RETURNS SETOF mmseq_result
