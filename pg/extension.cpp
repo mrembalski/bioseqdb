@@ -85,9 +85,59 @@ seq_search_mmseqs_main(target_tblname, target_colname, \
                        gap_penalty_cost, \
                        thread_number, \
                        all_targets, \
+                       seqType, \
+                       enableAmbiguity, \
                        tupstore, \
-                       attinmeta); \
+                       attinmeta \
+                       ); \
 return (Datum)0
+
+#define DEFINE_PG_FUNCTIONS_FOR_TYPE(prefix, seqType, ambiguity) \
+PG_FUNCTION_INFO_V1(prefix##_search_one_to_one); \
+PG_FUNCTION_INFO_V1(prefix##_search_one_to_arr); \
+PG_FUNCTION_INFO_V1(prefix##_search_one_to_db); \
+PG_FUNCTION_INFO_V1(prefix##_search_arr_to_one); \
+PG_FUNCTION_INFO_V1(prefix##_search_arr_to_arr); \
+PG_FUNCTION_INFO_V1(prefix##_search_arr_to_db); \
+PG_FUNCTION_INFO_V1(prefix##_search_db_to_one); \
+PG_FUNCTION_INFO_V1(prefix##_search_db_to_arr); \
+PG_FUNCTION_INFO_V1(prefix##_search_db_to_db); \
+Datum prefix##_search_one_to_one(PG_FUNCTION_ARGS) \
+{ \
+    return seq_search_mmseqs_one_to_one(fcinfo, seqType, ambiguity); \
+} \
+Datum prefix##_search_one_to_arr(PG_FUNCTION_ARGS) \
+{ \
+    return seq_search_mmseqs_one_to_arr(fcinfo, seqType, ambiguity); \
+} \
+Datum prefix##_search_one_to_db(PG_FUNCTION_ARGS) \
+{ \
+    return seq_search_mmseqs_one_to_db(fcinfo, seqType, ambiguity); \
+} \
+Datum prefix##_search_arr_to_one(PG_FUNCTION_ARGS) \
+{ \
+    return seq_search_mmseqs_arr_to_one(fcinfo, seqType, ambiguity); \
+} \
+Datum prefix##_search_arr_to_arr(PG_FUNCTION_ARGS) \
+{ \
+    return seq_search_mmseqs_arr_to_arr(fcinfo, seqType, ambiguity); \
+} \
+Datum prefix##_search_arr_to_db(PG_FUNCTION_ARGS) \
+{ \
+    return seq_search_mmseqs_arr_to_db(fcinfo, seqType, ambiguity); \
+} \
+Datum prefix##_search_db_to_one(PG_FUNCTION_ARGS) \
+{ \
+    return seq_search_mmseqs_db_to_one(fcinfo, seqType, ambiguity); \
+} \
+Datum prefix##_search_db_to_arr(PG_FUNCTION_ARGS) \
+{ \
+    return seq_search_mmseqs_db_to_arr(fcinfo, seqType, ambiguity); \
+} \
+Datum prefix##_search_db_to_db(PG_FUNCTION_ARGS) \
+{ \
+    return seq_search_mmseqs_db_to_db(fcinfo, seqType, ambiguity); \
+}
 
 namespace
 {
@@ -256,6 +306,8 @@ namespace
                                 const uint32_t gap_penalty_cost,
                                 const uint32_t thread_number,
                                 const bool all_targets,
+                                char seqType,
+                                bool enableAmbiguity,
                                 Tuplestorestate *tupstore,
                                 AttInMetadata *attinmeta)
     {
@@ -308,7 +360,9 @@ namespace
                                          eval_threshold,
                                          gap_open_cost,
                                          gap_penalty_cost,
-                                         thread_number);
+                                         thread_number,
+                                         seqType,
+                                         enableAmbiguity);
 
         // Client
         rpc::client c(MMSEQ_HOSTNAME, MMSEQ_PORT);
@@ -398,23 +452,8 @@ namespace
         rsinfo->setResult = tupstore;
         rsinfo->setDesc = tupdesc;
     }
-}
 
-extern "C"
-{
-    PG_MODULE_MAGIC;
-
-    PG_FUNCTION_INFO_V1(seq_search_mmseqs_one_to_one);
-    PG_FUNCTION_INFO_V1(seq_search_mmseqs_one_to_arr);
-    PG_FUNCTION_INFO_V1(seq_search_mmseqs_one_to_db);
-    PG_FUNCTION_INFO_V1(seq_search_mmseqs_arr_to_one);
-    PG_FUNCTION_INFO_V1(seq_search_mmseqs_arr_to_arr);
-    PG_FUNCTION_INFO_V1(seq_search_mmseqs_arr_to_db);
-    PG_FUNCTION_INFO_V1(seq_search_mmseqs_db_to_one);
-    PG_FUNCTION_INFO_V1(seq_search_mmseqs_db_to_arr);
-    PG_FUNCTION_INFO_V1(seq_search_mmseqs_db_to_db);
-
-    Datum seq_search_mmseqs_one_to_one(PG_FUNCTION_ARGS)
+    Datum seq_search_mmseqs_one_to_one(FunctionCallInfo &fcinfo, char seqType, bool enableAmbiguity)
     {
         TEST_ARGS_FOR_NULL(10, true);
         DECLARE_VECTORS_AND_TARGET_NAMES();
@@ -424,7 +463,7 @@ extern "C"
         SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION();
     }
 
-    Datum seq_search_mmseqs_one_to_arr(PG_FUNCTION_ARGS)
+    Datum seq_search_mmseqs_one_to_arr(FunctionCallInfo &fcinfo, char seqType, bool enableAmbiguity)
     {
         TEST_ARGS_FOR_NULL(10, true);
         DECLARE_VECTORS_AND_TARGET_NAMES();
@@ -434,7 +473,7 @@ extern "C"
         SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION();
     }
 
-    Datum seq_search_mmseqs_one_to_db(PG_FUNCTION_ARGS)
+    Datum seq_search_mmseqs_one_to_db(FunctionCallInfo &fcinfo, char seqType, bool enableAmbiguity)
     {
         TEST_ARGS_FOR_NULL(12, i != 3);
         DECLARE_VECTORS_AND_TARGET_NAMES();
@@ -444,7 +483,7 @@ extern "C"
         SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION();
     }
 
-    Datum seq_search_mmseqs_arr_to_one(PG_FUNCTION_ARGS)
+    Datum seq_search_mmseqs_arr_to_one(FunctionCallInfo &fcinfo, char seqType, bool enableAmbiguity)
     {
         TEST_ARGS_FOR_NULL(10, true);
         DECLARE_VECTORS_AND_TARGET_NAMES();
@@ -454,7 +493,7 @@ extern "C"
         SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION();
     }
 
-    Datum seq_search_mmseqs_arr_to_arr(PG_FUNCTION_ARGS)
+    Datum seq_search_mmseqs_arr_to_arr(FunctionCallInfo &fcinfo, char seqType, bool enableAmbiguity)
     {
         TEST_ARGS_FOR_NULL(10, true);
         DECLARE_VECTORS_AND_TARGET_NAMES();
@@ -464,7 +503,7 @@ extern "C"
         SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION();
     }
 
-    Datum seq_search_mmseqs_arr_to_db(PG_FUNCTION_ARGS)
+    Datum seq_search_mmseqs_arr_to_db(FunctionCallInfo &fcinfo, char seqType, bool enableAmbiguity)
     {
         TEST_ARGS_FOR_NULL(12, i != 3);
         DECLARE_VECTORS_AND_TARGET_NAMES();
@@ -474,7 +513,7 @@ extern "C"
         SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION();
     }
 
-    Datum seq_search_mmseqs_db_to_one(PG_FUNCTION_ARGS)
+    Datum seq_search_mmseqs_db_to_one(FunctionCallInfo &fcinfo, char seqType, bool enableAmbiguity)
     {
         TEST_ARGS_FOR_NULL(12, i != 3);
         DECLARE_VECTORS_AND_TARGET_NAMES();
@@ -484,7 +523,7 @@ extern "C"
         SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION();
     }
 
-    Datum seq_search_mmseqs_db_to_arr(PG_FUNCTION_ARGS)
+    Datum seq_search_mmseqs_db_to_arr(FunctionCallInfo &fcinfo, char seqType, bool enableAmbiguity)
     {
         TEST_ARGS_FOR_NULL(12, i != 3);
         DECLARE_VECTORS_AND_TARGET_NAMES();
@@ -494,7 +533,7 @@ extern "C"
         SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION();
     }
 
-    Datum seq_search_mmseqs_db_to_db(PG_FUNCTION_ARGS)
+    Datum seq_search_mmseqs_db_to_db(FunctionCallInfo &fcinfo, char seqType, bool enableAmbiguity)
     {
         TEST_ARGS_FOR_NULL(14, i != 4 && i != 5);
         DECLARE_VECTORS_AND_TARGET_NAMES();
@@ -503,4 +542,12 @@ extern "C"
         ADD_TARGETS_DB(5, 2, 3);
         SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION();
     }
+}
+
+extern "C"
+{
+    PG_MODULE_MAGIC;
+    DEFINE_PG_FUNCTIONS_FOR_TYPE(nucl, 'n', false)
+    DEFINE_PG_FUNCTIONS_FOR_TYPE(aa, 'a', false)
+    DEFINE_PG_FUNCTIONS_FOR_TYPE(amb_aa, 'a', true)
 }
