@@ -549,5 +549,5 @@ extern "C"
     PG_MODULE_MAGIC;
     DEFINE_PG_FUNCTIONS_FOR_TYPE(nucl, 'n', false)
     DEFINE_PG_FUNCTIONS_FOR_TYPE(aa, 'a', false)
-    DEFINE_PG_FUNCTIONS_FOR_TYPE(aaa, 'a', true)
+    DEFINE_PG_FUNCTIONS_FOR_TYPE(amb_aa, 'a', true)
 }

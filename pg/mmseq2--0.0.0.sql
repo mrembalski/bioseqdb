@@ -5,6 +5,11 @@ CHECK(
 
 CREATE DOMAIN aa_seq AS TEXT
 CHECK(
+   VALUE ~ '^[ARNDCQEGHILKMFPSTWYV\*]*$'
+);
+
+CREATE DOMAIN amb_aa_seq AS TEXT
+CHECK(
    VALUE ~ '^[ARNDCQEGHILKMFPSTWYVBJZX\*]*$'
 );
 
@@ -61,7 +66,7 @@ BEGIN
 	-- their table they would have to use 'CASCADE'
 	-- FOREIGN KEY (seq_id) REFERENCES %I(id) 
 	EXECUTE format(
-		-- using text, so aa_seq and nucl_seq can both be used
+		-- using text, so aa_seq, amb_aa_seq and nucl_seq can all be used
 	    'CREATE TABLE %I (
 	        kmer text NOT NULL,
 	        starting_position INT NOT NULL, 
@@ -139,6 +144,9 @@ BEGIN
 		UNION
 		SELECT column_name FROM show_domain_usage('aa_seq')
 		WHERE table_name = TG_TABLE_NAME 
+		UNION
+		SELECT column_name FROM show_domain_usage('amb_aa_seq')
+		WHERE table_name = TG_TABLE_NAME 
 	)
 	LOOP 
 		EXECUTE FORMAT('DELETE FROM %I WHERE "seq_id" = %L', 
@@ -170,6 +178,9 @@ BEGIN
 		UNION
 		SELECT column_name FROM show_domain_usage('aa_seq')
 		WHERE table_name = TG_TABLE_NAME 
+		UNION
+		SELECT column_name FROM show_domain_usage('amb_aa_seq')
+		WHERE table_name = TG_TABLE_NAME 
 	)
 	LOOP 
 		EXECUTE FORMAT ('SELECT %I FROM %I WHERE id = %L', 
@@ -195,6 +206,9 @@ BEGIN
 		WHERE table_name = TG_TABLE_NAME 
 		UNION
 		SELECT column_name FROM show_domain_usage('aa_seq')
+		WHERE table_name = TG_TABLE_NAME 
+		UNION
+		SELECT column_name FROM show_domain_usage('amb_aa_seq')
 		WHERE table_name = TG_TABLE_NAME 
 	)
 	LOOP 
@@ -243,6 +257,9 @@ BEGIN
 				WHERE "table_schema" || '.' || "table_name" = changed_object.object_identity
 				UNION
 				SELECT column_name FROM show_domain_usage('aa_seq')
+				WHERE "table_schema" || '.' || "table_name" = changed_object.object_identity
+				UNION
+				SELECT column_name FROM show_domain_usage('amb_aa_seq')
 				WHERE "table_schema" || '.' || "table_name" = changed_object.object_identity
 			)
 			LOOP 
@@ -345,28 +362,7 @@ ON
 EXECUTE FUNCTION 
 	test_event_trigger_for_drops();
 
-CREATE TYPE nucl_mmseq_result AS (
-	query_id bigint,
-	target_id bigint,
-	raw_score double precision,
-	bit_score double precision,
-	e_value double precision,
-	q_start integer,
-	q_end integer,
-	q_len integer,
-	t_start integer,
-	t_end integer,
-	t_len integer,
-	q_aln text,
-	t_aln text,
-	cigar text,
-	aln_len integer,
-	mismatch integer,
-	gap_open integer,
-	pident double precision
-);
-
-CREATE TYPE aa_mmseq_result AS (
+CREATE TYPE mmseq_result AS (
 	query_id bigint,
 	target_id bigint,
 	raw_score double precision,
@@ -399,7 +395,7 @@ CREATE OR REPLACE FUNCTION nucl_search_one_to_one(
 		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF nucl_mmseq_result
+    RETURNS SETOF mmseq_result
     AS 'MODULE_PATHNAME', 'nucl_search_one_to_one' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION nucl_search_one_to_arr(
@@ -414,7 +410,7 @@ CREATE OR REPLACE FUNCTION nucl_search_one_to_arr(
 		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF nucl_mmseq_result
+    RETURNS SETOF mmseq_result
     AS 'MODULE_PATHNAME', 'nucl_search_one_to_arr' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION nucl_search_one_to_db(
@@ -431,7 +427,7 @@ CREATE OR REPLACE FUNCTION nucl_search_one_to_db(
 		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF nucl_mmseq_result
+    RETURNS SETOF mmseq_result
     AS 'MODULE_PATHNAME', 'nucl_search_one_to_db' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION nucl_search_arr_to_one(
@@ -446,7 +442,7 @@ CREATE OR REPLACE FUNCTION nucl_search_arr_to_one(
 		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF nucl_mmseq_result
+    RETURNS SETOF mmseq_result
     AS 'MODULE_PATHNAME', 'nucl_search_arr_to_one' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION nucl_search_arr_to_arr(
@@ -461,7 +457,7 @@ CREATE OR REPLACE FUNCTION nucl_search_arr_to_arr(
 		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF nucl_mmseq_result
+    RETURNS SETOF mmseq_result
     AS 'MODULE_PATHNAME', 'nucl_search_arr_to_arr' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION nucl_search_arr_to_db(
@@ -478,7 +474,7 @@ CREATE OR REPLACE FUNCTION nucl_search_arr_to_db(
 		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF nucl_mmseq_result
+    RETURNS SETOF mmseq_result
     AS 'MODULE_PATHNAME', 'nucl_search_arr_to_db' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION nucl_search_db_to_one(
@@ -495,7 +491,7 @@ CREATE OR REPLACE FUNCTION nucl_search_db_to_one(
 		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF nucl_mmseq_result
+    RETURNS SETOF mmseq_result
     AS 'MODULE_PATHNAME', 'nucl_search_db_to_one' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION nucl_search_db_to_arr(
@@ -512,7 +508,7 @@ CREATE OR REPLACE FUNCTION nucl_search_db_to_arr(
 		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF nucl_mmseq_result
+    RETURNS SETOF mmseq_result
     AS 'MODULE_PATHNAME', 'nucl_search_db_to_arr' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION nucl_search_db_to_db(
@@ -531,7 +527,7 @@ CREATE OR REPLACE FUNCTION nucl_search_db_to_db(
 		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF nucl_mmseq_result
+    RETURNS SETOF mmseq_result
     AS 'MODULE_PATHNAME', 'nucl_search_db_to_db' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION aa_search_one_to_one(
@@ -546,7 +542,7 @@ CREATE OR REPLACE FUNCTION aa_search_one_to_one(
 		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
-    RETURNS SETOF aa_mmseq_result
+    RETURNS SETOF mmseq_result
     AS 'MODULE_PATHNAME', 'aa_search_one_to_one' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION aa_search_one_to_arr(
@@ -561,7 +557,7 @@ CREATE OR REPLACE FUNCTION aa_search_one_to_arr(
 		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
-    RETURNS SETOF aa_mmseq_result
+    RETURNS SETOF mmseq_result
     AS 'MODULE_PATHNAME', 'aa_search_one_to_arr' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION aa_search_one_to_db(
@@ -578,7 +574,7 @@ CREATE OR REPLACE FUNCTION aa_search_one_to_db(
 		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
-    RETURNS SETOF aa_mmseq_result
+    RETURNS SETOF mmseq_result
     AS 'MODULE_PATHNAME', 'aa_search_one_to_db' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION aa_search_arr_to_one(
@@ -593,7 +589,7 @@ CREATE OR REPLACE FUNCTION aa_search_arr_to_one(
 		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
-    RETURNS SETOF aa_mmseq_result
+    RETURNS SETOF mmseq_result
     AS 'MODULE_PATHNAME', 'aa_search_arr_to_one' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION aa_search_arr_to_arr(
@@ -608,7 +604,7 @@ CREATE OR REPLACE FUNCTION aa_search_arr_to_arr(
 		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
-    RETURNS SETOF aa_mmseq_result
+    RETURNS SETOF mmseq_result
     AS 'MODULE_PATHNAME', 'aa_search_arr_to_arr' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION aa_search_arr_to_db(
@@ -625,7 +621,7 @@ CREATE OR REPLACE FUNCTION aa_search_arr_to_db(
 		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
-    RETURNS SETOF aa_mmseq_result
+    RETURNS SETOF mmseq_result
     AS 'MODULE_PATHNAME', 'aa_search_arr_to_db' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION aa_search_db_to_one(
@@ -642,7 +638,7 @@ CREATE OR REPLACE FUNCTION aa_search_db_to_one(
 		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
-    RETURNS SETOF aa_mmseq_result
+    RETURNS SETOF mmseq_result
     AS 'MODULE_PATHNAME', 'aa_search_db_to_one' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION aa_search_db_to_arr(
@@ -659,7 +655,7 @@ CREATE OR REPLACE FUNCTION aa_search_db_to_arr(
 		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
-    RETURNS SETOF aa_mmseq_result
+    RETURNS SETOF mmseq_result
     AS 'MODULE_PATHNAME', 'aa_search_db_to_arr' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION aa_search_db_to_db(
@@ -678,12 +674,12 @@ CREATE OR REPLACE FUNCTION aa_search_db_to_db(
 		gap_penalty_cost integer = 1,
 		thread_number integer = 1
 	)
-    RETURNS SETOF aa_mmseq_result
+    RETURNS SETOF mmseq_result
     AS 'MODULE_PATHNAME', 'aa_search_db_to_db' LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION aaa_search_one_to_one(
-		aa_seq,
-		aa_seq,
+CREATE OR REPLACE FUNCTION amb_aa_search_one_to_one(
+		amb_aa_seq,
+		amb_aa_seq,
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
 		kmer_gen_threshold integer = 19,
@@ -693,12 +689,12 @@ CREATE OR REPLACE FUNCTION aaa_search_one_to_one(
 		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF aa_mmseq_result
-    AS 'MODULE_PATHNAME', 'aaa_search_one_to_one' LANGUAGE C;
+    RETURNS SETOF mmseq_result
+    AS 'MODULE_PATHNAME', 'amb_aa_search_one_to_one' LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION aaa_search_one_to_arr(
-		aa_seq,
-		aa_seq[],
+CREATE OR REPLACE FUNCTION amb_aa_search_one_to_arr(
+		amb_aa_seq,
+		amb_aa_seq[],
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
 		kmer_gen_threshold integer = 19,
@@ -708,11 +704,11 @@ CREATE OR REPLACE FUNCTION aaa_search_one_to_arr(
 		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF aa_mmseq_result
-    AS 'MODULE_PATHNAME', 'aaa_search_one_to_arr' LANGUAGE C;
+    RETURNS SETOF mmseq_result
+    AS 'MODULE_PATHNAME', 'amb_aa_search_one_to_arr' LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION aaa_search_one_to_db(
-		aa_seq,
+CREATE OR REPLACE FUNCTION amb_aa_search_one_to_db(
+		amb_aa_seq,
 		text,
 		text,
 		target_ids bigint[] = NULL,
@@ -725,12 +721,12 @@ CREATE OR REPLACE FUNCTION aaa_search_one_to_db(
 		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF aa_mmseq_result
-    AS 'MODULE_PATHNAME', 'aaa_search_one_to_db' LANGUAGE C;
+    RETURNS SETOF mmseq_result
+    AS 'MODULE_PATHNAME', 'amb_aa_search_one_to_db' LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION aaa_search_arr_to_one(
-		aa_seq[],
-		aa_seq,
+CREATE OR REPLACE FUNCTION amb_aa_search_arr_to_one(
+		amb_aa_seq[],
+		amb_aa_seq,
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
 		kmer_gen_threshold integer = 19,
@@ -740,12 +736,12 @@ CREATE OR REPLACE FUNCTION aaa_search_arr_to_one(
 		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF aa_mmseq_result
-    AS 'MODULE_PATHNAME', 'aaa_search_arr_to_one' LANGUAGE C;
+    RETURNS SETOF mmseq_result
+    AS 'MODULE_PATHNAME', 'amb_aa_search_arr_to_one' LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION aaa_search_arr_to_arr(
-		aa_seq[],
-		aa_seq[],
+CREATE OR REPLACE FUNCTION amb_aa_search_arr_to_arr(
+		amb_aa_seq[],
+		amb_aa_seq[],
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
 		kmer_gen_threshold integer = 19,
@@ -755,11 +751,11 @@ CREATE OR REPLACE FUNCTION aaa_search_arr_to_arr(
 		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF aa_mmseq_result
-    AS 'MODULE_PATHNAME', 'aaa_search_arr_to_arr' LANGUAGE C;
+    RETURNS SETOF mmseq_result
+    AS 'MODULE_PATHNAME', 'amb_aa_search_arr_to_arr' LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION aaa_search_arr_to_db(
-		aa_seq[],
+CREATE OR REPLACE FUNCTION amb_aa_search_arr_to_db(
+		amb_aa_seq[],
 		text,
 		text,
 		target_ids bigint[] = NULL,
@@ -772,13 +768,13 @@ CREATE OR REPLACE FUNCTION aaa_search_arr_to_db(
 		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF aa_mmseq_result
-    AS 'MODULE_PATHNAME', 'aaa_search_arr_to_db' LANGUAGE C;
+    RETURNS SETOF mmseq_result
+    AS 'MODULE_PATHNAME', 'amb_aa_search_arr_to_db' LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION aaa_search_db_to_one(
+CREATE OR REPLACE FUNCTION amb_aa_search_db_to_one(
 		text,
 		text,
-		aa_seq,
+		amb_aa_seq,
 		query_ids bigint[] = NULL,
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
@@ -789,13 +785,13 @@ CREATE OR REPLACE FUNCTION aaa_search_db_to_one(
 		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF aa_mmseq_result
-    AS 'MODULE_PATHNAME', 'aaa_search_db_to_one' LANGUAGE C;
+    RETURNS SETOF mmseq_result
+    AS 'MODULE_PATHNAME', 'amb_aa_search_db_to_one' LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION aaa_search_db_to_arr(
+CREATE OR REPLACE FUNCTION amb_aa_search_db_to_arr(
 		text,
 		text,
-		aa_seq[],
+		amb_aa_seq[],
 		query_ids bigint[] = NULL,
 		subst_matrix_name text = 'blosum62',
 		kmer_length integer = 7,
@@ -806,10 +802,10 @@ CREATE OR REPLACE FUNCTION aaa_search_db_to_arr(
 		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF aa_mmseq_result
-    AS 'MODULE_PATHNAME', 'aaa_search_db_to_arr' LANGUAGE C;
+    RETURNS SETOF mmseq_result
+    AS 'MODULE_PATHNAME', 'amb_aa_search_db_to_arr' LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION aaa_search_db_to_db(
+CREATE OR REPLACE FUNCTION amb_aa_search_db_to_db(
 		text,
 		text,
 		text,
@@ -825,5 +821,5 @@ CREATE OR REPLACE FUNCTION aaa_search_db_to_db(
 		gap_penalty_cost integer = 2,
 		thread_number integer = 1
 	)
-    RETURNS SETOF aa_mmseq_result
-    AS 'MODULE_PATHNAME', 'aaa_search_db_to_db' LANGUAGE C;
+    RETURNS SETOF mmseq_result
+    AS 'MODULE_PATHNAME', 'amb_aa_search_db_to_db' LANGUAGE C;
