@@ -17,6 +17,7 @@ namespace common
         using StrPtr = std::shared_ptr<std::string>;
         using VecStrPtr = std::shared_ptr<std::vector<StrPtr>>;
         using InputParamsPtr = std::shared_ptr<InputParams>;
+        using Str = std::string;
 
         InputParams() {}
 
@@ -35,7 +36,7 @@ namespace common
                                                                                           substitutionMatrixName{substitutionMatrixName}, kMerLength{kMerLength},
                                                                                           kMerGenThreshold{kMerGenThreshold}, ungappedAlignmentScore{ungappedAlignmentScore},
                                                                                           evalTreshold{evalTreshold}, gapOpenCost{gapOpenCost}, gapPenaltyCost{gapPenaltyCost},
-                                                                                          threadNumber{threadNumber}, sequenceType{sequenceType}, enableAmbiguity{enableAmbiguity}
+                                                                                          threadNumber{threadNumber}, sequenceType{sequenceType}, enableAmbiguity{enableAmbiguity}, executionInterrupted{false}
         {
             if (sequenceType == 'n') {
                 substitutionMatrixId = 0;
@@ -169,6 +170,19 @@ namespace common
             return substitutionMatrixId;
         }
 
+        void setInterruption(std::exception& e) {
+            executionInterrupted = true;
+            exceptionRaisedMessage = e.what();
+        }
+
+        bool getExecutionInterrupted() const {
+            return executionInterrupted;
+        }
+
+        std::string& getExceptionRaisedMessage() {
+            return exceptionRaisedMessage;
+        }
+
         MSGPACK_DEFINE_MAP(qLen, tLen, qIds, tIds,
                            queries, allTargets, localTargets, targets, targetTableName, targetColumnName, substitutionMatrixName,
                            kMerLength, kMerGenThreshold, ungappedAlignmentScore, evalTreshold, gapOpenCost,
@@ -200,6 +214,9 @@ namespace common
 
         char sequenceType;
         bool enableAmbiguity;
+
+        bool executionInterrupted;
+        Str exceptionRaisedMessage;
     };
 
     class MmseqResult

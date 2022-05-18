@@ -24,54 +24,53 @@ void processSingleQuery(const mmseq2::GetterInterfacePtr &getterInterfacePtr, ui
                         common::InputParams::InputParamsPtr inputParams, std::mutex *resMtx, const common::VecResPtr &resultPtr);
 
 common::VecRes mmseq2::MMSeq2(common::InputParams inputParams) {
-    try {
-        common::InputParams::InputParamsPtr inputParamsPtr = std::make_shared<common::InputParams>(inputParams);
-        std::vector<std::thread> workers{};
-        std::mutex mtx, resMtx;
-        uint32_t nextQuery = 0;
-        common::VecResPtr resultPtr = std::make_shared<common::VecRes>();
+    common::InputParams::InputParamsPtr inputParamsPtr = std::make_shared<common::InputParams>(inputParams);
+    std::vector<std::thread> workers{};
+    std::mutex mtx, resMtx;
+    uint32_t nextQuery = 0;
+    common::VecResPtr resultPtr = std::make_shared<common::VecRes>();
 
-        bool allTargets = inputParamsPtr.get()->getAllTargets(), localTargets = inputParamsPtr.get()->getLocalTargets();
-        mmseq2::GetterInterface getterInterface(allTargets, localTargets);
-        getterInterface.getTargetsPtr() = (*inputParamsPtr).getTargetsPtr();
+    bool allTargets = inputParamsPtr.get()->getAllTargets(), localTargets = inputParamsPtr.get()->getLocalTargets();
+    mmseq2::GetterInterface getterInterface(allTargets, localTargets);
+    getterInterface.getTargetsPtr() = (*inputParamsPtr).getTargetsPtr();
 
-        if (localTargets) {
-            uint32_t kMerLength = inputParamsPtr.get()->getKMerLength();
+    if (localTargets) {
+        uint32_t kMerLength = inputParamsPtr.get()->getKMerLength();
 
-            auto targetsPtr = inputParamsPtr.get()->getTargetsPtr();
-            for (uint32_t i = 0; i < targetsPtr.get()->size(); i++) {
-                std::string target = *targetsPtr.get()->at(i);
-                if (target.size() < kMerLength) {
-                    continue;
-                }
-                for (uint j = 0; j <= target.size() - kMerLength; j++) {
-                    std::string kMer = target.substr(j, kMerLength);
-                    (*getterInterface.getIndexesMapPtr())[kMer].push_back({i, j});
-                }
+        auto targetsPtr = inputParamsPtr.get()->getTargetsPtr();
+        for (uint32_t i = 0; i < targetsPtr.get()->size(); i++) {
+            std::string target = *targetsPtr.get()->at(i);
+            if (target.size() < kMerLength) {
+                continue;
+            }
+            for (uint j = 0; j <= target.size() - kMerLength; j++) {
+                std::string kMer = target.substr(j, kMerLength);
+                (*getterInterface.getIndexesMapPtr())[kMer].push_back({i, j});
             }
         }
+    }
 
-        for (uint32_t i = 0; i < inputParamsPtr.get()->getThreadNumber(); ++i) {
-            workers.emplace_back(std::thread(
-                    processQueries, inputParamsPtr, getterInterface, &mtx, &nextQuery, &resMtx, resultPtr));
-        }
+    for (uint32_t i = 0; i < inputParamsPtr.get()->getThreadNumber(); ++i) {
+        workers.emplace_back(std::thread(
+                processQueries, inputParamsPtr, getterInterface, &mtx, &nextQuery, &resMtx, resultPtr));
+    }
 
-        for (std::thread &worker : workers) {
-            worker.join();
-        }
+    for (std::thread &worker : workers) {
+        worker.join();
+    }
 
-        // we need to update targets id in result when it was run locally
+    if (inputParamsPtr.get()->getExecutionInterrupted()) {
+        rpc::this_handler().respond_error(inputParamsPtr.get()->getExceptionRaisedMessage());
+    }
+    else {
         if (localTargets) {
             for (uint32_t i = 0; i < resultPtr.get()->size(); i++) {
                 uint64_t localTargetId = (*resultPtr)[i].getTargetId();
                 (*resultPtr)[i].setTargetId(inputParamsPtr.get()->getTIds().get()->at(localTargetId));
             }
         }
-        return *resultPtr;
-    }
 
-    catch(std::exception& e) {
-        rpc::this_handler().respond_error(e.what());
+        return *resultPtr;
     }
 
     return common::VecRes{};
@@ -96,21 +95,25 @@ uint32_t getNextQuery(uint32_t q_len, std::mutex *mtx, uint32_t *nextQuery) {
 
 void processQueries(const common::InputParams::InputParamsPtr &inputParams, mmseq2::GetterInterface getterInterface,
                     std::mutex *mtx, uint32_t *nextQuery, std::mutex *resMtx, const common::VecResPtr &resultPtr) {
+    try {
+        mmseq2::GetterInterfacePtr getterInterfacePtr = std::make_shared<mmseq2::GetterInterface>(getterInterface);
 
-    mmseq2::GetterInterfacePtr getterInterfacePtr = std::make_shared<mmseq2::GetterInterface>(getterInterface);
+        if (!getterInterfacePtr.get()->getLocalTargets()) {
+            (*getterInterfacePtr).getDBconnPtr() = std::make_shared<DB::DBconn>(*inputParams->getTargetTableName(), *inputParams->getTargetColumnName());
+        }
 
-    if (!getterInterfacePtr.get()->getLocalTargets()) {
-        (*getterInterfacePtr).getDBconnPtr() = std::make_shared<DB::DBconn>(*inputParams->getTargetTableName(), *inputParams->getTargetColumnName());
+        uint32_t tmpNextQuery;
+
+        while ((tmpNextQuery = getNextQuery(inputParams.get()->getQLen(), mtx, nextQuery)) != -1) {
+            processSingleQuery(getterInterfacePtr, inputParams.get()->getQIds()->at(tmpNextQuery), inputParams.get()->getQueries()->at(tmpNextQuery), inputParams, resMtx, resultPtr);
+        }
+
+        if (!getterInterfacePtr.get()->getLocalTargets()) {
+            getterInterfacePtr.get()->getDBconnPtr().get()->CloseConnection();
+        }
     }
-
-    uint32_t tmpNextQuery;
-
-    while ((tmpNextQuery = getNextQuery(inputParams.get()->getQLen(), mtx, nextQuery)) != -1) {
-        processSingleQuery(getterInterfacePtr, inputParams.get()->getQIds()->at(tmpNextQuery), inputParams.get()->getQueries()->at(tmpNextQuery), inputParams, resMtx, resultPtr);
-    }
-
-    if (!getterInterfacePtr.get()->getLocalTargets()) {
-        getterInterfacePtr.get()->getDBconnPtr().get()->CloseConnection();
+    catch(std::exception& e) {
+        inputParams.get()->setInterruption(e);
     }
 }
 
@@ -383,7 +386,7 @@ void mmseq2::Query::executeAlignment(const mmseq2::GetterInterfacePtr &getterInt
 
         StrPtr querySequence = this->sequence;
         StrPtr targetSequence = getterInterfacePtr.get()->getTargetById(targetId);
-        
+
         if (ungappedAlignment(querySequence, targetSequence, diagonal) >= this->ungappedAlignmentScore && filteredTargetIds.find(targetId) == filteredTargetIds.end()) {
             filteredTargetIds.insert(targetId);
 
