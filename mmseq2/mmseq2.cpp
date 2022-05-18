@@ -95,9 +95,10 @@ uint32_t getNextQuery(uint32_t q_len, std::mutex *mtx, uint32_t *nextQuery) {
 
 void processQueries(const common::InputParams::InputParamsPtr &inputParams, mmseq2::GetterInterface getterInterface,
                     std::mutex *mtx, uint32_t *nextQuery, std::mutex *resMtx, const common::VecResPtr &resultPtr) {
-    try {
-        mmseq2::GetterInterfacePtr getterInterfacePtr = std::make_shared<mmseq2::GetterInterface>(getterInterface);
 
+    mmseq2::GetterInterfacePtr getterInterfacePtr = std::make_shared<mmseq2::GetterInterface>(getterInterface);
+
+    try {
         if (!getterInterfacePtr.get()->getLocalTargets()) {
             (*getterInterfacePtr).getDBconnPtr() = std::make_shared<DB::DBconn>(*inputParams->getTargetTableName(), *inputParams->getTargetColumnName());
         }
@@ -107,14 +108,17 @@ void processQueries(const common::InputParams::InputParamsPtr &inputParams, mmse
         while ((tmpNextQuery = getNextQuery(inputParams.get()->getQLen(), mtx, nextQuery)) != -1) {
             processSingleQuery(getterInterfacePtr, inputParams.get()->getQIds()->at(tmpNextQuery), inputParams.get()->getQueries()->at(tmpNextQuery), inputParams, resMtx, resultPtr);
         }
-
-        if (!getterInterfacePtr.get()->getLocalTargets()) {
-            getterInterfacePtr.get()->getDBconnPtr().get()->CloseConnection();
-        }
     }
     catch(std::exception& e) {
         inputParams.get()->setInterruption(e);
     }
+
+    try {
+        if (!getterInterfacePtr.get()->getLocalTargets()) {
+            getterInterfacePtr.get()->getDBconnPtr().get()->CloseConnection();
+        }
+    }
+    catch(std::exception& e) {} // error handled by db
 }
 
 void processSingleQuery(const mmseq2::GetterInterfacePtr &getterInterfacePtr, uint64_t qId, common::InputParams::StrPtr queryStr,
