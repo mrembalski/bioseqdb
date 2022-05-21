@@ -54,6 +54,10 @@ uint32_t thread_number = PG_GETARG_INT32(n + 7)
 #define ADD_QUERIES_DB(n, a, b) \
 std::string query_tblname = text_to_cstring(PG_GETARG_TEXT_PP(a)); \
 std::string query_colname = text_to_cstring(PG_GETARG_TEXT_PP(b)); \
+if (!check_valid_name(query_tblname)) \
+    elog(ERROR, "%s", "Invalid query table name!"); \
+if (!check_valid_name(query_colname)) \
+    elog(ERROR, "%s", "Invalid query column name!"); \
 if (PG_ARGISNULL(n)) \
     add_queries_all(query_tblname, query_colname, qIds, queries); \
 else \
@@ -62,6 +66,10 @@ else \
 #define ADD_TARGETS_DB(n, a, b) \
 target_tblname = text_to_cstring(PG_GETARG_TEXT_PP(a)); \
 target_colname = text_to_cstring(PG_GETARG_TEXT_PP(b)); \
+if (!check_valid_name(target_tblname.value())) \
+    elog(ERROR, "%s", "Invalid target table name!"); \
+if (!check_valid_name(target_colname.value())) \
+    elog(ERROR, "%s", "Invalid target column name!"); \
 if (PG_ARGISNULL(n)) \
 { \
     all_targets = true; \
@@ -283,6 +291,18 @@ namespace
         {
             tIds->push_back(targets_array[i]);
         }
+    }
+
+    bool check_valid_name(std::string s)
+    {
+        if (s.empty() || (s[0] != '_' && !isalpha(s[0])))
+            return false;
+        for (const char c : s)
+        {
+            if (c != '_' && !isalpha(c) && !isdigit(c))
+                return false;
+        }
+        return true;
     }
 
     void sigint_handler(int signo)
