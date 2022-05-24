@@ -1,10 +1,27 @@
 version: "3.9"
 services:
-  postgres:
-    container_name: db
+  mmseq2:
+    ports:
+    - 8080:8080
+    hostname: mmseq2
     build:
       context: ../..
-      dockerfile: ./ops/docker/Dockerfile
+      dockerfile: ./ops/docker/Dockerfile.mmseq2
+    environment:
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_DATABASE: bioseqdb
+      PG_USER: postgres
+      PG_PASSWORD: password
+    networks:
+      - nw
+
+  postgres:
+    depends_on:
+      - mmseq2
+    build:
+      context: ../..
+      dockerfile: ./ops/docker/Dockerfile.pg
     ports:
       - 5432:5432
     environment:
@@ -14,8 +31,8 @@ services:
     tmpfs:
       - /pgtmpfs
     networks:
-      - development
+      - nw
 
 networks:
-  development:
-    name: development
+  nw: 
+    name: nw
