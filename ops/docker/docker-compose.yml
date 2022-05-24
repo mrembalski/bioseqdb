@@ -33,7 +33,7 @@ services:
       - /pgtmpfs
     networks:
       - nw
-      
+
 networks:
   nw: 
     name: nw
