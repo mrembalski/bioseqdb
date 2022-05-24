@@ -44,11 +44,11 @@ namespace mmseq2
             throw bioSequenceNotAssigned;
         }
 
-        virtual int32_t getPenalty(uint32_t matrixId, uint32_t currentId, uint32_t replacementId) const {
+        virtual int32_t getPenaltyByIds(uint32_t matrixId, uint32_t currentId, uint32_t replacementId) const {
             throw bioSequenceNotAssigned;
         }
 
-        virtual int32_t getPenalty(uint32_t matrixId, char currentId, char replacementId) const {
+        virtual int32_t getPenaltyByChars(uint32_t matrixId, char currentId, char replacementId) const {
             throw bioSequenceNotAssigned;
         }
 
@@ -89,11 +89,11 @@ namespace mmseq2
             return charId[aa_char];
         }
 
-        int32_t getPenalty(uint32_t matrixId, uint32_t currentId, uint32_t replacementId) const {
+        int32_t getPenaltyByIds(uint32_t matrixId, uint32_t currentId, uint32_t replacementId) const {
             return substitutionMatrix[matrixId][currentId][replacementId];
         }
 
-        int32_t getPenalty(uint32_t matrixId, char currentId, char replacementId) const {
+        int32_t getPenaltyByChars(uint32_t matrixId, char currentId, char replacementId) const {
             return substitutionMatrix[matrixId][charToId(currentId)][charToId(replacementId)];
         }
     private:
@@ -145,12 +145,12 @@ namespace mmseq2
             return charId[aa_char];
         }
 
-        int32_t getPenalty(uint32_t matrixId, uint32_t currentId, uint32_t replacementId) const
+        int32_t getPenaltyByIds(uint32_t matrixId, uint32_t currentId, uint32_t replacementId) const
         {
             return substitutionMatrix[matrixId][currentId][replacementId];
         }
 
-        int32_t getPenalty(uint32_t matrixId, char currentId, char replacementId) const
+        int32_t getPenaltyByChars(uint32_t matrixId, char currentId, char replacementId) const 
         {
             return substitutionMatrix[matrixId][charToId(currentId)][charToId(replacementId)];
         }

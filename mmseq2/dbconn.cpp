@@ -137,10 +137,10 @@ std::shared_ptr<std::string> DB::DBconn::GetTargetById(uint64_t id)
     }
 
     char *target_seq = PQgetvalue(res, 0, target_seq_fnum);
-    
+    auto target_ptr = std::make_shared<std::string>(target_seq);
     PQclear(res);
-
-    return std::make_shared<std::string>(target_seq);
+    
+    return target_ptr;
 }
 
 
