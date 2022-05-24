@@ -365,7 +365,6 @@ namespace
                                          enableAmbiguity);
 
         // Client
-        elog(WARNING, "%s %d %d", MMSEQ_HOSTNAME, MMSEQ_PORT, MMSEQ_TIMEOUT);
         rpc::client c(MMSEQ_HOSTNAME, MMSEQ_PORT);
         c.set_timeout(MMSEQ_TIMEOUT);
         common::VecRes mmseq_result;
