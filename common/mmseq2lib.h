@@ -186,7 +186,8 @@ namespace common
         MSGPACK_DEFINE_MAP(qLen, tLen, qIds, tIds,
                            queries, allTargets, localTargets, targets, targetTableName, targetColumnName, substitutionMatrixName,
                            kMerLength, kMerGenThreshold, ungappedAlignmentScore, evalTreshold, gapOpenCost,
-                           gapPenaltyCost, threadNumber, substitutionMatrixId, sequenceType, enableAmbiguity);
+                           gapPenaltyCost, threadNumber, substitutionMatrixId, sequenceType, enableAmbiguity,
+                           executionInterrupted, exceptionRaisedMessage);
 
     private:
         uint32_t qLen;
