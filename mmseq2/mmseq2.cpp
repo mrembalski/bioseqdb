@@ -140,11 +140,11 @@ void mmseq2::Query::findPrefilterKmerStageResults(const mmseq2::GetterInterfaceP
     int32_t SMaxSuf = 0;
 
     for (uint32_t i = 0; i < this->kMerLength - 1; ++i) {
-        SMaxSuf += bioSequence->getPenalty(this->substitutionMatrixId, this->sequence.get()->at(i), this->sequence.get()->at(i));
+        SMaxSuf += bioSequence->getPenaltyByChars(this->substitutionMatrixId, this->sequence.get()->at(i), this->sequence.get()->at(i));
     }
 
     for (uint32_t kMerPos = 0; kMerPos + this->kMerLength <= this->sequence.get()->length(); ++kMerPos) {
-        SMaxSuf += bioSequence->getPenalty(this->substitutionMatrixId, this->sequence.get()->at(kMerPos + this->kMerLength - 1), this->sequence.get()->at(kMerPos + this->kMerLength - 1));
+        SMaxSuf += bioSequence->getPenaltyByChars(this->substitutionMatrixId, this->sequence.get()->at(kMerPos + this->kMerLength - 1), this->sequence.get()->at(kMerPos + this->kMerLength - 1));
 
         std::string kMer = this->sequence.get()->substr(kMerPos, this->kMerLength);
 
@@ -156,7 +156,7 @@ void mmseq2::Query::findPrefilterKmerStageResults(const mmseq2::GetterInterfaceP
         // get hits from db
         AddHitsFromSimilarKmers(getterInterfacePtr);
 
-        SMaxSuf -= bioSequence->getPenalty(this->substitutionMatrixId, this->sequence.get()->at(kMerPos), this->sequence.get()->at(kMerPos));
+        SMaxSuf -= bioSequence->getPenaltyByChars(this->substitutionMatrixId, this->sequence.get()->at(kMerPos), this->sequence.get()->at(kMerPos));
     }
 }
 
@@ -175,10 +175,10 @@ void mmseq2::Query::processSimilarKMers(const mmseq2::GetterInterfacePtr &getter
 
     const uint32_t currentAAId = bioSequence->charToId(currentAA);
 
-    SMaxSuf -= bioSequence->getPenalty(this->substitutionMatrixId, currentAAId, currentAAId);
+    SMaxSuf -= bioSequence->getPenaltyByIds(this->substitutionMatrixId, currentAAId, currentAAId);
 
     for (uint32_t aaId = 0; aaId < bioSequence->getAlphabetSize(); ++aaId) {
-        Spref += bioSequence->getPenalty(this->substitutionMatrixId, currentAAId, aaId);
+        Spref += bioSequence->getPenaltyByIds(this->substitutionMatrixId, currentAAId, aaId);
 
         if (evalBitScore(Spref + SMaxSuf) >= this->kMerGenThreshold) {
             kMer[indx] = bioSequence->idToChar(aaId);
@@ -191,7 +191,7 @@ void mmseq2::Query::processSimilarKMers(const mmseq2::GetterInterfacePtr &getter
             processSimilarKMers(getterInterfacePtr, kMerPos, kMer, SMaxSuf, Spref, indx + 1);
         }
 
-        Spref -= bioSequence->getPenalty(this->substitutionMatrixId, currentAAId, aaId);
+        Spref -= bioSequence->getPenaltyByIds(this->substitutionMatrixId, currentAAId, aaId);
     }
 
     kMer[indx] = currentAA;
@@ -260,7 +260,7 @@ double mmseq2::Query::ungappedAlignment(const StrPtr &querySequence, const StrPt
     int32_t score = 0, maxScore = 0;
 
     while (queryPosition <= queryLastPosition) {
-        score += bioSequence->getPenalty(getSubstitutionMatrixId(), querySequence.get()->at(queryPosition), targetSequence.get()->at(targetPosition));
+        score += bioSequence->getPenaltyByChars(getSubstitutionMatrixId(), querySequence.get()->at(queryPosition), targetSequence.get()->at(targetPosition));
         score = std::max(score, 0);
         maxScore = std::max(maxScore, score);
 
@@ -295,7 +295,7 @@ void mmseq2::Query::gappedAlignment(const StrPtr &querySequence, const StrPtr &t
                 H[qInd][tInd] = std::max(H[qInd][tInd], F[qInd][tInd]);
             }
 
-            int32_t match = bioSequence->getPenalty(this->substitutionMatrixId, querySequence.get()->at(qInd), targetSequence.get()->at(tInd));
+            int32_t match = bioSequence->getPenaltyByChars(this->substitutionMatrixId, querySequence.get()->at(qInd), targetSequence.get()->at(tInd));
             H[qInd][tInd] = std::max(H[qInd][tInd], match);
             if (qInd > 0 && tInd > 0) {
                 H[qInd][tInd] = std::max(H[qInd][tInd], H[qInd - 1][tInd - 1] + match);
@@ -317,7 +317,7 @@ void mmseq2::Query::gappedAlignment(const StrPtr &querySequence, const StrPtr &t
 
     // backtrace
     while (qInd >= 0 && tInd >= 0 && H[qInd][tInd] > 0) {
-        int32_t match = bioSequence->getPenalty(this->substitutionMatrixId,
+        int32_t match = bioSequence->getPenaltyByChars(this->substitutionMatrixId,
                                               querySequence.get()->at(qInd), targetSequence.get()->at(tInd));
         if ((qInd > 0 && tInd > 0 && H[qInd][tInd] == H[qInd - 1][tInd - 1] + match) || (H[qInd][tInd] == match)) {
             if (querySequence.get()->at(qInd) != targetSequence.get()->at(tInd)) {
