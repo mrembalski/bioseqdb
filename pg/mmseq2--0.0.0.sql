@@ -1,6 +1,6 @@
 CREATE DOMAIN nucl_seq AS TEXT
 CHECK(
-   VALUE ~ '^[ACGT]*$'
+   VALUE ~ '^[ACGTX]*$'
 );
 
 CREATE DOMAIN aa_seq AS TEXT
