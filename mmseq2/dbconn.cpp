@@ -6,7 +6,7 @@
 #include <exception>
 #include <cstdlib>
 
-DB::DBconn::DBconn(const std::string &tableName, const std::string &columnName)
+DB::DBconn::DBconn(const std::string &tableName, const std::string &columnName, bool allTargets, const common::InputParams::Vec64Ptr &tIds)
 {
     this->columnName = columnName;
     this->tableName = tableName;
@@ -17,6 +17,18 @@ DB::DBconn::DBconn(const std::string &tableName, const std::string &columnName)
         .append(this->columnName)
         .append("__index")
         .append(" WHERE kmer IN (");
+    if (allTargets == false) {
+        this->kmerHitsQuerySuffix = ") AND id IN (";
+        for (auto i = 0; i < tIds->size(); i++) {
+            this->kmerHitsQuerySuffix.append(std::to_string((*tIds)[i]));
+            if (i + 1 < tIds->size())
+                this->kmerHitsQuerySuffix.append(",");
+        }
+        this->kmerHitsQuerySuffix.append(");");
+    }
+    else {
+        this->kmerHitsQuerySuffix = ");";
+    }
 
 	/* A list of possible environment variables*/
 	const char *env_var[5] = {
@@ -151,7 +163,7 @@ void DB::DBconn::GetSimKMersHits(common::SimKMersPtr &simKMersPtr, common::SimKM
     }
 
     std::string query;
-    query.reserve(this->kmerHitsQueryPrefix.size() + 10 * simKMersPtr.get()->size() + 1);
+    query.reserve(this->kmerHitsQueryPrefix.size() + 10 * simKMersPtr.get()->size() - 1 + this->kmerHitsQuerySuffix.size());
     query.append(this->kmerHitsQueryPrefix);
 
     /** kMer values */
@@ -167,7 +179,7 @@ void DB::DBconn::GetSimKMersHits(common::SimKMersPtr &simKMersPtr, common::SimKM
         }
     }
 
-    query.append(");");
+    query.append(this->kmerHitsQuerySuffix);
 
     PGresult *res = PQexec(connection, query.c_str());
 

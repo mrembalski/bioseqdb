@@ -100,7 +100,8 @@ void processQueries(const common::InputParams::InputParamsPtr &inputParams, mmse
 
     try {
         if (!getterInterfacePtr.get()->getLocalTargets()) {
-            (*getterInterfacePtr).getDBconnPtr() = std::make_shared<DB::DBconn>(*inputParams->getTargetTableName(), *inputParams->getTargetColumnName());
+            (*getterInterfacePtr).getDBconnPtr() = std::make_shared<DB::DBconn>(*inputParams->getTargetTableName(), *inputParams->getTargetColumnName(),
+                                                    inputParams->getAllTargets(), inputParams->getTIds());
         }
 
         uint32_t tmpNextQuery;
