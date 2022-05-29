@@ -13,7 +13,7 @@ namespace DB
     class DBconn
     {
     public:
-        DBconn(const std::string&, const std::string&);
+        DBconn(const std::string&, const std::string&, bool, const common::InputParams::Vec64Ptr&);
         void GetIthIndex(std::string, uint32_t, uint64_t *, uint32_t *);
         void GetSimKMersHits(common::SimKMersPtr&, common::SimKMersHitsPtr&);
         void CloseConnection();
@@ -25,6 +25,7 @@ namespace DB
         std::string tableName;
         std::string columnName;
         std::string kmerHitsQueryPrefix;
+        std::string kmerHitsQuerySuffix;
     };
 }
 
