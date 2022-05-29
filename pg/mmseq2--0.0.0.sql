@@ -75,6 +75,16 @@ BEGIN
 	   	(t_name || '_' || c_name || '__index'), 
 	   	(t_name)
 	);
+	EXECUTE format(
+	    'CREATE INDEX %I ON %I (kmer);',
+	   	(t_name || '_' || c_name || '__index' || '_kmer_idx'), 
+	   	(t_name || '_' || c_name || '__index')
+	);
+	EXECUTE format(
+	    'CREATE INDEX %I ON %I (seq_id);',
+	   	(t_name || '_' || c_name || '__index' || '_seq_id_idx'), 
+	   	(t_name || '_' || c_name || '__index')
+	);
 END;
 $BODY$
 LANGUAGE plpgsql;
