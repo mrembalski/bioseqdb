@@ -21,7 +21,7 @@ RUN set -x \
         postgresql-server-dev-$PG_DEV_VERSION \
     && mkdir /pg/build \
     && cd /pg/build \
-    && cmake -D PostgreSQL_TYPE_INCLUDE_DIR=/usr/include/postgresql/$PG_DEV_VERSION/server/ -D MMSEQ_HOSTNAME=$MMSEQ_HOSTNAME .. \
+    && cmake -D PostgreSQL_TYPE_INCLUDE_DIR=/usr/include/postgresql/$PG_DEV_VERSION/server/ -D MMSEQ_HOSTNAME=$MMSEQ_HOSTNAME -D MMSEQ_TIMEOUT=36000000 .. \
     && make \
     && make install 
 
