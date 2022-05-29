@@ -31,7 +31,8 @@ common::InputParams::VecStrPtr queries(new std::vector<common::InputParams::StrP
 common::InputParams::VecStrPtr targets(new std::vector<common::InputParams::StrPtr>{}); \
 std::optional<std::string> target_tblname = std::nullopt; \
 std::optional<std::string> target_colname = std::nullopt; \
-bool all_targets = false
+bool all_targets = false; \
+uint32_t tCount
 
 #define GET_OPTIONAL_PARAMS(n) \
 std::string subst_matrix_name = text_to_cstring(PG_GETARG_TEXT_PP(n)); \
@@ -73,7 +74,7 @@ if (!check_valid_name(target_colname.value())) \
 if (PG_ARGISNULL(n)) \
 { \
     all_targets = true; \
-    add_targets_all(target_tblname.value(), target_colname.value(), tIds); \
+    tCount = count_targets(target_tblname.value()); \
 } \
 else \
     add_targets_with_ids(target_tblname.value(), target_colname.value(), tIds, PG_GETARG_ARRAYTYPE_P(n))
@@ -83,7 +84,7 @@ Tuplestorestate *tupstore; \
 AttInMetadata *attinmeta; \
 enable_materialize_mode(fcinfo, tupstore, attinmeta); \
 seq_search_mmseqs_main(target_tblname, target_colname, \
-                       qIds, tIds, queries, targets, \
+                       qIds, tIds, queries, targets, tCount, \
                        kmer_length, \
                        subst_matrix_name, \
                        kmer_gen_threshold, \
@@ -150,6 +151,25 @@ Datum prefix##_search_db_to_db(PG_FUNCTION_ARGS) \
 namespace
 {
     constexpr uint32_t OUT_TUPLE_ARITY = 18;
+
+    uint32_t count_targets(const std::string &target_tblname)
+    {
+        const std::string countTargetsQuery =
+            std::string("SELECT COUNT(*) FROM ") +
+            target_tblname +
+            std::string(";");
+        
+        SPI_connect();
+        SPI_exec(countTargetsQuery.data(), 0);
+
+        const TupleDesc spi_tupdesc = SPI_tuptable->tupdesc;
+        const HeapTuple spi_tuple = SPI_tuptable->vals[0];
+        const std::string tCountStr = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
+        const uint32_t tCount = std::stol(tCountStr);
+
+        SPI_finish();
+        return tCount;
+    }
 
     void add_one_sequence(const std::string &sequence,
                           const common::InputParams::Vec64Ptr &ids, const common::InputParams::VecStrPtr &sequences)
@@ -317,6 +337,7 @@ namespace
                                 common::InputParams::Vec64Ptr tIds,
                                 common::InputParams::VecStrPtr queries,
                                 common::InputParams::VecStrPtr targets,
+                                const uint32_t tCount,
                                 const uint32_t kmer_length,
                                 const std::string &subst_matrix_name,
                                 const uint32_t kmer_gen_threshold,
@@ -331,29 +352,6 @@ namespace
                                 Tuplestorestate *tupstore,
                                 AttInMetadata *attinmeta)
     {
-        // Log debug info
-        elog(WARNING, "%s", "----- Passed sequences -----");
-        elog(WARNING, "%s%ld%s", "Query ids (", qIds->size(), "):");
-        for (int i = 0; i < qIds->size(); i++)
-            elog(WARNING, "%ld", (*qIds)[i]);
-        elog(WARNING, "%s%ld%s", "Queries (", queries->size(), "):");
-        for (int i = 0; i < queries->size(); i++)
-            elog(WARNING, "%s", ((*queries)[i])->data());
-        elog(WARNING, "%s%ld%s", "Target ids (", tIds->size(), "):");
-        for (int i = 0; i < tIds->size(); i++)
-            elog(WARNING, "%ld", (*tIds)[i]);
-        elog(WARNING, "%s%ld%s", "Targets (", targets->size(), "):");
-        for (int i = 0; i < targets->size(); i++)
-            elog(WARNING, "%s", ((*targets)[i])->data());
-        elog(WARNING, "%s", "----- Optional parameters -----");
-        elog(WARNING, "%s%s", "Substitution matrix: ", subst_matrix_name.data());
-        elog(WARNING, "%s%d", "Kmer length: ", kmer_length);
-        elog(WARNING, "%s%d", "Kmer gen threshold: ", kmer_gen_threshold);
-        elog(WARNING, "%s%d", "Ungapped alignment score: ", ungapped_alignment_score);
-        elog(WARNING, "%s%f", "Eval threshold: ", eval_threshold);
-        elog(WARNING, "%s%d", "Gap open cost: ", gap_open_cost);
-        elog(WARNING, "%s%d", "Gap penalty cost: ", gap_penalty_cost);
-
         // Add a sigint handler
         struct sigaction act;
         act.sa_handler = sigint_handler;
@@ -369,7 +367,10 @@ namespace
         }
 
         // Input params
-        common::InputParams input_params(qIds->size(), tIds->size(), qIds, tIds, queries,
+        uint32_t no_of_targets = tIds->size();
+        if (all_targets)
+            no_of_targets = tCount;
+        common::InputParams input_params(qIds->size(), no_of_targets, qIds, tIds, queries,
                                          all_targets, local_targets, targets,
                                          std::make_shared<std::string>(target_tblname.value()),
                                          std::make_shared<std::string>(target_colname.value()),
