@@ -534,7 +534,22 @@ namespace mmseq2
             }
             else
             {
-                dbconnPtr.get()->GetSimKMersHits(simKMersPtr, simKMersHitsPtr);
+                for (const auto &kMer : *simKMersPtr) {
+                    uint32_t i = 0;
+                    uint64_t tId;
+                    uint32_t pos;
+
+                    while (true) {
+                        try {
+                            dbconnPtr.get()->GetIthIndex(kMer, i, &tId, &pos);
+                            (*simKMersHitsPtr).push_back({kMer, {tId, pos}});
+                            i++;
+                        }
+                        catch (std::exception& e) {
+                            break;
+                        }
+                    }
+                }
             }
         }
 
