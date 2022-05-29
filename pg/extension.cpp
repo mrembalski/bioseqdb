@@ -71,13 +71,15 @@ if (!check_valid_name(target_tblname.value())) \
     elog(ERROR, "%s", "Invalid target table name!"); \
 if (!check_valid_name(target_colname.value())) \
     elog(ERROR, "%s", "Invalid target column name!"); \
+tCount = count_targets(target_tblname.value()); \
 if (PG_ARGISNULL(n)) \
 { \
     all_targets = true; \
-    tCount = count_targets(target_tblname.value()); \
 } \
 else \
-    add_targets_with_ids(target_tblname.value(), target_colname.value(), tIds, PG_GETARG_ARRAYTYPE_P(n))
+{ \
+    add_targets_with_ids(target_tblname.value(), target_colname.value(), tIds, PG_GETARG_ARRAYTYPE_P(n)); \
+}
 
 #define SET_MATERIALIZE_AND_CALL_MAIN_FUNCTION() \
 Tuplestorestate *tupstore; \
@@ -155,7 +157,7 @@ namespace
     uint32_t count_targets(const std::string &target_tblname)
     {
         const std::string countTargetsQuery =
-            std::string("SELECT COUNT(*) FROM ") +
+            std::string("SELECT max(id) + 1 FROM ") +
             target_tblname +
             std::string(";");
         
@@ -360,16 +362,19 @@ namespace
 
         // Ad-hoc/local targets
         const bool local_targets = target_tblname == std::nullopt;
+        uint32_t no_of_targets = 0;
         if (local_targets)
         {
             target_tblname = "";
             target_colname = "";
+            no_of_targets = tIds->size();
+        }
+        else 
+        {
+            no_of_targets = tCount;
         }
 
         // Input params
-        uint32_t no_of_targets = tIds->size();
-        if (all_targets)
-            no_of_targets = tCount;
         common::InputParams input_params(qIds->size(), no_of_targets, qIds, tIds, queries,
                                          all_targets, local_targets, targets,
                                          std::make_shared<std::string>(target_tblname.value()),

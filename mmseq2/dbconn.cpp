@@ -18,7 +18,7 @@ DB::DBconn::DBconn(const std::string &tableName, const std::string &columnName, 
         .append("__index")
         .append(" WHERE kmer IN (");
     if (allTargets == false) {
-        this->kmerHitsQuerySuffix = ") AND id IN (";
+        this->kmerHitsQuerySuffix = ") AND seq_id IN (";
         for (auto i = 0; i < tIds->size(); i++) {
             this->kmerHitsQuerySuffix.append(std::to_string((*tIds)[i]));
             if (i + 1 < tIds->size())
